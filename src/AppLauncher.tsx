@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { visibleApps, type AppEntry } from "./apps";
 import { pickAppsToWarm } from "./warm";
+import { badgeText, loadEstateCounts } from "./notifications";
 
 export function AppLauncher({
   catalog,
@@ -19,6 +20,23 @@ export function AppLauncher({
     () => visibleApps(catalog, userApps, currentApp),
     [catalog, userApps, currentApp],
   );
+
+  // Estate notification ticks: each app that has items awaiting the user's
+  // action reports a count from its /api/notifications (see notifications.ts
+  // for the convention). Loaded once per mount, sessionStorage-cached for a
+  // minute, and every failure mode reads as zero — an app without the
+  // endpoint costs nothing and shows nothing.
+  const [counts, setCounts] = useState<Record<string, number>>({});
+  useEffect(() => {
+    let cancelled = false;
+    void loadEstateCounts(apps).then((c) => {
+      if (!cancelled) setCounts(c);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [apps]);
+  const anyNotifications = apps.some((a) => (counts[a.key] ?? 0) > 0);
 
   // Close on outside click or Escape while open — same document-listener
   // pattern as UserMenu, deliberately NOT the fixed-inset-0 backdrop this
@@ -74,11 +92,17 @@ export function AppLauncher({
         }}
         className="flex items-center rounded px-2 py-1 text-text-3 hover:text-accent transition-colors"
       >
-        <span className="grid grid-cols-3 gap-0.5">
+        <span className="relative grid grid-cols-3 gap-0.5">
           {/* 3×3 dot grid — waffle/launcher icon */}
           {Array.from({ length: 9 }).map((_, i) => (
             <span key={i} className="h-1 w-1 rounded-full bg-current" />
           ))}
+          {anyNotifications && (
+            <span
+              className="absolute -right-1.5 -top-1.5 h-2 w-2 rounded-full bg-accent"
+              aria-label="An app has items awaiting action"
+            />
+          )}
         </span>
       </button>
       {open && (
@@ -89,6 +113,7 @@ export function AppLauncher({
         >
           {apps.map((a) => {
             const isCurrent = a.key === currentApp;
+            const badge = badgeText(counts[a.key]);
             return (
               <a
                 key={a.key}
@@ -101,7 +126,17 @@ export function AppLauncher({
                     : "text-text-2 hover:bg-surface hover:text-text"
                 }`}
               >
-                <span className="block text-sm font-bold">{a.name}</span>
+                <span className="flex items-center gap-1.5 text-sm font-bold">
+                  {a.name}
+                  {badge && (
+                    <span
+                      className="inline-flex min-w-4 items-center justify-center rounded-full border border-accent-border bg-accent-soft px-1 text-[10px] font-bold leading-4 text-accent"
+                      aria-label={`${counts[a.key]} awaiting action`}
+                    >
+                      {badge}
+                    </span>
+                  )}
+                </span>
                 <span className="block text-xs text-text-3">{a.description}</span>
               </a>
             );

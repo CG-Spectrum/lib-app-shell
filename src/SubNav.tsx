@@ -1,6 +1,7 @@
 "use client";
 
 import { rememberTab } from "./last-tab";
+import { badgeText } from "./notifications";
 
 /**
  * SubNav — shared left-justified section tab row.
@@ -26,6 +27,11 @@ import { rememberTab } from "./last-tab";
 export interface SubNavTab {
   href: string;
   label: string;
+  /** Items awaiting action behind this tab. >0 renders a count badge beside
+   *  the label (capped at "9+"); 0/undefined renders nothing. Typically fed
+   *  from the app's own /api/notifications `paths` map — see notifications.ts
+   *  for the estate convention. */
+  badge?: number;
 }
 
 /**
@@ -66,6 +72,7 @@ export function SubNav({
       <div className="flex items-end gap-1 px-6">
         {tabs.map((tab) => {
           const active = isActiveTab(tab.href, currentPath);
+          const badge = badgeText(tab.badge);
           return (
             <a
               key={tab.href}
@@ -81,6 +88,16 @@ export function SubNav({
               ].join(" ")}
             >
               {tab.label}
+              {badge && (
+                // Chip colouring (accent on accent-soft), not solid accent with
+                // white text — #EA27C2 under white fails AA at this size.
+                <span
+                  className="ml-1.5 inline-flex min-w-4 items-center justify-center rounded-full border border-accent-border bg-accent-soft px-1 text-[10px] font-bold leading-4 text-accent"
+                  aria-label={`${tab.badge} awaiting action`}
+                >
+                  {badge}
+                </span>
+              )}
             </a>
           );
         })}

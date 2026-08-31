@@ -16,6 +16,8 @@ export { ThemeToggle } from "./ThemeToggle";
 export { THEME_INIT_SCRIPT, THEME_COOKIE, resolveTheme, applyTheme } from "./theme";
 export type { Theme } from "./theme";
 export { LAST_TAB_COOKIE, parseLastTabCookie, resolveLastTab, lastTabCookieString, rememberTab } from "./last-tab";
+export { parseNotificationPayload, badgeText, loadEstateCounts, NOTIFY_TTL_MS } from "./notifications";
+export type { AppNotifications } from "./notifications";
 export { buildUrl } from "./url-state";
 export { useUrlState } from "./useUrlState";
 export type { UrlStateCodec, UrlState } from "./useUrlState";
