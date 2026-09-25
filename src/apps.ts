@@ -22,6 +22,12 @@ export type ShellUser = {
 // Department split in progress (dept-split spec 2026-06-10): People shipped;
 // Finance/Marketing/Partnerships/AcademicOps land as their phases ship.
 export const APPS: AppEntry[] = [
+  // `home` leads: it is the staff landing app, and the only one every
+  // authenticated staffer holds by role rather than by grant. Added 2026-09-24
+  // when `home` joined the floor in the auth host (app-auth#2) — before that
+  // it had no key in any catalog and was reachable only through hardcoded
+  // header links in two apps, which is why those links exist.
+  { key: "home", name: "Home", url: "https://home.cgspectrum.com", description: "Your workspace: classes, marking, attendance, notes" },
   { key: "leadership", name: "Leadership", url: "https://leadership.cgspectrum.com", description: "Conversion rally dashboard: lead→enrolment, CAC, referrals" },
   { key: "product", name: "Product", url: "https://catalog.cgspectrum.com", description: "Course catalogue, org & policy" },
   { key: "people", name: "People", url: "https://people.cgspectrum.com", description: "Org chart & mentor directory" },

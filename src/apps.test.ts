@@ -37,7 +37,7 @@ describe("visibleApps", () => {
 
   it("APPS canonical order", () => {
     expect(APPS.map((a) => a.key)).toEqual([
-      "leadership", "product", "people", "marketing", "sales", "scheduling", "finance", "partnerships", "cms", "audit", "governance", "launchpad", "admin",
+      "home", "leadership", "product", "people", "marketing", "sales", "scheduling", "finance", "partnerships", "cms", "audit", "governance", "launchpad", "admin",
     ]);
   });
 
@@ -52,5 +52,24 @@ describe("visibleApps", () => {
     expect(entry).toBeDefined();
     expect(entry?.name).toBe("Academic Ops");
     expect(entry?.url).toBe("https://academicops.cgspectrum.com");
+  });
+
+  // 🔴 The floor keys the auth host composes into every token (app-auth
+  // src/lib/grants.ts composeApps) must each have an entry here, or a staffer
+  // holds a grant that renders no tile and the app is unreachable from the
+  // launcher. `home` was exactly that case until 2026-09-24.
+  it("every floor key the auth host composes has a launcher entry", () => {
+    const FLOOR = ["home", "product", "people", "scheduling"];
+    for (const key of FLOOR) {
+      const entry = APPS.find((a) => a.key === key);
+      expect(entry, `floor key "${key}" has no APPS entry — it would render no tile`).toBeDefined();
+      expect(entry?.url).toMatch(/^https:\/\//);
+    }
+  });
+
+  it("a staffer with only the floor sees all four floor tiles", () => {
+    expect(visibleApps(APPS, ["home", "product", "people", "scheduling"], "home").map((a) => a.key)).toEqual([
+      "home", "product", "people", "scheduling",
+    ]);
   });
 });
