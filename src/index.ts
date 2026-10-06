@@ -2,7 +2,7 @@ export { Header } from "./Header";
 export { AppLauncher } from "./AppLauncher";
 export { UserMenu } from "./UserMenu";
 export type { ProfileLink } from "./usermenu-logic";
-export { SubNav, isActiveTab } from "./SubNav";
+export { SubNav, isActiveTab, startsNewGroup } from "./SubNav";
 export type { SubNavTab } from "./SubNav";
 export { Breadcrumb } from "./Breadcrumb";
 export { segmentKind, isCurrentPage } from "./breadcrumb-logic";
