@@ -99,6 +99,42 @@ code {
   font-size: 0.92em;
 }
 
+/* ── Links ─────────────────────────────────────────────────────────────────
+   🔴 THIS BELONGS HERE, AND LIVING IN THE APPS IS WHAT BROKE THE CHROME.
+   Seven apps carried their own blanket `a { color }`, six of them UNLAYERED —
+   and unlayered CSS beats a layered Tailwind utility whatever the
+   specificity. So every anchor in app-shell's own header, app launcher and
+   SubNav took the app's link colour: in marketing, where that colour was the
+   accent, the entire top bar and every entry in the app launcher rendered
+   green. The tabs carried `text-text` the whole time and lost.
+
+   Two defences, because either alone has failed before:
+     @layer base   — a utility on the element wins again, which is what
+                     `finance` had already worked out and written down.
+     `main`        — the chrome is outside it and can never be reached, the
+                     same scoping the form controls below use.
+
+   ⛔ Accent at rest was wrong on its own terms. Rule 4 of the standard: the
+   accent "marks the current item, the selection, the one series that matters
+   and the one primary button per view". A default link state is none of
+   those, and an interface where every link is the selection colour has no
+   way left to show what is actually selected.
+
+   Paper at rest, accent on hover — the brand's own behaviour ("Links and nav
+   turn accent green") and the same treatment the nav tabs got, so a link and
+   a tab finally agree. The six apps that read --color-series-1 were quieter
+   than their own body text AND spending a chart token on prose. */
+@layer base {
+  main a {
+    color: var(--color-text);
+    text-decoration: none;
+  }
+  main a:hover {
+    color: var(--color-accent);
+    text-decoration: underline;
+  }
+}
+
 /* ── Form controls ─────────────────────────────────────────────────────────
    Scoped to main so the app-shell chrome (header, launcher, search) never
    inherits these if it gains form elements of its own. */
