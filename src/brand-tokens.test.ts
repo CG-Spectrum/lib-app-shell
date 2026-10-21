@@ -133,3 +133,92 @@ describe("the three 2027 faces", () => {
     }
   });
 });
+
+/* The light palette is written out TWICE — once for html[data-theme="light"]
+   and once for html:not([data-theme]) inside a prefers-color-scheme query,
+   which covers a page that renders before THEME_INIT_SCRIPT can stamp it.
+   Plain CSS has no way to share a declaration block between a selector and a
+   media query, so the duplication is unavoidable; what is avoidable is the two
+   drifting. At the phase 4 flip that risk was real and immediate: every value
+   in both blocks changed at once, and a miss would have shown only on an
+   unstamped page on a light-preferring OS, which is the hardest surface in the
+   estate to notice. */
+describe("the two light blocks", () => {
+  // ⚠️ Anchored to the start of a line. A bare indexOf finds the mention of
+  // html[data-theme="light"] in the file header comment, forty lines above the
+  // rule — which silently made this compare the DARK block against itself and
+  // pass. Found while writing it, which is the only reason it is not still
+  // passing vacuously.
+  function block(selector: string) {
+    const at = brandCss.search(new RegExp(`^\\s*${selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*\\{`, "m"));
+    expect(at, `${selector} not found as a rule`).toBeGreaterThan(-1);
+    const open = brandCss.indexOf("{", at);
+    let depth = 0;
+    for (let i = open; i < brandCss.length; i++) {
+      if (brandCss[i] === "{") depth++;
+      else if (brandCss[i] === "}" && --depth === 0) {
+        return [...brandCss.slice(open + 1, i).matchAll(/(--[\w-]+)\s*:\s*([^;]+);/g)]
+          .map(([, k, v]) => `${k}: ${v.trim()}`);
+      }
+    }
+    throw new Error(`unbalanced braces after ${selector}`);
+  }
+
+  const stamped = block('html[data-theme="light"]');
+  const unstamped = block("html:not([data-theme])");
+
+  test("declare exactly the same tokens with the same values", () => {
+    expect(unstamped).toEqual(stamped);
+  });
+
+  test("and are not empty, which would make the comparison vacuous", () => {
+    expect(stamped.length).toBeGreaterThan(15);
+  });
+});
+
+/* The 2027 values. Spot-checks on the handful where being wrong is invisible
+   until someone complains, not a transcription of the whole palette. */
+describe("the 2027 palette", () => {
+  const lightAt = brandCss.search(/^html\[data-theme="light"\]\s*\{/m);
+  const dark = brandCss.slice(brandCss.indexOf("@theme static"), lightAt);
+  const light = brandCss.slice(lightAt);
+
+  test("the ground and the accent are the 2027 pair", () => {
+    expect(dark).toMatch(/--color-bg:\s*#131919;/);
+    expect(dark).toMatch(/--color-accent:\s*#44d62c;/);
+  });
+
+  test("🔴 light overrides --color-accent-mark, and it is the bright green", () => {
+    // Without this, marks inherit --color-accent (Ink Green) and the light
+    // theme has no bright element left anywhere.
+    expect(light).toMatch(/--color-accent-mark:\s*#44d62c;/);
+    expect(light).toMatch(/--color-accent:\s*#1e7d10;/);
+  });
+
+  test("dark leaves --color-accent-mark tracking the accent", () => {
+    expect(dark).toMatch(/--color-accent-mark:\s*var\(--color-accent\);/);
+  });
+
+  test("success is sage, never the accent green", () => {
+    // Green marks selection. If good and accent ever share a value, a selected
+    // row and a passing status become the same signal.
+    const good = /--color-good:\s*(#[0-9a-f]{6});/i.exec(dark)?.[1];
+    expect(good?.toLowerCase()).toBe("#a8d08d");
+    expect(good?.toLowerCase()).not.toBe("#44d62c");
+  });
+
+  test("no 2025 value survives anywhere in the file", () => {
+    for (const dead of ["#EA27C2", "#030B1B", "#0E1729", "#C313A0", "#F5F8FA", "#FF7276"]) {
+      expect(brandCss.toLowerCase()).not.toContain(`${dead.toLowerCase()};`);
+    }
+  });
+
+  test("the retired groups are grey, not hues", () => {
+    // They keep values rather than vanishing, so a straggler degrades to grey
+    // instead of rendering as nothing. Grey is the point: if one is still a
+    // hue, the retirement did not happen for whoever still uses it.
+    for (const t of ["animation", "gamedesign", "digitalart", "cat-industry", "cat-community", "cat-marketing", "cat-lci"]) {
+      expect(dark).toMatch(new RegExp(`--color-${t}:\\s*#8f8f8b;`));
+    }
+  });
+});

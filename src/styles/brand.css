@@ -48,33 +48,43 @@
    custom properties per app. */
 @theme static {
   /* ── Surfaces ──────────────────────────────────────────────────────────── */
-  --color-bg: #030B1B;
-  --color-surface: #0E1729;
-  --color-surface-2: #18223A;
-  --color-surface-3: #232A39;
-  --color-border: #2D3B4A;
-  --color-border-strong: #3F5266;
+  --color-bg: #131919;
+  --color-surface: #1b2120;
+  --color-surface-2: #222928;
+  /* ⚠️ SURFACE-3 CHANGED SIDES. In 2025 it was #232A39, LIGHTER than the
+     #030B1B ground — a raised third panel. In 2027 it is #0a0c0c, DARKER than
+     the ground: a well, for recessed fields and the calendar's out-of-hours
+     band. The token kept its name and inverted its meaning, so the 79 uses
+     across eleven apps did not move but about half of them now read as a hole
+     where they used to read as a card. That is the single largest visual
+     surprise in the flip; it is on the visual-audit list. */
+  --color-surface-3: #0a0c0c;
+  --color-border: #333938;
+  --color-border-strong: #444948;
 
   /* ── Text ──────────────────────────────────────────────────────────────── */
-  --color-text: #F5F8FA;
-  --color-text-2: #C5CDD6;
-  --color-text-3: #8A95A2;
+  --color-text: #e9e6df;
+  --color-text-2: #b9b6ae;
+  /* Deliberately the same value as --color-series-1. Paper's most recessive
+     step and the chart's lighter grey are the same grey; the standard sets
+     both at #8f8f8b. */
+  --color-text-3: #8f8f8b;
 
   /* ── Accent (brand) ────────────────────────────────────────────────────── */
-  --color-accent: #EA27C2;
-  --color-accent-border: rgba(234, 39, 194, 0.45);
+  --color-accent: #44d62c;
+  --color-accent-border: rgba(68, 214, 44, 0.45);
 
   /* DEPRECATED (2027) — superseded by --color-accent-tint. In 2027 the accent
      is a bar, a rule, an eyebrow, a selection or one filled button per view,
      never a wash, so a 16% accent fill has no role left. */
-  --color-accent-soft: rgba(234, 39, 194, 0.16);
+  --color-accent-soft: rgba(143, 143, 139, 0.14);
 
   /* The selected row / selected chip tint, and the only accent fill that
      survives into 2027. Stated outright rather than aliased to
      --color-accent-soft so the flip can set it independently of a token that
      is on its way out. No users yet: adopt it in phase 3 as local selection
      styling is replaced by the package's .ledger and .filters. */
-  --color-accent-tint: rgba(234, 39, 194, 0.08);
+  --color-accent-tint: rgba(68, 214, 44, 0.08);
 
   /* Accent for MARKS rather than text: the notched bar, a chart tick, the rule
      under the selected tab. Tracks --color-accent today, so it is a no-op
@@ -91,12 +101,12 @@
      flip. Status is app-only: ⛔ never on the website or in marketing.
      In 2027, status NEVER uses the accent — green marks selection, and success
      becomes sage #a8d08d so the two can never be confused. */
-  --color-good: #4ADE80;
-  --color-good-border: rgba(74, 222, 128, 0.4);
-  --color-warn: #FBBF24;
-  --color-warn-border: rgba(251, 191, 36, 0.4);
-  --color-bad: #F87171;
-  --color-bad-border: rgba(248, 113, 113, 0.4);
+  --color-good: #a8d08d;
+  --color-good-border: rgba(168, 208, 141, 0.4);
+  --color-warn: #f5b74a;
+  --color-warn-border: rgba(245, 183, 74, 0.4);
+  --color-bad: #ff4d4d;
+  --color-bad-border: rgba(255, 77, 77, 0.4);
 
   /* ── Chart series ──────────────────────────────────────────────────────── */
   /* Grey is data; the accent is the one series a panel is about. There is no
@@ -113,9 +123,18 @@
      third grey is not a worse chart, it is one nobody can read — including
      readers with full colour vision.
 
-     🔴 Both dark steps measure under 3:1 against the surface (2.01, 2.36),
-     which obliges visible labels or a table view. That is why direct labels
-     are mandatory on Chart and why ChartPanel always ships the table. */
+     🔴 Re-measured against the 2027 surface #1b2120 at the flip: series-1
+     clears comfortably at 5.03:1, series-2 does not at 2.01:1. The earlier
+     note here said both steps were under 3:1, which was true of the values
+     and ground it was written against and is not true now — the obligation it
+     created still is, because one of the two steps still fails. Direct labels
+     stay mandatory on Chart and ChartPanel still always ships the table: a
+     reader who cannot see the second line is no better off for the first one
+     being legible.
+
+     Light is the better ground for charts: 8.90 and 2.91 on #f3f4f2, with
+     series-2 reaching 3.21 on white — over the 3:1 a graphical object needs,
+     which the dark pair never reaches. */
   --color-series-1: #8f8f8b;
   --color-series-2: #4a5150;
 
@@ -131,9 +150,9 @@
      paper. Neither takes a tinted fill, so these have no role. Still the
      single largest retired group at 249 uses, led by scheduling (48),
      courseapp (39), home (39) and marketing (34). */
-  --color-good-soft: rgba(74, 222, 128, 0.14);
-  --color-warn-soft: rgba(251, 191, 36, 0.14);
-  --color-bad-soft: rgba(248, 113, 113, 0.14);
+  --color-good-soft: rgba(143, 143, 139, 0.14);
+  --color-warn-soft: rgba(143, 143, 139, 0.14);
+  --color-bad-soft: rgba(143, 143, 139, 0.14);
 
   /* Workbench aliases for the same three status colours. Kept because the
      ported Bar / KpiCard / StatusPill components address them by these names;
@@ -152,11 +171,11 @@
      they need no separate treatment at the flip; they come out in the same
      release. */
   --color-success-soft: var(--color-good-soft);
-  --color-surface-success-soft: rgba(74, 222, 128, 0.12);
+  --color-surface-success-soft: rgba(143, 143, 139, 0.12);
   --color-warning-soft: var(--color-warn-soft);
-  --color-surface-warning-soft: rgba(251, 191, 36, 0.12);
+  --color-surface-warning-soft: rgba(143, 143, 139, 0.12);
   --color-error-soft: var(--color-bad-soft);
-  --color-surface-error-soft: rgba(248, 113, 113, 0.12);
+  --color-surface-error-soft: rgba(143, 143, 139, 0.12);
 
   /* ── Attention ─────────────────────────────────────────────────────────── */
   /* Outstanding required work: rail badges, "Required" tags, the UserMenu
@@ -164,10 +183,10 @@
      colour and must not be borrowed for a UI state; this token owns the
      meaning. Used by UserMenu in every app, so it ships here — before 1.27 it
      was defined only in `people` and rendered as nothing everywhere else. */
-  --color-attention: #FFAA4D;
-  --color-attention-soft: rgba(255, 170, 77, 0.07);
-  --color-attention-hover: rgba(255, 170, 77, 0.13);
-  --color-attention-border: rgba(255, 170, 77, 0.2);
+  --color-attention: #f5b74a;
+  --color-attention-soft: rgba(245, 183, 74, 0.07);
+  --color-attention-hover: rgba(245, 183, 74, 0.13);
+  --color-attention-border: rgba(245, 183, 74, 0.2);
 
   /* ── Disciplines ───────────────────────────────────────────────────────── */
   /* DEPRECATED (2027) — the whole group. Department colours were retired by
@@ -184,15 +203,15 @@
      meaning despite sharing a hex with --color-gamedesign.
 
      Department identity, not status. Never reuse these for a UI state. */
-  --color-animation: #FF7276;
-  --color-gamedesign: #FFAA4D;
-  --color-digitalart: #009ACE;
-  --color-animation-soft: rgba(255, 114, 118, 0.12);
-  --color-animation-border: rgba(255, 114, 118, 0.4);
-  --color-gamedesign-soft: rgba(255, 170, 77, 0.12);
-  --color-gamedesign-border: rgba(255, 170, 77, 0.4);
-  --color-digitalart-soft: rgba(0, 154, 206, 0.12);
-  --color-digitalart-border: rgba(0, 154, 206, 0.4);
+  --color-animation: #8f8f8b;
+  --color-gamedesign: #8f8f8b;
+  --color-digitalart: #8f8f8b;
+  --color-animation-soft: rgba(143, 143, 139, 0.12);
+  --color-animation-border: rgba(143, 143, 139, 0.4);
+  --color-gamedesign-soft: rgba(143, 143, 139, 0.12);
+  --color-gamedesign-border: rgba(143, 143, 139, 0.4);
+  --color-digitalart-soft: rgba(143, 143, 139, 0.12);
+  --color-digitalart-border: rgba(143, 143, 139, 0.4);
   /* Shorthand aliases used by the ported workbench components. */
   --color-disc-anim: var(--color-animation);
   --color-disc-game: var(--color-gamedesign);
@@ -208,18 +227,18 @@
 
      Picked to distinguish from discipline colours and status colours, so a dot
      or chip colour can never be misread as a discipline or a status signal. */
-  --color-cat-industry: #60A5FA;     /* sky blue — Industry Conferences */
-  --color-cat-industry-soft: rgba(96, 165, 250, 0.14);
-  --color-cat-industry-border: rgba(96, 165, 250, 0.4);
-  --color-cat-community: #A78BFA;    /* violet   — Community            */
-  --color-cat-community-soft: rgba(167, 139, 250, 0.14);
-  --color-cat-community-border: rgba(167, 139, 250, 0.4);
-  --color-cat-marketing: #A3E635;    /* lime     — Marketing            */
-  --color-cat-marketing-soft: rgba(163, 230, 53, 0.14);
-  --color-cat-marketing-border: rgba(163, 230, 53, 0.4);
-  --color-cat-lci: #FB7185;          /* rose     — LCI on-prem          */
-  --color-cat-lci-soft: rgba(251, 113, 133, 0.14);
-  --color-cat-lci-border: rgba(251, 113, 133, 0.4);
+  --color-cat-industry: #8f8f8b;
+  --color-cat-industry-soft: rgba(143, 143, 139, 0.14);
+  --color-cat-industry-border: rgba(143, 143, 139, 0.4);
+  --color-cat-community: #8f8f8b;
+  --color-cat-community-soft: rgba(143, 143, 139, 0.14);
+  --color-cat-community-border: rgba(143, 143, 139, 0.4);
+  --color-cat-marketing: #8f8f8b;
+  --color-cat-marketing-soft: rgba(143, 143, 139, 0.14);
+  --color-cat-marketing-border: rgba(143, 143, 139, 0.4);
+  --color-cat-lci: #8f8f8b;
+  --color-cat-lci-soft: rgba(143, 143, 139, 0.14);
+  --color-cat-lci-border: rgba(143, 143, 139, 0.4);
 
   /* ── Card and table surfaces ───────────────────────────────────────────── */
   /* Aliases, not new colours — they track the surfaces above through var(), so
@@ -333,38 +352,55 @@ html[data-density="compact"] {
    Tokens marked DEPRECATED (2027) above get no light values added here. They
    are leaving, and giving them a light ramp now is work that ships twice. */
 html[data-theme="light"] {
-  --color-bg: #F2F5F9;
-  --color-surface: #FFFFFF;
-  --color-surface-2: #F6F8FB;
+  --color-bg: #f3f4f2;
+  --color-surface: #ffffff;
+  --color-surface-2: #f6f7f6;
   /* Before 1.27 this override existed only in `referrals`, so the other seven
-     apps that use --color-surface-3 painted a navy panel on a white page. */
-  --color-surface-3: #EEF2F7;
-  --color-border: #D8DFE8;
-  --color-border-strong: #B9C4D0;
+     apps that use --color-surface-3 painted a navy panel on a white page.
+     ⚠️ Unlike the dark ramp, light's surface-3 stays LIGHTER than its ground
+     — the well device reads as a hole on a dark page and as nothing at all on
+     a white one, so the standard does not invert it here. The same token
+     therefore means "recessed" in dark and "third surface" in light. */
+  --color-surface-3: #eceeed;
+  --color-border: #d0d3d3;
+  --color-border-strong: #b4b9b8;
 
-  --color-text: #10213A;
-  --color-text-2: #41506A;
-  --color-text-3: #66758B;
+  --color-text: #131919;
+  --color-text-2: #3e4544;
+  --color-text-3: #5b6160;
 
-  --color-accent: #C313A0;
-  --color-accent-soft: rgba(234, 39, 194, 0.12);
-  --color-accent-border: rgba(195, 19, 160, 0.35);
-  --color-accent-tint: rgba(234, 39, 194, 0.10);
+  /* Ink Green: green TEXT on white, 5.2:1. ⛔ Not #44d62c — bright green type
+     on white measures about 1.8:1 and is unreadable. */
+  --color-accent: #1e7d10;
+  --color-accent-soft: rgba(91, 97, 96, 0.12);
+  --color-accent-border: rgba(30, 125, 16, 0.35);
+  --color-accent-tint: rgba(68, 214, 44, 0.10);
 
-  /* --color-accent-mark takes var(--color-accent) and so resolves to #C313A0
-     here without an override, which is correct while text and marks share a
-     value. ⚠️ Phase 4 MUST add an explicit override in this block
-     (--color-accent-mark: #44d62c) while --color-accent becomes Ink Green
-     #1e7d10. If the override is forgotten, every bar, tick and selected-tab
-     rule in light mode goes dark green and the 2027 light theme loses its
-     only bright mark. */
+  /* 🔴 THE OVERRIDE THE WHOLE PROGRAMME WAS WARNED ABOUT. Marks are not text:
+     a bar, a chart tick, the rule under the selected tab and the notched bar
+     all stay bright, because they are shapes measured against the surface
+     rather than glyphs that have to be read. Without this line
+     --color-accent-mark inherits --color-accent, every mark in light mode
+     turns Ink Green, and the light theme loses its only bright element — the
+     silent regression this split was created to prevent. */
+  --color-accent-mark: #44d62c;
 
-  --color-good: #15803D;
-  --color-warn: #B45309;
-  --color-warn-soft: rgba(180, 83, 9, 0.14);
-  --color-bad: #DC2626;
-  --color-info: #2D4FD6;
+  --color-good: #2f6b3a;
+  --color-warn: #9a5b00;
+  --color-warn-soft: rgba(91, 97, 96, 0.14);
+  --color-bad: #c41e3a;
+  --color-info: #2d4fd6;
   --color-info-border: rgba(45, 79, 214, 0.35);
+
+  /* ⚠️ Same value as --color-warn, per the standard. Attention and warn are
+     one hue in 2027 on both grounds; the glyph and the word carry the
+     difference, which is rule 5 — colour is the third signal, never the
+     first. Keep the two tokens apart in code even though they render alike:
+     they are different meanings and the brand may part them again. */
+  --color-attention: #9a5b00;
+  --color-attention-soft: rgba(154, 91, 0, 0.07);
+  --color-attention-hover: rgba(154, 91, 0, 0.13);
+  --color-attention-border: rgba(154, 91, 0, 0.2);
 
   /* Light is a second ground, not an inversion, so the series ramp is chosen
      for white rather than flipped. The lightness order reverses because
@@ -393,38 +429,55 @@ html[data-theme="light"] {
    because this only matches when nothing has stamped anything. */
 @media (prefers-color-scheme: light) {
   html:not([data-theme]) {
-  --color-bg: #F2F5F9;
-  --color-surface: #FFFFFF;
-  --color-surface-2: #F6F8FB;
+  --color-bg: #f3f4f2;
+  --color-surface: #ffffff;
+  --color-surface-2: #f6f7f6;
   /* Before 1.27 this override existed only in `referrals`, so the other seven
-     apps that use --color-surface-3 painted a navy panel on a white page. */
-  --color-surface-3: #EEF2F7;
-  --color-border: #D8DFE8;
-  --color-border-strong: #B9C4D0;
+     apps that use --color-surface-3 painted a navy panel on a white page.
+     ⚠️ Unlike the dark ramp, light's surface-3 stays LIGHTER than its ground
+     — the well device reads as a hole on a dark page and as nothing at all on
+     a white one, so the standard does not invert it here. The same token
+     therefore means "recessed" in dark and "third surface" in light. */
+  --color-surface-3: #eceeed;
+  --color-border: #d0d3d3;
+  --color-border-strong: #b4b9b8;
 
-  --color-text: #10213A;
-  --color-text-2: #41506A;
-  --color-text-3: #66758B;
+  --color-text: #131919;
+  --color-text-2: #3e4544;
+  --color-text-3: #5b6160;
 
-  --color-accent: #C313A0;
-  --color-accent-soft: rgba(234, 39, 194, 0.12);
-  --color-accent-border: rgba(195, 19, 160, 0.35);
-  --color-accent-tint: rgba(234, 39, 194, 0.10);
+  /* Ink Green: green TEXT on white, 5.2:1. ⛔ Not #44d62c — bright green type
+     on white measures about 1.8:1 and is unreadable. */
+  --color-accent: #1e7d10;
+  --color-accent-soft: rgba(91, 97, 96, 0.12);
+  --color-accent-border: rgba(30, 125, 16, 0.35);
+  --color-accent-tint: rgba(68, 214, 44, 0.10);
 
-  /* --color-accent-mark takes var(--color-accent) and so resolves to #C313A0
-     here without an override, which is correct while text and marks share a
-     value. ⚠️ Phase 4 MUST add an explicit override in this block
-     (--color-accent-mark: #44d62c) while --color-accent becomes Ink Green
-     #1e7d10. If the override is forgotten, every bar, tick and selected-tab
-     rule in light mode goes dark green and the 2027 light theme loses its
-     only bright mark. */
+  /* 🔴 THE OVERRIDE THE WHOLE PROGRAMME WAS WARNED ABOUT. Marks are not text:
+     a bar, a chart tick, the rule under the selected tab and the notched bar
+     all stay bright, because they are shapes measured against the surface
+     rather than glyphs that have to be read. Without this line
+     --color-accent-mark inherits --color-accent, every mark in light mode
+     turns Ink Green, and the light theme loses its only bright element — the
+     silent regression this split was created to prevent. */
+  --color-accent-mark: #44d62c;
 
-  --color-good: #15803D;
-  --color-warn: #B45309;
-  --color-warn-soft: rgba(180, 83, 9, 0.14);
-  --color-bad: #DC2626;
-  --color-info: #2D4FD6;
+  --color-good: #2f6b3a;
+  --color-warn: #9a5b00;
+  --color-warn-soft: rgba(91, 97, 96, 0.14);
+  --color-bad: #c41e3a;
+  --color-info: #2d4fd6;
   --color-info-border: rgba(45, 79, 214, 0.35);
+
+  /* ⚠️ Same value as --color-warn, per the standard. Attention and warn are
+     one hue in 2027 on both grounds; the glyph and the word carry the
+     difference, which is rule 5 — colour is the third signal, never the
+     first. Keep the two tokens apart in code even though they render alike:
+     they are different meanings and the brand may part them again. */
+  --color-attention: #9a5b00;
+  --color-attention-soft: rgba(154, 91, 0, 0.07);
+  --color-attention-hover: rgba(154, 91, 0, 0.13);
+  --color-attention-border: rgba(154, 91, 0, 0.2);
 
   /* Light is a second ground, not an inversion, so the series ramp is chosen
      for white rather than flipped. The lightness order reverses because
