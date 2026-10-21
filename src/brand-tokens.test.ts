@@ -41,3 +41,43 @@ describe("brand.css font stacks", () => {
     expect(mono).toMatch(/monospace\s*$/);
   });
 });
+
+/* The original --brand-mono bug had two halves. The fallback sat outside the
+   var(), which the tests above now catch — but the reason it mattered is that
+   --font-mono was named by brand.css and set by nobody: fonts.ts exported
+   display and body only, and had done since phase 2 while the comment beside
+   the token said Plex would arrive "at phase 4". A token that reads a variable
+   no one defines is the bug; the broken fallback only decided how loudly it
+   failed. This is the half that notices. */
+describe("brand.css and fonts.ts agree on what is defined", () => {
+  const fontsTs = readFileSync(new URL("./fonts.ts", import.meta.url), "utf8");
+
+  const declared = new Set(
+    [...fontsTs.matchAll(/variable:\s*"(--font-[\w-]+)"/g)].map(([, v]) => v),
+  );
+  const referenced = new Set(
+    [...brandCss.matchAll(/var\(\s*(--font-[\w-]+)/g)].map(([, v]) => v),
+  );
+
+  test("fonts.ts exports all three faces", () => {
+    expect([...declared].sort()).toEqual(["--font-body", "--font-display", "--font-mono"]);
+  });
+
+  test.each([...referenced])("%s is set by a font export, not just named", (v) => {
+    expect(declared).toContain(v);
+  });
+
+  test("every exported face is actually reached by a token", () => {
+    // The other direction: a face loaded and never referenced is dead weight
+    // downloaded on every page.
+    for (const v of declared) expect(referenced).toContain(v);
+  });
+
+  test("mono ships the weights the standard asks for", () => {
+    // Labels, tabs, strips and buttons are all mono 500 caps; 400 carries
+    // captions and inline code. A missing 500 silently synthesises a bold.
+    const block = fontsTs.slice(fontsTs.indexOf("export const mono"));
+    expect(block).toMatch(/weight:\s*"400"/);
+    expect(block).toMatch(/weight:\s*"500"/);
+  });
+});

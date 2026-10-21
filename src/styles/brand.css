@@ -273,11 +273,12 @@
   /* The app layer's third face: IBM Plex Mono 500 caps for labels, strips,
      buttons and captions. ⛔ Mono is never reading copy.
 
-     The face is not loaded yet — fonts.ts ships display and body only — so
-     this resolves to a locally installed Plex if the reader has one and the
-     system mono stack otherwise. Apps reference the token rather than guessing
-     at a local font list, so when phase 4 loads Plex every app picks it up
-     without touching a stylesheet. That is the whole point of naming it now. */
+     Self-hosted at 400 and 500 since v1.35.0 — fonts.ts exports `mono` and the
+     layout sets --font-mono from it, the same way it sets the other two. The
+     quoted name behind it covers an app that has not added `mono.variable` to
+     <html> yet: a reader with Plex installed locally gets the right face, and
+     everyone else gets the system mono stack rather than, as before, the body
+     face. */
   --brand-mono: var(--font-mono, "IBM Plex Mono"), ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
