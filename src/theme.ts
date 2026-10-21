@@ -5,6 +5,8 @@
 // whole estate (localStorage is per-subdomain and would reset on every app
 // switch). No cookie → the user's OS preference.
 
+import { CHROME_INIT_SCRIPT } from "./scale";
+
 export const THEME_COOKIE = "cgsi-theme";
 
 export type Theme = "light" | "dark";
@@ -19,10 +21,15 @@ export function resolveTheme(cookieValue: string | null | undefined, prefersLigh
 // Inline pre-paint script for app root layouts: render as the FIRST child of
 // <body> (App Router owns <head>) so it runs before anything paints — no theme
 // flash. Defaults to dark on any error (the shipped design).
-export const THEME_INIT_SCRIPT =
-  '(function(){try{var m=document.cookie.match(/(?:^|;\\s*)cgsi-theme=(light|dark)/);' +
-  'var t=m?m[1]:(window.matchMedia&&matchMedia("(prefers-color-scheme: light)").matches?"light":"dark");' +
-  'document.documentElement.dataset.theme=t}catch(e){document.documentElement.dataset.theme="dark"}})()';
+/**
+ * @deprecated in name only — still the thing to inject, and still the only
+ * one. It now resolves theme, density AND scale, because every app already
+ * injects this and asking seventeen layouts to add a second script is how
+ * density ended up inert: it shipped its own init script and not one app ever
+ * injected it. Prefer importing CHROME_INIT_SCRIPT, which is the same string
+ * under the name that tells the truth.
+ */
+export const THEME_INIT_SCRIPT = CHROME_INIT_SCRIPT;
 
 // Cookie string for a theme choice. Domain-scoped to the estate in production;
 // host-only on localhost (a .cgspectrum.com domain attribute would be rejected).

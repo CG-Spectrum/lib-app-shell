@@ -102,6 +102,18 @@ export {
   resolveDensity,
 } from "./density";
 export type { Density } from "./density";
+export {
+  CHROME_INIT_SCRIPT,
+  SCALE_COOKIE,
+  SCALE_CHOICES,
+  SCALE_STEPS,
+  scaleForWidth,
+  scaleValue,
+  resolveScale,
+  scaleCookieString,
+  applyScale,
+} from "./scale";
+export type { Scale } from "./scale";
 
 export { buildUrl } from "./url-state";
 export { useUrlState } from "./useUrlState";

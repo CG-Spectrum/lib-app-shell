@@ -17,6 +17,30 @@ html {
   scrollbar-gutter: stable;
 }
 
+/* ⚖️ Display scale. CHROME_INIT_SCRIPT sets --ui-scale pre-paint from the
+   cookie, or from the viewport when the reader leaves it on auto. See
+   scale.ts, and surface-app-layer.md "Display scale" for the ladder.
+
+   `zoom` and not a root font-size, deliberately: the estate is split between
+   Tailwind rem utilities and hand-written px — marketing has 3,444 of the
+   first and ten of the second, studentportal has ten and 586 — so scaling the
+   root would have grown one app and left the other exactly as it was. Half a
+   scaling estate reads as broken where a fixed one reads as deliberate.
+   `zoom` scales both, so nothing in any app had to be rewritten.
+
+   ⛔ Not `transform: scale()`, which does not affect layout and leaves the
+   page the wrong size inside a right-sized scrollport. */
+html {
+  zoom: var(--ui-scale, 1);
+}
+
+/* A document goes to paper at its own size. */
+@media print {
+  html {
+    zoom: 1;
+  }
+}
+
 html,
 body {
   margin: 0;
