@@ -254,20 +254,31 @@
 
 /* Font stacks. --font-display / --font-body are the next/font variables set on
    <html> by the consuming layout (see @cgsi/app-shell/fonts). The quoted names
-   are the fallback for any surface that renders before the webfont resolves. */
+   are the fallback for any surface that renders before the webfont resolves.
+
+   ⚠️ The quoted name has to live INSIDE the var() fallback, not after it in the
+   comma list. Written as `var(--font-body), "Quicksand", ...` the fallback is
+   dead: when --font-body is unset, var() with no fallback resolves to the
+   guaranteed-invalid value, which poisons the WHOLE custom property, and every
+   `font-family: var(--brand-body)` downstream becomes invalid-at-computed-value
+   -time — i.e. `unset`, i.e. inherited. Not the next item in the list. The app
+   does not fall back to Quicksand, it falls back to whatever the parent had.
+   That is why --brand-mono rendered as body type: nothing anywhere defines
+   --font-mono, so the token was permanently invalid and the "IBM Plex Mono,
+   ui-monospace, …" written beside it never applied. */
 :root {
-  --brand-body: var(--font-body), "Quicksand", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
-  --brand-display: var(--font-display), "Stack Sans Notch", var(--brand-body);
+  --brand-body: var(--font-body, "Quicksand"), -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+  --brand-display: var(--font-display, "Stack Sans Notch"), var(--brand-body);
 
   /* The app layer's third face: IBM Plex Mono 500 caps for labels, strips,
      buttons and captions. ⛔ Mono is never reading copy.
 
      The face is not loaded yet — fonts.ts ships display and body only — so
-     this resolves to the system stack today. Apps reference the token rather
-     than guessing at a local font list, so when phase 4 loads Plex every app
-     picks it up without touching a stylesheet. That is the whole point of
-     naming it now. */
-  --brand-mono: var(--font-mono), "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+     this resolves to a locally installed Plex if the reader has one and the
+     system mono stack otherwise. Apps reference the token rather than guessing
+     at a local font list, so when phase 4 loads Plex every app picks it up
+     without touching a stylesheet. That is the whole point of naming it now. */
+  --brand-mono: var(--font-mono, "IBM Plex Mono"), ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 /* ── Density ────────────────────────────────────────────────────────────────
