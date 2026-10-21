@@ -268,8 +268,28 @@
   --color-scrim-hero: color-mix(in srgb, var(--color-bg) 92%, transparent);
 
   /* ── Layout ────────────────────────────────────────────────────────────── */
-  /* Theme-independent, so no light override. */
-  --content-max: 1480px;
+  /* Theme-independent, so no light override.
+
+     1920 because that is the most common external monitor, and with the
+     estate's 24–32px page gutters it fills one edge to edge. Wider screens
+     still cap: a 27" or 32" left uncapped runs a ledger row most of a metre
+     and the eye loses which line it is on.
+
+     ⚠️ It was 1480, which is the WEBSITE's 1440 design width plus its 40px
+     margins — inherited from a surface these apps are not. The standard
+     separates the two explicitly (surface-app-layer.md, the spacing row of
+     the comparison table: the website gets "1440 grid, 40 margins", the app
+     layer gets the six-step scale and no page width at all). So this was
+     never a brand value to begin with, which is why changing it is not a
+     change to the brand. Same shape as the oxlint config documented in
+     ADHERENCE.md: the website's numbers applied to the app layer because they
+     were the numbers to hand.
+
+     ⛔ Read this token, never the number. studentportal had 1480 written out
+     five times to line its full-bleed bands up with the container, so raising
+     the cap here would have pushed its content out from under its own
+     backgrounds. Those now resolve the token. */
+  --content-max: 1920px;
 }
 
 /* Font stacks. --font-display / --font-body are the next/font variables set on
