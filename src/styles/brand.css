@@ -227,6 +227,29 @@
   --brand-display: var(--font-display), "Stack Sans Notch", var(--brand-body);
 }
 
+/* ── Density ────────────────────────────────────────────────────────────────
+   Size only: row height, body size, panel padding. ⛔ Never a typeface, a
+   weight or a colour — those carry meaning, and a setting that moved them
+   would make the same screen say different things at two densities.
+
+   Resolved pre-paint onto html[data-density] by DENSITY_INIT_SCRIPT, the same
+   way the theme is. Parts read these variables rather than branching on the
+   density string, so a measurement changes in one place.
+
+   The numbers mirror DENSITY_METRICS in density.ts, which is the version the
+   tests assert against. If you change one, change both; density.test.ts pins
+   the values but cannot see this file. */
+:root {
+  --density-row: 40px;
+  --density-body: 14px;
+  --density-panel-pad: 24px;
+}
+html[data-density="compact"] {
+  --density-row: 32px;
+  --density-body: 13px;
+  --density-panel-pad: 16px;
+}
+
 /* ── Light mode ────────────────────────────────────────────────────────────
    Token overrides only. Neutrals are a cool grey ramp rather than an inversion
    of the navy ramp, so the light values are stated outright, not derived.
