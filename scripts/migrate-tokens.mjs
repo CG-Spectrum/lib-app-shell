@@ -52,7 +52,9 @@ const EDITS = [
   },
   {
     id: "status-fill",
-    re: /var\(--color-(?:good|warn|bad|success|warning|error)-soft\)/g,
+    /* Includes the --color-surface-*-soft trio: a tinted status SURFACE,
+       retired for the same reason as the tinted status fill. */
+    re: /var\(--color-(?:good|warn|bad|success|warning|error|attention)-soft\)|var\(--color-surface-(?:success|warning|error)-soft\)/g,
     to: "var(--color-surface-2)",
   },
   {
