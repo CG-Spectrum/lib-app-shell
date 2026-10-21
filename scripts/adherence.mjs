@@ -56,9 +56,37 @@ const RULES = [
     tier: "error",
     /* 🔴 NOT PRECEDED BY `&`. `&#160;` is a non-breaking space and `&#8217;` a
        curly apostrophe; both look like a short hex to a naive pattern. Found
-       flagging an HTML-entity strip in marketing's blog-post cleaner. */
-    re: /(?<!&)#[0-9a-fA-F]{6}\b|(?<!&)#[0-9a-fA-F]{3}\b/g,
+       flagging an HTML-entity strip in marketing's blog-post cleaner.
+
+       🔴 8 AND 4 DIGITS FIRST, AND THEY NEED THEIR OWN ALTERNATIVES. #rrggbbaa
+       is a colour too, and the original pattern could not see one: against
+       `#dc262655` the 6-digit arm matches `#dc2626` and then fails its `\b` on
+       the `5`, the 3-digit arm fails the same way, and the whole value passes
+       as clean. home carried four alpha tints straight through a sweep that
+       was reported as complete. Longest first, or the 6-digit arm eats the
+       first six characters of an 8-digit value and reports the wrong colour. */
+    re: /(?<!&)#[0-9a-fA-F]{8}\b|(?<!&)#[0-9a-fA-F]{6}\b|(?<!&)#[0-9a-fA-F]{4}\b|(?<!&)#[0-9a-fA-F]{3}\b/g,
     msg: `Raw hex colour. Use a token: ${TOKENS}. If the colour is missing, add it to app-shell brand.css, not to this app.`,
+  },
+  {
+    id: "glued-alpha",
+    tier: "error",
+    /* 🔴 THE CODEMOD MADE THIS ONE. Swapping `#dc2626` for `var(--color-bad)`
+       inside the 8-digit `#dc262655` leaves `var(--color-bad)55` — not a
+       transparent red, not a colour at all. The declaration is invalid and the
+       browser drops it, so the element silently loses its border or its tint
+       and nothing anywhere says so. Four of these shipped in home's globals.css
+       in the sweep that closed 137 findings.
+
+       It has to be its own rule. The dangling digits are not hex (no `#`), the
+       var() name is a live token, and the only thing wrong is the join — every
+       other check reads both halves as legitimate.
+
+       The fix is color-mix, which is the only way to tint a token:
+         color-mix(in srgb, var(--color-bad) 33%, transparent)    // 55 ≈ 33%
+       Browser support is universal in the estate's targets. */
+    re: /var\(\s*--[\w-]+\s*(?:,[^()]*)?\)[0-9a-fA-F]{2,}\b/g,
+    msg: "Hex alpha digits glued to a var(). `var(--color-bad)55` is not a colour — the declaration is invalid and the browser drops it, so the tint or border vanishes with no error. A codemod that replaced the 6-digit head of an 8-digit hex leaves exactly this. Tint a token with color-mix(in srgb, var(--token) NN%, transparent).",
   },
   {
     id: "deprecated-discipline",

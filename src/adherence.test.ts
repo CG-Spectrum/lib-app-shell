@@ -244,3 +244,79 @@ describe("the retired token groups", () => {
     expect(exit).toBe(0);
   });
 });
+
+describe("alpha hex — the sweep that reported itself complete", () => {
+  // The raw-hex pattern was `#[0-9a-fA-F]{6}\b | #[0-9a-fA-F]{3}\b`. Against
+  // `#dc262655` the 6-digit arm matches `#dc2626`, then its `\b` fails on the
+  // `5`; the 3-digit arm fails the same way; the value passes as clean. home's
+  // globals.css carried four of them through a sweep reported as finished.
+  test("#rrggbbaa is a colour", () => {
+    const { out, exit } = check({ "a.css": ".x { background: #dc262655; }" });
+    expect(out).toContain("raw-hex");
+    expect(out).toContain("#dc262655");
+    expect(exit).toBe(1);
+  });
+
+  test("#rgba is a colour", () => {
+    const { out, exit } = check({ "a.css": ".x { background: #f00a; }" });
+    expect(out).toContain("raw-hex");
+    expect(exit).toBe(1);
+  });
+
+  test("the longest arm wins — an 8-digit value is not reported as its first six", () => {
+    // Ordering the alternatives shortest-first reports `#dc2626`, which sends
+    // whoever reads the output looking for a string that is not in the file.
+    const { out } = check({ "a.css": ".x { background: #dc262655; }" });
+    expect(out).not.toContain(" #dc2626\n");
+  });
+
+  test("HTML entities are still not colours", () => {
+    // The &-lookahead has to survive on every new arm. `&#8217;` is eight
+    // characters of digits after a hash.
+    const { exit } = check({ "a.tsx": "const s = 'it&#8217;s';" });
+    expect(exit).toBe(0);
+  });
+});
+
+describe("hex alpha glued to a var() — what the codemod left behind", () => {
+  // Replacing the 6-digit head of `#dc262655` with the token leaves
+  // `var(--color-bad)55`. Invalid, dropped by the browser, silent. Both halves
+  // look legitimate to every other rule, so it needs one of its own.
+  test("var(--token)55 is flagged", () => {
+    const { out, exit } = check({
+      "a.css": ".x { border-color: var(--color-bad)55; }",
+    });
+    expect(out).toContain("glued-alpha");
+    expect(exit).toBe(1);
+  });
+
+  test("the 1a form is flagged too", () => {
+    const { out } = check({ "a.css": ".x { background: var(--color-bad)1a; }" });
+    expect(out).toContain("glued-alpha");
+  });
+
+  test("a var() with a fallback is not immune", () => {
+    const { out } = check({ "a.css": ".x { color: var(--color-bad, #000)55; }" });
+    expect(out).toContain("glued-alpha");
+  });
+
+  test("a well-formed var() is left alone", () => {
+    const { out, exit } = check({
+      "a.css": [
+        ".x { color: var(--color-bad); }",
+        ".y { background: color-mix(in srgb, var(--color-bad) 33%, transparent); }",
+        ".z { font-family: var(--font-body, 'Stack Sans Text'), sans-serif; }",
+      ].join("\n"),
+    });
+    expect(out).not.toContain("glued-alpha");
+    expect(exit).toBe(0);
+  });
+
+  test("a var() followed by a unit or an identifier is not a glued alpha", () => {
+    // `var(--gap)px` is its own bug, but it is not this one, and reporting it
+    // as a dropped colour sends the reader to the wrong fix. Two hex digits,
+    // and the pattern only matches characters that could be alpha.
+    const { out } = check({ "a.css": ".x { margin: var(--gap)rem; }" });
+    expect(out).not.toContain("glued-alpha");
+  });
+});

@@ -51,7 +51,8 @@ because it survives a colour migration untouched.
 
 | ID | Tier | What it catches |
 |---|---|---|
-| `raw-hex` | freeze | Any `#rgb` / `#rrggbb` outside `brand.css` |
+| `raw-hex` | freeze | Any `#rgb` / `#rgba` / `#rrggbb` / `#rrggbbaa` outside `brand.css` |
+| `glued-alpha` | freeze | Hex alpha digits welded to a `var()`: `var(--color-bad)55` |
 | `deprecated-discipline` | freeze | `--color-animation` / `gamedesign` / `digitalart` / `disc-*` |
 | `deprecated-category` | freeze | `--color-cat-*` |
 | `deprecated-soft` | freeze | Every `-soft` tint except `--color-accent-tint` |
@@ -65,6 +66,19 @@ because it survives a colour migration untouched.
 `brand.css` is exempt: it is where the tokens are defined. Test and spec files
 are exempt: they assert on literals. Advisory and geometry tiers are off unless
 you pass `--advisory` / `--geometry`.
+
+⚠️ **`raw-hex` could not see an alpha hex until 21 Oct.** `#dc262655` slipped
+both arms of the old pattern — the 6-digit one matched `#dc2626` and then
+failed its word boundary on the `5`. Any count taken before that date
+undercounts by however many tints the repo carries, and the phase 3 sweep that
+closed 137 findings reported itself complete over four of them in `home`.
+Re-measure rather than trusting a recorded number.
+
+`glued-alpha` exists because of what that sweep then did to them: the codemod
+replaced the 6-digit head and left `var(--color-bad)55`. That is not a colour,
+the browser drops the declaration, and the border or tint disappears with no
+error anywhere. Tint a token with `color-mix(in srgb, var(--token) NN%,
+transparent)` — never by appending digits.
 
 ## Fixing a finding
 
