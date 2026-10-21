@@ -21,31 +21,14 @@
   color: var(--color-text-2);
   white-space: nowrap;
 }
-/* ⚠️ DEPRECATED (2027) — the three discipline chips. Disciplines are NAMED,
-   not coloured, from Sept 2026, and these are also the combination that fails
-   AA as text on white (the known follow-up recorded in brand.css). They stay
-   defined only because apps still emit `.chip.disc-*`; they come out in phase
-   3 as each app replaces the chip with the discipline name in text. Do not add
-   a fourth.
-   cgsi-adherence-allow: deprecated-discipline, deprecated-soft — package must
-   keep defining these while 5 apps still emit the class; removed in phase 3 */
-.chip.disc-anim {
-  background: var(--color-animation-soft);
-  border-color: var(--color-animation-border);
-  color: var(--color-animation);
-}
-/* cgsi-adherence-allow: deprecated-discipline, deprecated-soft — as above */
-.chip.disc-game {
-  background: var(--color-gamedesign-soft);
-  border-color: var(--color-gamedesign-border);
-  color: var(--color-gamedesign);
-}
-/* cgsi-adherence-allow: deprecated-discipline, deprecated-soft — as above */
-.chip.disc-art {
-  background: var(--color-digitalart-soft);
-  border-color: var(--color-digitalart-border);
-  color: var(--color-digitalart);
-}
+/* The three discipline chips (.chip.disc-anim / -game / -art) were removed on
+   21 Oct 2026. Disciplines have been NAMED rather than coloured since Sept
+   2026, and the last app emitting the class stopped during phase 3 — checked
+   across all 18 repos before deleting, which is the condition brand.css set
+   for itself. The combination was also the one that failed AA as text on
+   white, so the known follow-up recorded in brand.css goes with it.
+   ⛔ Do not add a fourth, or a first. */
+
 /* ⚠️ DEPRECATED (2027) — status as a filled chip. 2027 draws a status as a
    glyph plus a word, never a pill and never a filled badge, so that colour is
    the third signal rather than the first. Replaced by `.status` in phase 2.
@@ -109,12 +92,14 @@
 .filter-pill:hover {
   border-color: var(--color-accent);
 }
-/* cgsi-adherence-allow: deprecated-soft — selected state; moves to
-   --color-accent-tint with .filters in phase 2 */
 .filter-pill[aria-pressed="true"],
 .filter-pill.is-selected {
   border-color: var(--color-accent);
-  background: var(--color-accent-soft);
+  /* --color-accent-tint, the one accent fill 2027 keeps, as the pragma that
+     used to sit here said it would at phase 2. It was still on
+     --color-accent-soft, which the phase 4 flip retired to neutral grey — so
+     a selected pill had an accent border and a grey fill. */
+  background: var(--color-accent-tint);
   font-weight: 600;
   color: var(--color-text);
 }

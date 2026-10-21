@@ -74,16 +74,11 @@
   --color-accent: #44d62c;
   --color-accent-border: rgba(68, 214, 44, 0.45);
 
-  /* DEPRECATED (2027) — superseded by --color-accent-tint. In 2027 the accent
-     is a bar, a rule, an eyebrow, a selection or one filled button per view,
-     never a wash, so a 16% accent fill has no role left. */
-  --color-accent-soft: rgba(143, 143, 139, 0.14);
-
   /* The selected row / selected chip tint, and the only accent fill that
      survives into 2027. Stated outright rather than aliased to
-     --color-accent-soft so the flip can set it independently of a token that
-     is on its way out. No users yet: adopt it in phase 3 as local selection
-     styling is replaced by the package's .ledger and .filters. */
+     the retired --color-accent-soft so the flip could set it independently of
+     a token on its way out. That token is now gone and this is the estate's
+     only accent fill, as intended. */
   --color-accent-tint: rgba(68, 214, 44, 0.08);
 
   /* Accent for MARKS rather than text: the notched bar, a chart tick, the rule
@@ -179,43 +174,29 @@
 
   /* ── Attention ─────────────────────────────────────────────────────────── */
   /* Outstanding required work: rail badges, "Required" tags, the UserMenu
-     incomplete dot. Same hex as --color-gamedesign, which is a DISCIPLINE
-     colour and must not be borrowed for a UI state; this token owns the
-     meaning. Used by UserMenu in every app, so it ships here — before 1.27 it
-     was defined only in `people` and rendered as nothing everywhere else. */
+     incomplete dot. It used to share a hex with --color-gamedesign, which was
+     a DISCIPLINE colour and must never be borrowed for a UI state; that
+     ambiguity is gone with the discipline group, and this token has always
+     owned the meaning. Used by UserMenu in every app, so it ships here —
+     before 1.27 it was defined only in `people` and rendered as nothing
+     everywhere else. */
   --color-attention: #f5b74a;
   --color-attention-soft: rgba(245, 183, 74, 0.07);
   --color-attention-hover: rgba(245, 183, 74, 0.13);
   --color-attention-border: rgba(245, 183, 74, 0.2);
 
-  /* ── Disciplines ───────────────────────────────────────────────────────── */
-  /* DEPRECATED (2027) — the whole group. Department colours were retired by
-     the brand owner in Sept 2026: disciplines are NAMED, not coloured. This is
-     the one retired group that is a behaviour change rather than a reskin, so
-     it cannot be fixed by swapping a value. 79 uses, led by marketing (22),
-     courseapp (14) and scheduling (12). studentportal is the hard case: it
-     holds discipline colour as application logic in src/lib/discipline.ts and
-     src/lib/home/subjectColor.ts, which needs a product decision on what
-     replaces colour-coded subjects for students, not a CSS edit.
+  /* ── Disciplines — REMOVED 21 Oct 2026 ───────────────────────────────────
+     --color-animation / gamedesign / digitalart, their -soft and -border
+     variants, and the --color-disc-* aliases. Retired by the brand owner in
+     Sept 2026 (disciplines are NAMED, not coloured), frozen through phases
+     1–3, given neutral grey at the phase 4 flip so a straggler would degrade
+     rather than vanish, and deleted once the estate-wide count reached zero.
 
-     Note the existing warning below still stands and gets stronger: these are
-     identity, never a UI state, and --color-attention owns the attention
-     meaning despite sharing a hex with --color-gamedesign.
-
-     Department identity, not status. Never reuse these for a UI state. */
-  --color-animation: #8f8f8b;
-  --color-gamedesign: #8f8f8b;
-  --color-digitalart: #8f8f8b;
-  --color-animation-soft: rgba(143, 143, 139, 0.12);
-  --color-animation-border: rgba(143, 143, 139, 0.4);
-  --color-gamedesign-soft: rgba(143, 143, 139, 0.12);
-  --color-gamedesign-border: rgba(143, 143, 139, 0.4);
-  --color-digitalart-soft: rgba(143, 143, 139, 0.12);
-  --color-digitalart-border: rgba(143, 143, 139, 0.4);
-  /* Shorthand aliases used by the ported workbench components. */
-  --color-disc-anim: var(--color-animation);
-  --color-disc-game: var(--color-gamedesign);
-  --color-disc-art: var(--color-digitalart);
+     ⚠️ Zero was CHECKED, not assumed. The handoff said "delete the deprecated
+     block once usage is zero" and three of the four groups were not at zero
+     when that was read: the category chips are still rendered by
+     partnerships, the status chips by five apps. Only this group was dead.
+     Grep before you delete the next one. */
 
   /* ── Event categories ──────────────────────────────────────────────────── */
   /* DEPRECATED (2027) — the whole group, for the same reason as the
@@ -392,7 +373,6 @@ html[data-theme="light"] {
   /* Ink Green: green TEXT on white, 5.2:1. ⛔ Not #44d62c — bright green type
      on white measures about 1.8:1 and is unreadable. */
   --color-accent: #1e7d10;
-  --color-accent-soft: rgba(91, 97, 96, 0.12);
   --color-accent-border: rgba(30, 125, 16, 0.35);
   --color-accent-tint: rgba(68, 214, 44, 0.10);
 
@@ -469,7 +449,6 @@ html[data-theme="light"] {
   /* Ink Green: green TEXT on white, 5.2:1. ⛔ Not #44d62c — bright green type
      on white measures about 1.8:1 and is unreadable. */
   --color-accent: #1e7d10;
-  --color-accent-soft: rgba(91, 97, 96, 0.12);
   --color-accent-border: rgba(30, 125, 16, 0.35);
   --color-accent-tint: rgba(68, 214, 44, 0.10);
 

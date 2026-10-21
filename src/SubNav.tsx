@@ -108,20 +108,41 @@ export function SubNav({
                     : undefined
                 }
                 aria-current={active ? "page" : undefined}
+                /* ⚖️ THE STANDARD'S TAB, not a smaller body label. Mono 500
+                   at 11 with .14em tracking, in caps, with a 2px accent rule
+                   under the active one (surface-app-layer.md, "Navigation":
+                   "Tabs ... Mono 11 caps, 2px accent rule under the active
+                   tab", and the type table's "Tab, button" row).
+
+                   It had been body 600 at 12.25px in sentence case — the face
+                   and the case both wrong, which is most of why the top bars
+                   looked like a different product in each app.
+
+                   ⛔ Non-active is PAPER, not --color-text-2. A nav item you
+                   can go to is not secondary information; dimming the whole
+                   bar to make one item stand out spends contrast the brand
+                   does not have to spare, and the accent plus the rule
+                   already marks the current page twice over. */
                 className={[
-                  "inline-block px-3 py-2.5 text-sm font-semibold transition-colors duration-100",
+                  "inline-block px-3 py-2.5 font-mono text-[11px] font-medium uppercase tracking-[0.14em]",
+                  "transition-colors duration-100",
                   "border-b-2 -mb-px", // sits on the nav's bottom border
                   active
                     ? "border-accent text-accent"
-                    : "border-transparent text-text-2 hover:text-text hover:border-border",
+                    : "border-transparent text-text hover:text-accent hover:border-border",
                 ].join(" ")}
               >
                 {tab.label}
                 {badge && (
-                  // Chip colouring (accent on accent-soft), not solid accent with
-                  // white text — #EA27C2 under white fails AA at this size.
+                  // Chip colouring, not solid accent with white text — the
+                  // accent under white fails AA at this size.
+                  // ⚠️ Was bg-accent-soft, a token deleted on 21 Oct once its
+                  // last users moved. An undefined custom property makes the
+                  // background invalid, so the badge would have rendered with
+                  // no fill at all. --color-accent-tint is the one accent fill
+                  // 2027 keeps.
                   <span
-                    className="ml-1.5 inline-flex min-w-4 items-center justify-center border border-accent-border bg-accent-soft px-1 text-[10px] font-bold leading-4 text-accent"
+                    className="ml-1.5 inline-flex min-w-4 items-center justify-center border border-accent-border bg-accent-tint px-1 text-[10px] font-bold leading-4 text-accent"
                     aria-label={`${tab.badge} awaiting action`}
                   >
                     {badge}

@@ -213,12 +213,27 @@ describe("the 2027 palette", () => {
     }
   });
 
-  test("the retired groups are grey, not hues", () => {
-    // They keep values rather than vanishing, so a straggler degrades to grey
-    // instead of rendering as nothing. Grey is the point: if one is still a
-    // hue, the retirement did not happen for whoever still uses it.
-    for (const t of ["animation", "gamedesign", "digitalart", "cat-industry", "cat-community", "cat-marketing", "cat-lci"]) {
+  test("the retired groups still defined are grey, not hues", () => {
+    // A retired group keeps a value rather than vanishing, so a straggler
+    // degrades to grey instead of rendering as nothing. Grey is the point: if
+    // one is still a hue, the retirement has not happened for whoever uses it.
+    for (const t of ["cat-industry", "cat-community", "cat-marketing", "cat-lci"]) {
       expect(dark).toMatch(new RegExp(`--color-${t}:\\s*#8f8f8b;`));
     }
+  });
+
+  test("the discipline group is gone entirely, not just greyed", () => {
+    // Removed 21 Oct 2026 after an estate-wide check found zero users. The
+    // category and status groups are NOT gone and must not be deleted on the
+    // strength of this one: partnerships still renders .chip.cat-*, and five
+    // apps still render .chip.status-*.
+    for (const t of ["animation", "gamedesign", "digitalart", "disc-anim", "disc-game", "disc-art"]) {
+      expect(brandCss).not.toMatch(new RegExp(`^\\s*--color-${t}\\s*:`, "m"));
+    }
+  });
+
+  test("--color-accent-soft is gone; --color-accent-tint is the one accent fill", () => {
+    expect(brandCss).not.toMatch(/^\s*--color-accent-soft\s*:/m);
+    expect(dark).toMatch(/--color-accent-tint:\s*rgba\(68, 214, 44, 0\.08\);/);
   });
 });

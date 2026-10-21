@@ -40,10 +40,22 @@ export function Header({
       <div className="w-full px-6 py-3 flex items-center gap-3">
         <AppLauncher catalog={APPS} userApps={user.apps} currentApp={currentApp} />
         <img src="/cgspectrum-icon.png" alt="CG Spectrum" width={32} height={32} className="" />
-        <a href="/" className="text-base font-bold tracking-tight text-text">
+        {/* ⚖️ The app name is header furniture, so it takes the header's
+            voice: mono 500 caps, the same treatment as the numbering strip
+            the standard puts up here. It was body 700 at 14px in sentence
+            case, which read as a heading and made the name the loudest thing
+            in a bar whose job is wayfinding. */}
+        <a
+          href="/"
+          className="font-mono text-[12px] font-medium uppercase tracking-[0.14em] text-text"
+        >
           {wordmark}
         </a>
-        {subtitle && <span className="text-text-3 text-xs">{subtitle}</span>}
+        {subtitle && (
+          <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-text-3">
+            {subtitle}
+          </span>
+        )}
         <div className="ml-auto flex items-center gap-3">
           <SearchBar userApps={user.apps} />
           {children}
