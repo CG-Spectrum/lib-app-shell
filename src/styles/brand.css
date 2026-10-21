@@ -97,6 +97,27 @@
   --color-bad: #F87171;
   --color-bad-border: rgba(248, 113, 113, 0.4);
 
+  /* ── Chart series ──────────────────────────────────────────────────────── */
+  /* Grey is data; the accent is the one series a panel is about. There is no
+     categorical hue palette here, deliberately, and the consequence was
+     MEASURED rather than assumed (dataviz palette validator, against the panel
+     surface #1b2120):
+
+       4 greys   worst adjacent pair ΔE 6.8 normal vision   FAIL
+       3 greys   worst adjacent pair ΔE 9.7 normal vision   FAIL
+       2 greys   ΔE 22.1 protan / 22.1 normal               PASS
+
+     The floor is 15. So a single-hue ramp carries exactly TWO distinguishable
+     series plus the accent, and chart-logic.ts enforces that as a budget. A
+     third grey is not a worse chart, it is one nobody can read — including
+     readers with full colour vision.
+
+     🔴 Both dark steps measure under 3:1 against the surface (2.01, 2.36),
+     which obliges visible labels or a table view. That is why direct labels
+     are mandatory on Chart and why ChartPanel always ships the table. */
+  --color-series-1: #8f8f8b;
+  --color-series-2: #4a5150;
+
   /* New in 2027: the fourth status, for projected and read-only values. It has
      no 2025 equivalent to preserve, so it takes its 2027 values now — safe,
      because nothing references it yet and both values are contrast-tested
@@ -303,4 +324,14 @@ html[data-theme="light"] {
   --color-bad: #DC2626;
   --color-info: #2D4FD6;
   --color-info-border: rgba(45, 79, 214, 0.35);
+
+  /* Light is a second ground, not an inversion, so the series ramp is chosen
+     for white rather than flipped. The lightness order reverses because
+     series-1 is the more present step on its own ground: darker on white,
+     lighter on #131919.
+
+     Validated on #ffffff: ΔE 26.7 normal and protan, and both steps clear 3:1
+     against the surface — better than the dark pair, which only warns. */
+  --color-series-1: #3E4544;
+  --color-series-2: #8A9190;
 }

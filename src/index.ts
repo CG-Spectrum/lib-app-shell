@@ -43,6 +43,55 @@ export {
   shouldCollapse,
 } from "./filters-logic";
 export type { FilterOption, ActiveDimension } from "./filters-logic";
+export { Chart, ChartTable } from "./Chart";
+export type { ChartProps, ChartView } from "./Chart";
+export { ChartPanel } from "./ChartPanel";
+export type { ChartPanelProps } from "./ChartPanel";
+export {
+  CHART_SERIES_BUDGET,
+  SERIES_GREY,
+  seriesBudgetError,
+  seriesColour,
+  greySeriesCount,
+  accentSeriesCount,
+  yDomain,
+  yTicks,
+  yScale,
+  xScale,
+  band,
+  niceCeiling,
+} from "./chart-logic";
+export type { Series, Point } from "./chart-logic";
+export { Calendar } from "./Calendar";
+export type { CalendarProps } from "./Calendar";
+export {
+  DAY_START_MIN,
+  DAY_END_MIN,
+  LANE_GUTTER,
+  OWNER_COLLAPSE_AFTER,
+  overlaps,
+  clusterEvents,
+  assignLanes,
+  layoutEvents,
+  laneGeometry,
+  isOutOfHours,
+  busiestDay,
+  shouldCollapseOwners,
+} from "./calendar-logic";
+export type { CalendarEvent, LaneAssignment } from "./calendar-logic";
+export { RecordCard, RecordGrid } from "./RecordCard";
+export type { RecordCardProps } from "./RecordCard";
+export {
+  DEFAULT_K,
+  SKIN_TARGET,
+  SKIN_P99_MAX,
+  SKIN_MAX,
+  exposureFor,
+  isSuspectK,
+  gradeFilter,
+  skinWithinCeilings,
+} from "./portrait-grade";
+
 export {
   DENSITY_COOKIE,
   DENSITY_INIT_SCRIPT,
