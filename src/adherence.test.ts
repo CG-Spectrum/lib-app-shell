@@ -320,3 +320,57 @@ describe("hex alpha glued to a var() — what the codemod left behind", () => {
     expect(out).not.toContain("glued-alpha");
   });
 });
+
+describe("fontFamily — the React style object the check could not see", () => {
+  // Only the CSS spelling was matched, so type set inline from JSX walked
+  // straight past the freeze. governance and referrals each carried one while
+  // reporting zero.
+  test("fontFamily: \"monospace\" is flagged", () => {
+    const { out, exit } = check({
+      "a.tsx": 'const s = <td style={{ fontFamily: "monospace" }} />;',
+    });
+    expect(out).toContain("non-brand-font");
+    expect(exit).toBe(1);
+  });
+
+  test("a style object closing on the same line still terminates the value", () => {
+    const { out } = check({
+      "a.tsx": 'const s = <td style={{ fontFamily: "Comic Sans MS", fontSize: 12 }} />;',
+    });
+    expect(out).toContain("non-brand-font");
+    expect(out).not.toContain("fontSize");
+  });
+
+  test("fontFamily: \"var(--brand-mono)\" passes — the quote does not hide the var", () => {
+    const { out, exit } = check({
+      "a.tsx": 'const s = <td style={{ fontFamily: "var(--brand-mono)" }} />;',
+    });
+    expect(out).not.toContain("non-brand-font");
+    expect(exit).toBe(0);
+  });
+
+  test("the CSS spelling still works", () => {
+    const { out } = check({ "a.css": ".x { font-family: Comic Sans MS; }" });
+    expect(out).toContain("non-brand-font");
+  });
+
+  test("a legal CSS declaration is still legal", () => {
+    const { exit } = check({ "a.css": ".x { font-family: var(--brand-body); }" });
+    expect(exit).toBe(0);
+  });
+});
+
+describe("the comma is a separator in one language and a list in the other", () => {
+  test("a CSS font stack is reported whole", () => {
+    const { out } = check({ "a.css": ".x { font-family: Arial, Helvetica, sans-serif; }" });
+    expect(out).toContain("Arial, Helvetica, sans-serif");
+  });
+
+  test("a style object's next property is not part of the font", () => {
+    const { out } = check({
+      "a.tsx": 'const s = <td style={{ fontFamily: "Comic Sans MS", fontSize: 12 }} />;',
+    });
+    expect(out).toContain('fontFamily: "Comic Sans MS"');
+    expect(out).not.toContain("fontSize");
+  });
+});

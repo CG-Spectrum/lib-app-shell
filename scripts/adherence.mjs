@@ -112,8 +112,25 @@ const RULES = [
     /* The optional whitespace lives INSIDE the lookahead. Written as
        `font-family\s*:\s*(?!...)` the trailing `\s*` backtracks to zero width,
        the lookahead then tests the space rather than the value, and every
-       declaration matches including the legal ones. */
-    re: /font-family\s*:(?!\s*['"]?(?:var\(|inherit|initial|unset|Stack Sans Notch|Stack Sans Text|IBM Plex Mono))[^;}\n]+/gi,
+       declaration matches including the legal ones.
+
+       🔴 `fontFamily` TOO. The hyphen is optional because half this estate sets
+       type from a React style object, and `fontFamily: "monospace"` is the same
+       declaration as `font-family: monospace` by the time it reaches the DOM.
+       Only the CSS spelling was checked, so a font set inline from JSX was
+       invisible — found in governance and referrals, both otherwise at zero.
+       The value terminator already stops at `}` and the newline, which is what
+       closes a style object as surely as `;` closes a declaration.
+
+       The comma is the hard part. It separates the properties of a style
+       object AND the faces of a font stack, so it cannot simply end the value:
+       stopping there would report `font-family: Arial` and hide the rest of a
+       legitimate CSS stack. It ends the value only when what follows looks
+       like the next object key — an identifier and a colon — which
+       `sans-serif` never does and `fontSize: 12` always does. Without that,
+       the finding for a one-line style object dragged the rest of the object
+       in with it and read as though the font were four properties long. */
+    re: /font-?family\s*:(?!\s*['"]?(?:var\(|inherit|initial|unset|Stack Sans Notch|Stack Sans Text|IBM Plex Mono))[^;}\n]+?(?=,\s*[A-Za-z_$][\w$]*\s*:|[;}\n]|$)/gi,
     msg: "Font not provided by the app layer. Three faces only: Stack Sans Notch (display), Stack Sans Text (body, 400), IBM Plex Mono (labels, 500 caps). Reach them via var(--brand-display) / var(--brand-body).",
   },
   {
