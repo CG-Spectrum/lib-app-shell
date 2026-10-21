@@ -67,7 +67,13 @@ env:
   #
   # Bump deliberately, and expect every app's count to move when you do.
   # 97edff8 = 2027 phase 1 (new tokens, frozen retirements, adherence check).
-  ADHERENCE_REF: 97edff832cb5bab6c9269f075060cc5718e65e57
+  # 90e8fe0 = 2027 phase 3 close. Four rules the phase 1 set could not see:
+  #   8- and 4-digit hex (#rrggbbaa slipped the word boundary on both arms),
+  #   hex alpha welded to a var() by a codemod, font-family set from a React
+  #   style object, and a mask-image gradient wrongly read as a gradient fill.
+  #   Findings in a generated file now report under UPSTREAM instead of being
+  #   counted, because the fix belongs in the generator's input.
+  ADHERENCE_REF: 90e8fe085a5d800a162a86afe91c25e4f8562b88
 
 jobs:
   adherence:
