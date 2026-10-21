@@ -75,6 +75,18 @@ describe("the backtracking lookahead bug — shipped twice", () => {
     expect(out).not.toContain("drop-shadow");
   });
 
+  test("🔴 a Tailwind arbitrary inset is not flagged — underscores are word characters", () => {
+    // `[box-shadow:inset_3px_0_0_var(--x)]`: `inset\b` fails because `_` is a
+    // word char, so the lookahead passed and the rule replaced the very inset
+    // shadow it exists to protect — truncating the string and breaking
+    // auditapp's selected-row rule.
+    const { out } = check(
+      { "a.tsx": 'const c = "bg-x [box-shadow:inset_3px_0_0_var(--color-accent)]";' },
+      "--geometry",
+    );
+    expect(out).not.toContain("drop-shadow");
+  });
+
   test("an outer shadow IS flagged", () => {
     const { out } = check({ "a.css": ".x { box-shadow: 0 8px 24px rgba(0,0,0,.3); }" }, "--geometry");
     expect(out).toContain("drop-shadow");

@@ -108,7 +108,7 @@ const RULES = [
   {
     id: "drop-shadow",
     tier: "geometry",
-    re: /box-shadow\s*:(?!\s*(?:none\b|inset\b))[^;}\n]+|\bshadow-(?:sm|md|lg|xl|2xl)\b/g,
+    re: /box-shadow\s*:(?!\s*(?:none|inset)(?![a-z0-9-]))[^;}\n\]"\x27]+|\bshadow-(?:sm|md|lg|xl|2xl)\b/g,
     msg: "No shadows. Depth in the 2027 brand is a 1px hairline, not a shadow. (An inset shadow is allowed: it is how the selected-row rule is drawn.)",
   },
   {
