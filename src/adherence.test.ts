@@ -144,6 +144,21 @@ describe("the comment bug — the check flagged the note explaining the rule", (
   });
 });
 
+describe("things that look like hex but are not", () => {
+  test("🔴 an HTML entity is not a colour", () => {
+    // `&#160;` is a non-breaking space, `&#8217;` a curly apostrophe. Caught
+    // flagging an entity-strip in marketing's blog-post cleaner.
+    const { out, exit } = check({ "a.ts": '.replace(/&nbsp;|&#160;|\u00a0/g, " ")' });
+    expect(out).not.toContain("raw-hex");
+    expect(exit).toBe(0);
+  });
+
+  test("a real hex beside an entity is still caught", () => {
+    const { out } = check({ "a.ts": 'const a = "&#160;"; const b = "#EA27C2";' });
+    expect(out).toContain("raw-hex");
+  });
+});
+
 describe("tiers", () => {
   test("geometry findings do not fail the build by default", () => {
     const { out, exit } = check({ "a.css": ".x { border-radius: 8px; }" });

@@ -32,8 +32,17 @@ const SKIP_DIR = /^(node_modules|\.next|\.git|dist|build|coverage|out)$/;
 
 /* brand.css is the one file allowed to hold raw colour: it is where the tokens
    are defined. Tests assert on literals, so they are exempt too. */
+/* 🔴 EMAIL IS NOT THE APP LAYER. Email clients do not support CSS variables,
+   so an email template MUST inline its hex and use a web-safe face — one
+   marketing file carries the note "every colour is explicit: an inherited one
+   has rendered dark-on-dark". Flagging those teaches people the check is
+   wrong rather than the code. The brand treats email as its own surface
+   (600 wide) for the same reason. Anything outside this naming convention
+   should carry a pragma naming email as the reason. */
 const EXEMPT = (path) =>
-  basename(path) === "brand.css" || /\.(test|spec)\.[tj]sx?$/.test(path);
+  basename(path) === "brand.css" ||
+  /\.(test|spec)\.[tj]sx?$/.test(path) ||
+  /email/i.test(path);
 
 /* The live app-layer tokens, for the "use this instead" hint. */
 const TOKENS =
@@ -45,7 +54,10 @@ const RULES = [
   {
     id: "raw-hex",
     tier: "error",
-    re: /#[0-9a-fA-F]{6}\b|#[0-9a-fA-F]{3}\b/g,
+    /* 🔴 NOT PRECEDED BY `&`. `&#160;` is a non-breaking space and `&#8217;` a
+       curly apostrophe; both look like a short hex to a naive pattern. Found
+       flagging an HTML-entity strip in marketing's blog-post cleaner. */
+    re: /(?<!&)#[0-9a-fA-F]{6}\b|(?<!&)#[0-9a-fA-F]{3}\b/g,
     msg: `Raw hex colour. Use a token: ${TOKENS}. If the colour is missing, add it to app-shell brand.css, not to this app.`,
   },
   {
