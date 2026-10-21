@@ -92,29 +92,40 @@ blast radius. So they stay defined, unchanged, and frozen.
 This check is the freeze. It does not reduce the count; the phase 3 migrations
 do that. It stops the count growing in the meantime.
 
-Phase 1 baseline, 21 Oct 2026, errors per app:
+Phase 1 baseline, 21 Oct 2026, errors per app, measured on current `main`:
 
 ```
-studentportal 160   courseapp 100   marketing 85   home      73
-people         66   scheduling  51   salesapp  49   finance   31
-partnerships   18   referrals   16   leadership 9   governance 9
-launchpad-admin 9   auditapp     9   mediacms   4   gca-dash   3
-cgsi-auth       1   app-shell    0
+studentportal 160   courseapp 100   marketing 93   home      81
+people         70   salesapp   52   scheduling 51   finance   31
+partnerships   18   referrals  16   auditapp    9   governance 9
+launchpad-adm   9   leadership  9   mediacms    4   gca-dash   3
+cgsi-auth       1   app-shell   0
 ```
 
-Total 693. An earlier pass reported 787; the difference was 94 false positives
-from two bugs in the checker, both fixed before this baseline was taken. Worth
-knowing because both are easy to reintroduce:
+Total 716. Two earlier passes reported 787 and 693; both were wrong, for
+different reasons, and both are worth recording because the mistakes are easy
+to repeat.
 
-1. **Comments were matched.** `SubNav.tsx` carries the note "#EA27C2 under
-   white fails AA at this size" directly above code that correctly uses the
-   tokens. Flagging prose that explains a rule teaches people to delete the
+**787 counted false positives.** Two bugs in the checker, both fixed before the
+later passes:
+
+1. *Comments were matched.* `SubNav.tsx` carries the note "#EA27C2 under white
+   fails AA at this size" directly above code that correctly uses the tokens.
+   Flagging prose that explains a rule teaches people to delete the
    explanation. Comment bodies are now blanked before matching, with newlines
    preserved so reported line numbers stay correct.
-2. **The font rule matched everything, including the legal declarations.**
+2. *The font rule matched everything, including the legal declarations.*
    Written `font-family\s*:\s*(?!...)`, the trailing `\s*` backtracks to zero
    width, so the lookahead tests the space after the colon rather than the
    value. The optional whitespace now lives inside the lookahead.
+
+**693 counted stale code.** It was measured against local `main` in each repo
+without fetching first. Those refs were behind by up to 75 commits (marketing),
+34 (home) and 24 (mediacms), so the audit graded code that was months out of
+date. The lesson is narrow and blunt: **fetch before you measure, and never
+treat an unfetched `origin/main` as evidence of anything.** The same stale refs
+also produced a phantom finding that the estate spanned four releases of this
+package; in fact 15 of 17 apps were already on v1.31.0.
 
 app-shell is at zero and stays there: this repo gates, because nothing deploys
 from it. The apps report, because a push to main deploys production there before
