@@ -153,3 +153,45 @@ check should not be blocked on a release decision. The first pass used
 Current ruleset: `97edff8` (2027 phase 1). Bump deliberately, and expect every
 app's count to move when you do. If the ref ever stops resolving, the fetch
 step fails loudly rather than passing silently.
+
+## Changing a rule
+
+⚖️ **The skill is the source of truth, not this package.** `cgsi-2027-design`
+defines the brand; `@cgsi/app-shell` implements it. A readability fix made only
+here diverges from the skill silently, and the next person reading the standard
+builds against the old rule.
+
+So when a rule has to change:
+
+1. Amend `cgsi-2027-design` (`guidelines/surface-app-layer.md` for the app
+   layer) and say what changed and why.
+2. Then change the package to match, citing the amendment.
+3. Then let the per-app counts move.
+
+Doing it in that order means the standard and the code never disagree about
+what the brand is, which is the failure the 2027 rebrand exists to fix.
+
+### Open, deferred to the visual audit
+
+**Brand holds for the first pass** (Jeremy, 21 Oct 2026). The migration lands
+the brand as written; readability is reviewed per dashboard afterwards, and
+anything that must change then goes back into the skill first.
+
+| Question | Where | Status |
+|---|---|---|
+| Event-type hue in the calendar: the standard both asks for it and retires `cat-*` | `Calendar.tsx` | Neutral rule, type named in text. Revisit at audit. |
+| Mono is IBM Plex Mono in the standard, but the face is not loaded | `base.css`, `fonts.ts` | System mono stack, pragma'd. Loads with the phase 4 flip. |
+| Focus ring is a tinted glow, 2027 wants a 2px accent outline | `base.css` | Pragma'd, changes at the flip. |
+| Per-mentor `k` is unmeasured estate-wide | `RecordCard.tsx` | Renders at 1.0 and flags the frame. Needs measuring, not a code change. |
+
+### What the audit cannot change
+
+Three things are measurements, not preferences, and a readability complaint
+about them is answered by re-measuring rather than by loosening the rule:
+
+- **Two grey chart series.** 3 greys separate at ΔE 9.7 against a floor of 15.
+  A third is unreadable for everyone, not a matter of taste.
+- **Body at 13px minimum.** Stack Sans Text 400 stops being reliably legible
+  below it on `#131919`.
+- **The status hue set.** Chosen by protan/deutan/tritan simulation, every
+  value clearing 4.5:1 on both grounds. Substituting a hue breaks that.

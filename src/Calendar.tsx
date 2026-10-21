@@ -21,9 +21,13 @@ import {
 // Resolved the way the rest of the document points: the rule is NEUTRAL by
 // default and the event type is NAMED IN TEXT on the block. The accent rule is
 // kept for SELECTION, which is the device's stated job everywhere else in the
-// standard (the selected ledger row, the selected filter chip). If the brand
-// owner wants event-type colour back, that is a decision to un-retire a token
-// group, not something this component should assume.
+// standard (the selected ledger row, the selected filter chip).
+//
+// ⚖️ DECIDED, Jeremy, 21 Oct 2026: the brand holds for this first pass. No
+// event-type hue. Readability is reviewed in the visual audit of each
+// dashboard once the migration is complete, and anything that has to change
+// then goes back into cgsi-2027-design FIRST — the skill is the source of
+// truth, and a fix made only here would silently diverge from it.
 //
 // 🔴 BOOKED IS PAPER, SO GREEN STAYS FREE. A booked event is not a success
 // state; it is the normal state. Painting it green spends the one colour the
