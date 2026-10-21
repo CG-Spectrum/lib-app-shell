@@ -38,6 +38,9 @@
 # Making it a real gate needs branch protection, which is a change to how
 # people work, not a workflow file. app-shell is the exception and genuinely
 # gates, because nothing deploys from a library.
+#
+# ⛔ Do not add `npm ci` to "make it consistent" with the other workflows. The
+# install is the thing this deliberately avoids; see above.
 
 name: adherence
 
@@ -54,9 +57,17 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  # The ruleset version. Bump deliberately: it changes what every app in the
-  # estate is graded against. Must be a tag that exists in lib-app-shell.
-  ADHERENCE_REF: v1.32.0
+  # The ruleset version: a lib-app-shell commit SHA, not a tag.
+  #
+  # ⚖️ A SHA rather than a tag for two reasons. It is immutable, where a tag can
+  # be force-moved, and the thing being pinned is what every app in the estate
+  # is graded against. And it decouples the brand rules from the package
+  # release cycle: changing a rule should not require cutting a package
+  # version, and a CI check should not be blocked on a release decision.
+  #
+  # Bump deliberately, and expect every app's count to move when you do.
+  # 97edff8 = 2027 phase 1 (new tokens, frozen retirements, adherence check).
+  ADHERENCE_REF: 97edff832cb5bab6c9269f075060cc5718e65e57
 
 jobs:
   adherence:
@@ -98,4 +109,6 @@ jobs:
               echo "Phase 1 baselines per app are in app-shell \`src/styles/ADHERENCE.md\`."
               echo "A finding is a raw hex value, a non-brand font, or a token frozen by the rebrand."
             fi
+            echo ""
+            echo "_Ruleset \`${ADHERENCE_REF:0:7}\` · advisory until this app reaches zero._"
           } >> "$GITHUB_STEP_SUMMARY"
