@@ -1,0 +1,101 @@
+# CGSI 2027 brand adherence · consuming app workflow.
+#
+# Canonical copy lives in lib-app-shell at scripts/adherence-workflow-template.yml
+# and is deployed byte-identical to all 17 app repos as
+# .github/workflows/adherence.yml. Nothing in it is per-app: the baseline counts
+# live in ADHERENCE.md, so there is no number here to go stale.
+#
+# ── WHY IT DOES NOT RUN `npm ci` ────────────────────────────────────────────
+# The checker has zero dependencies, so it is fetched and run directly rather
+# than installed. That is deliberate, not a shortcut:
+#
+# 🔴 Most app repos route the private @cg-spectrum scope to GitHub Packages via
+# .npmrc, and the per-repository read grant is UI-only and incomplete across
+# the estate (app-finance run 33428554537 returned 401). An adherence check
+# that installs first would fail in those repos for a reason that has nothing
+# to do with the brand, and a step that fails for the wrong reason gets
+# ignored, then switched off.
+#
+# ⚖️ It also means every app checks against ONE ruleset at a known tag, instead
+# of whichever rules happen to ship with that app's pinned app-shell. The
+# estate currently spans four releases (v1.28.0 to v1.31.0), so installing
+# would mean four different versions of the rules grading the same freeze.
+#
+# lib-app-shell is public and its tag archive resolves unauthenticated, so no
+# token is needed. No secrets are used anywhere in this workflow.
+#
+# ── WHAT IT GATES ───────────────────────────────────────────────────────────
+# ⚖️ Nothing, on arrival. `continue-on-error: true` is set because every app
+# starts non-zero: 787 findings across the estate at the phase 1 baseline. A
+# step that fails on day one gets switched off in a week. It reports the count
+# on every push so the direction of travel is visible.
+#
+# When an app reaches zero, DELETE the continue-on-error line in that repo.
+# From then on that app cannot regress.
+#
+# 🔴 Even without continue-on-error this is a detector, not a gate. A push to
+# main deploys production in these repos and Vercel does not wait for Actions.
+# Making it a real gate needs branch protection, which is a change to how
+# people work, not a workflow file. app-shell is the exception and genuinely
+# gates, because nothing deploys from a library.
+
+name: adherence
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: adherence-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # The ruleset version. Bump deliberately: it changes what every app in the
+  # estate is graded against. Must be a tag that exists in lib-app-shell.
+  ADHERENCE_REF: v1.32.0
+
+jobs:
+  adherence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Fetch the checker
+        run: |
+          curl -fsSL \
+            "https://raw.githubusercontent.com/CG-Spectrum/lib-app-shell/${ADHERENCE_REF}/scripts/adherence.mjs" \
+            -o /tmp/adherence.mjs
+          test -s /tmp/adherence.mjs
+
+      # Remove continue-on-error once this app reports 0 errors.
+      - name: Brand adherence (2027 app layer)
+        id: check
+        continue-on-error: true
+        run: node /tmp/adherence.mjs src
+
+      - name: Record the count
+        if: always()
+        run: |
+          COUNT=$(node /tmp/adherence.mjs src 2>/dev/null \
+            | grep -oE '^[0-9]+ error' | grep -oE '^[0-9]+' || echo 0)
+          {
+            echo "### 2027 brand adherence"
+            echo ""
+            echo "**$COUNT findings** in \`src\`, graded against \`$ADHERENCE_REF\`."
+            echo ""
+            if [ "$COUNT" -eq 0 ]; then
+              echo "Clean. Remove \`continue-on-error\` from this workflow so it can no longer regress."
+            else
+              echo "Phase 1 baselines per app are in app-shell \`src/styles/ADHERENCE.md\`."
+              echo "A finding is a raw hex value, a non-brand font, or a token frozen by the rebrand."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"

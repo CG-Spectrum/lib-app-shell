@@ -1,0 +1,75 @@
+name: ci
+
+# Typecheck, the unit suite, and the 2027 brand adherence check.
+#
+# ⚖️ WHY THIS REPO GATES AND THE APPS DO NOT. app-shell is a library: nothing
+# deploys from a push here, the 17 apps pick changes up only when they bump
+# their pinned tarball tag. So this workflow can genuinely block a bad change,
+# which the app repos' equivalents cannot (a push to main deploys production
+# there before any workflow finishes — see app-academicops test.yml).
+#
+# That makes this the one place in the estate where a brand rule can be
+# enforced rather than merely reported. Hence the adherence step runs here with
+# no continue-on-error, and ships to the apps as an advisory step they can
+# promote once branch protection exists.
+#
+# 🔴 THE ADHERENCE STEP IS NOT A STYLE CHECK. It is the 2027 rebrand's freeze
+# mechanism. The discipline hues, the `cat-*` set and every `-soft` tint are
+# retired but still DEFINED in brand.css, because deleting them would resolve
+# 328 declarations across 17 apps to the guaranteed-invalid value in
+# production. They stay defined and frozen; this step is what stops the count
+# growing while the apps migrate. A legitimate transitional use carries a
+# `cgsi-adherence-allow: <rule> — <reason>` pragma, which is reviewable.
+#
+# ⛔ No secrets. app-shell's dependencies are all public, so there is no
+# @cg-spectrum scope to authenticate and no NPM_TOKEN here, unlike the app
+# repos.
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Unit tests
+        run: npm test
+
+      # Runs against the package's own source. app-shell must pass the rule it
+      # ships, or the rule has no standing to be applied to anyone else.
+      - name: Brand adherence (2027 app layer)
+        run: npm run adherence
+
+      - name: Explain an adherence failure
+        if: failure()
+        run: |
+          echo "::error title=2027 brand adherence::\
+          A raw hex value, a non-brand font, or a token frozen by the 2027 \
+          rebrand was added. The token set is in src/styles/brand.css; \
+          anything marked DEPRECATED (2027) there is frozen and must not gain \
+          new usage. If this specific use is genuinely transitional, annotate \
+          it with 'cgsi-adherence-allow: <rule-id> - <reason>' on the line \
+          above, and expect the reason to be read in review. \
+          Full rules: src/styles/ADHERENCE.md"

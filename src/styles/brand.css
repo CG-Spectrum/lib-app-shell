@@ -16,6 +16,26 @@
 
    data-theme is set pre-paint by THEME_INIT_SCRIPT (cgsi-theme estate cookie,
    else OS preference) and toggled from the shared Header.
+
+   ── 2027 REBRAND · PHASE 1 ──────────────────────────────────────────────────
+   The 2027 brand (ground #131919, accent #44d62c, Stack Sans Notch / Text /
+   IBM Plex Mono) retires three token groups: the discipline hues, every
+   `cat-*`, and every `-soft` tint except the selected-row one. They are
+   referenced 328 times across the 17 consuming apps, so DELETING them now
+   would resolve 328 declarations to the guaranteed-invalid value in
+   production — the same failure as the pre-1.28 login cards, at 60x the
+   blast radius.
+
+   So they are marked DEPRECATED (2027) below and left defined and unchanged.
+   Nothing here is deleted until every app has migrated off it. Anything
+   carrying that marker is frozen: no new usage, no new app may adopt it, and
+   `_adherence.oxlintrc.json` fails a build that adds one.
+
+   Phase 4 (the value flip) does three things to this file and nothing else:
+   re-points the live tokens to the 2027 palette, gives the deprecated groups
+   neutral values so any straggler degrades to grey rather than vanishing, and
+   drops "Quicksand" from --brand-body. Then the deprecated block comes out in
+   the release after, once usage is zero.
    ──────────────────────────────────────────────────────────────────────────── */
 
 /* `static` because Tailwind otherwise drops any theme variable it cannot see
@@ -41,34 +61,80 @@
 
   /* ── Accent (brand) ────────────────────────────────────────────────────── */
   --color-accent: #EA27C2;
-  --color-accent-soft: rgba(234, 39, 194, 0.16);
   --color-accent-border: rgba(234, 39, 194, 0.45);
 
+  /* DEPRECATED (2027) — superseded by --color-accent-tint. In 2027 the accent
+     is a bar, a rule, an eyebrow, a selection or one filled button per view,
+     never a wash, so a 16% accent fill has no role left. */
+  --color-accent-soft: rgba(234, 39, 194, 0.16);
+
+  /* The selected row / selected chip tint, and the only accent fill that
+     survives into 2027. Stated outright rather than aliased to
+     --color-accent-soft so the flip can set it independently of a token that
+     is on its way out. No users yet: adopt it in phase 3 as local selection
+     styling is replaced by the package's .ledger and .filters. */
+  --color-accent-tint: rgba(234, 39, 194, 0.08);
+
+  /* Accent for MARKS rather than text: the notched bar, a chart tick, the rule
+     under the selected tab. Tracks --color-accent today, so it is a no-op
+     here. It exists because the two part company at the flip: on a light
+     ground 2027 sets green TEXT to Ink Green #1e7d10 for 5.2:1, while bars and
+     ticks stay bright #44d62c. Any app that uses one value for both fails
+     contrast in light mode, which is the likeliest silent regression in the
+     whole programme — so the split lands now, before anything depends on it. */
+  --color-accent-mark: var(--color-accent);
+
   /* ── Status ────────────────────────────────────────────────────────────── */
+  /* The 2027 set was chosen by protan / deutan / tritan simulation and every
+     value clears 4.5:1 as text on both grounds. Do not substitute hues at the
+     flip. Status is app-only: ⛔ never on the website or in marketing.
+     In 2027, status NEVER uses the accent — green marks selection, and success
+     becomes sage #a8d08d so the two can never be confused. */
   --color-good: #4ADE80;
-  --color-good-soft: rgba(74, 222, 128, 0.14);
   --color-good-border: rgba(74, 222, 128, 0.4);
   --color-warn: #FBBF24;
-  --color-warn-soft: rgba(251, 191, 36, 0.14);
   --color-warn-border: rgba(251, 191, 36, 0.4);
   --color-bad: #F87171;
-  --color-bad-soft: rgba(248, 113, 113, 0.14);
   --color-bad-border: rgba(248, 113, 113, 0.4);
+
+  /* New in 2027: the fourth status, for projected and read-only values. It has
+     no 2025 equivalent to preserve, so it takes its 2027 values now — safe,
+     because nothing references it yet and both values are contrast-tested
+     against the 2025 and 2027 grounds alike. Light override below. */
+  --color-info: #7AA7FF;
+  --color-info-border: rgba(122, 167, 255, 0.4);
+
+  /* DEPRECATED (2027) — status fills. 2027 draws a status as a glyph plus a
+     word, and a notice as a hairline in the status hue with the text left in
+     paper. Neither takes a tinted fill, so these have no role. Still the
+     single largest retired group at 249 uses, led by scheduling (48),
+     courseapp (39), home (39) and marketing (34). */
+  --color-good-soft: rgba(74, 222, 128, 0.14);
+  --color-warn-soft: rgba(251, 191, 36, 0.14);
+  --color-bad-soft: rgba(248, 113, 113, 0.14);
 
   /* Workbench aliases for the same three status colours. Kept because the
      ported Bar / KpiCard / StatusPill components address them by these names;
      they are aliases, not a second palette, so they track the values above. */
+  /* These four survive the rebrand by name: the 2027 app layer keeps
+     success / warning / error (and card / text-dim below) pointing at the
+     live tokens. */
   --color-success: var(--color-good);
-  --color-success-soft: var(--color-good-soft);
   --color-success-border: var(--color-good-border);
-  --color-surface-success-soft: rgba(74, 222, 128, 0.12);
   --color-warning: var(--color-warn);
+  --color-error: var(--color-bad);
+  --color-danger: var(--color-bad);
+
+  /* DEPRECATED (2027) — the fills behind those aliases, retired with the
+     -soft group above. They track the deprecated tokens through var(), so
+     they need no separate treatment at the flip; they come out in the same
+     release. */
+  --color-success-soft: var(--color-good-soft);
+  --color-surface-success-soft: rgba(74, 222, 128, 0.12);
   --color-warning-soft: var(--color-warn-soft);
   --color-surface-warning-soft: rgba(251, 191, 36, 0.12);
-  --color-error: var(--color-bad);
   --color-error-soft: var(--color-bad-soft);
   --color-surface-error-soft: rgba(248, 113, 113, 0.12);
-  --color-danger: var(--color-bad);
 
   /* ── Attention ─────────────────────────────────────────────────────────── */
   /* Outstanding required work: rail badges, "Required" tags, the UserMenu
@@ -82,7 +148,20 @@
   --color-attention-border: rgba(255, 170, 77, 0.2);
 
   /* ── Disciplines ───────────────────────────────────────────────────────── */
-  /* Department identity, not status. Never reuse these for a UI state. */
+  /* DEPRECATED (2027) — the whole group. Department colours were retired by
+     the brand owner in Sept 2026: disciplines are NAMED, not coloured. This is
+     the one retired group that is a behaviour change rather than a reskin, so
+     it cannot be fixed by swapping a value. 79 uses, led by marketing (22),
+     courseapp (14) and scheduling (12). studentportal is the hard case: it
+     holds discipline colour as application logic in src/lib/discipline.ts and
+     src/lib/home/subjectColor.ts, which needs a product decision on what
+     replaces colour-coded subjects for students, not a CSS edit.
+
+     Note the existing warning below still stands and gets stronger: these are
+     identity, never a UI state, and --color-attention owns the attention
+     meaning despite sharing a hex with --color-gamedesign.
+
+     Department identity, not status. Never reuse these for a UI state. */
   --color-animation: #FF7276;
   --color-gamedesign: #FFAA4D;
   --color-digitalart: #009ACE;
@@ -98,7 +177,14 @@
   --color-disc-art: var(--color-digitalart);
 
   /* ── Event categories ──────────────────────────────────────────────────── */
-  /* Picked to distinguish from discipline colours and status colours, so a dot
+  /* DEPRECATED (2027) — the whole group, for the same reason as the
+     disciplines: colour is the third signal, never the first. The 2027
+     calendar carries event type as a 3px inside-left rule plus the name in
+     paper, with booked kept in paper so green stays free for the busiest-day
+     marker. The replacement is .calendar in the package (phase 2), so these
+     stay until scheduling migrates.
+
+     Picked to distinguish from discipline colours and status colours, so a dot
      or chip colour can never be misread as a discipline or a status signal. */
   --color-cat-industry: #60A5FA;     /* sky blue — Industry Conferences */
   --color-cat-industry-soft: rgba(96, 165, 250, 0.14);
@@ -154,7 +240,13 @@
    ⚠️ Known follow-up, not fixed in 1.27 because it changes pixels rather than
    centralising them: discipline hues used as TEXT on a light tint (the .chip
    discipline variants) fail AA on white. Fixing that is a design decision, so
-   it ships on its own, not inside a refactor. */
+   it ships on its own, not inside a refactor.
+   → Closed by the 2027 rebrand rather than by a fix: retiring discipline
+     colour removes the failing combination entirely. Do not spend a release
+     on it; it goes out with the group.
+
+   Tokens marked DEPRECATED (2027) above get no light values added here. They
+   are leaving, and giving them a light ramp now is work that ships twice. */
 html[data-theme="light"] {
   --color-bg: #F2F5F9;
   --color-surface: #FFFFFF;
@@ -172,9 +264,20 @@ html[data-theme="light"] {
   --color-accent: #C313A0;
   --color-accent-soft: rgba(234, 39, 194, 0.12);
   --color-accent-border: rgba(195, 19, 160, 0.35);
+  --color-accent-tint: rgba(234, 39, 194, 0.10);
+
+  /* --color-accent-mark takes var(--color-accent) and so resolves to #C313A0
+     here without an override, which is correct while text and marks share a
+     value. ⚠️ Phase 4 MUST add an explicit override in this block
+     (--color-accent-mark: #44d62c) while --color-accent becomes Ink Green
+     #1e7d10. If the override is forgotten, every bar, tick and selected-tab
+     rule in light mode goes dark green and the 2027 light theme loses its
+     only bright mark. */
 
   --color-good: #15803D;
   --color-warn: #B45309;
   --color-warn-soft: rgba(180, 83, 9, 0.14);
   --color-bad: #DC2626;
+  --color-info: #2D4FD6;
+  --color-info-border: rgba(45, 79, 214, 0.35);
 }

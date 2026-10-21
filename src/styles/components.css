@@ -21,46 +21,71 @@
   color: var(--color-text-2);
   white-space: nowrap;
 }
+/* ⚠️ DEPRECATED (2027) — the three discipline chips. Disciplines are NAMED,
+   not coloured, from Sept 2026, and these are also the combination that fails
+   AA as text on white (the known follow-up recorded in brand.css). They stay
+   defined only because apps still emit `.chip.disc-*`; they come out in phase
+   3 as each app replaces the chip with the discipline name in text. Do not add
+   a fourth.
+   cgsi-adherence-allow: deprecated-discipline, deprecated-soft — package must
+   keep defining these while 5 apps still emit the class; removed in phase 3 */
 .chip.disc-anim {
   background: var(--color-animation-soft);
   border-color: var(--color-animation-border);
   color: var(--color-animation);
 }
+/* cgsi-adherence-allow: deprecated-discipline, deprecated-soft — as above */
 .chip.disc-game {
   background: var(--color-gamedesign-soft);
   border-color: var(--color-gamedesign-border);
   color: var(--color-gamedesign);
 }
+/* cgsi-adherence-allow: deprecated-discipline, deprecated-soft — as above */
 .chip.disc-art {
   background: var(--color-digitalart-soft);
   border-color: var(--color-digitalart-border);
   color: var(--color-digitalart);
 }
+/* ⚠️ DEPRECATED (2027) — status as a filled chip. 2027 draws a status as a
+   glyph plus a word, never a pill and never a filled badge, so that colour is
+   the third signal rather than the first. Replaced by `.status` in phase 2.
+   cgsi-adherence-allow: deprecated-soft — superseded by .status in phase 2 */
 .chip.status-active {
   background: var(--color-good-soft);
   border-color: var(--color-good-border);
   color: var(--color-good);
 }
+/* cgsi-adherence-allow: deprecated-soft — as above */
 .chip.status-inactive {
   background: var(--color-warn-soft);
   border-color: var(--color-warn-border);
   color: var(--color-warn);
 }
+
+/* ⚠️ DEPRECATED (2027) — the four event-category chips, retired with the
+   disciplines. The 2027 calendar carries event type as a 3px inside-left rule
+   with the name in paper. Replaced by `.calendar` in phase 2 and removed when
+   scheduling migrates in phase 3.
+   cgsi-adherence-allow: deprecated-category — package must keep defining these
+   while scheduling still emits the class; removed in phase 3 */
 .chip.cat-industry {
   background: var(--color-cat-industry-soft);
   border-color: var(--color-cat-industry-border);
   color: var(--color-cat-industry);
 }
+/* cgsi-adherence-allow: deprecated-category — as above */
 .chip.cat-community {
   background: var(--color-cat-community-soft);
   border-color: var(--color-cat-community-border);
   color: var(--color-cat-community);
 }
+/* cgsi-adherence-allow: deprecated-category — as above */
 .chip.cat-marketing {
   background: var(--color-cat-marketing-soft);
   border-color: var(--color-cat-marketing-border);
   color: var(--color-cat-marketing);
 }
+/* cgsi-adherence-allow: deprecated-category — as above */
 .chip.cat-lci {
   background: var(--color-cat-lci-soft);
   border-color: var(--color-cat-lci-border);
@@ -84,6 +109,8 @@
 .filter-pill:hover {
   border-color: var(--color-accent);
 }
+/* cgsi-adherence-allow: deprecated-soft — selected state; moves to
+   --color-accent-tint with .filters in phase 2 */
 .filter-pill[aria-pressed="true"],
 .filter-pill.is-selected {
   border-color: var(--color-accent);

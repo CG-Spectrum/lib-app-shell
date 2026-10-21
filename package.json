@@ -1,6 +1,6 @@
 {
   "name": "@cgsi/app-shell",
-  "version": "1.30.0",
+  "version": "1.31.0",
   "private": false,
   "type": "module",
   "exports": {
@@ -9,10 +9,14 @@
     "./styles.css": "./src/styles/index.css",
     "./styles/*": "./src/styles/*"
   },
-  "files": ["src"],
+  "bin": {
+    "cgsi-adherence": "./scripts/adherence.mjs"
+  },
+  "files": ["src", "scripts"],
   "scripts": {
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "adherence": "node scripts/adherence.mjs src"
   },
   "peerDependencies": {
     "react": "^19.0.0",

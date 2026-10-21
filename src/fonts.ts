@@ -23,6 +23,11 @@ export const display = localFont({
   display: "swap",
 });
 
+/* ⚠️ Quicksand is replaced in the 2027 brand by Stack Sans Text at weight 400
+   (not 300: thin strokes break up at 13px on a dark ground). Swapping the face
+   here changes every app's body type, so it ships with the phase 4 flip, not
+   before. Phase 2 adds IBM Plex Mono alongside for labels.
+   cgsi-adherence-allow: quicksand — replaced by Stack Sans Text at phase 4 */
 export const body = localFont({
   src: [
     { path: "./fonts/Quicksand-Medium.ttf", weight: "500", style: "normal" },
