@@ -83,6 +83,24 @@ const RULES = [
     msg: "Quicksand is replaced in the 2027 brand. It survives only as the fallback inside brand.css --brand-body until the phase 4 flip, and nowhere else.",
   },
   {
+    id: "rounded-corners",
+    tier: "geometry",
+    re: /border-radius\s*:\s*(?!0\b|0px|0%)[^;}\n]+|\brounded(?:-(?:sm|md|lg|xl|2xl|3xl|full))?\b(?!-none)/g,
+    msg: "Square corners. The 2027 brand is radius 0 on everything: buttons, fields, cards, images, radios. A pill or a circular avatar is a 2025 shape and survives a token swap, which is why this is checked separately from colour.",
+  },
+  {
+    id: "drop-shadow",
+    tier: "geometry",
+    re: /box-shadow\s*:\s*(?!none\b|inset\b)[^;}\n]+|\bshadow-(?:sm|md|lg|xl|2xl)\b/g,
+    msg: "No shadows. Depth in the 2027 brand is a 1px hairline, not a shadow. (An inset shadow is allowed: it is how the selected-row rule is drawn.)",
+  },
+  {
+    id: "gradient-fill",
+    tier: "geometry",
+    re: /\b(?:linear|radial|conic)-gradient\s*\(|\bbg-gradient-to-[a-z]+\b/g,
+    msg: "No gradients. Flat colour grounds only. The one exception in the brand is the text-protection scrim over photography, which is a gradient to the ground and belongs on an image, not on a control or a card.",
+  },
+  {
     id: "off-scale-spacing",
     tier: "advisory",
     re: /(?:padding|margin|gap|row-gap|column-gap)(?:-(?:top|right|bottom|left|block|inline))?\s*:\s*[^;}\n]*?\b(?!(?:0|4|8|12|16|24|40)px)\d+px/g,
@@ -153,6 +171,12 @@ function walk(dir, out = []) {
 
 const args = process.argv.slice(2);
 const advisory = args.includes("--advisory");
+/* Geometry is the DESTINATION brand, not the freeze. Square corners, no
+   shadows and no gradients are 2027; the estate is still 2025 and its chrome
+   is correctly rounded today. Reporting them as errors now would fail every
+   repo for being what it is supposed to be, so they report separately and
+   become errors at the phase 4 flip (swap tier to "error" then). */
+const geometry = args.includes("--geometry");
 const roots = args.filter((a) => !a.startsWith("--"));
 const targets = roots.length ? roots : ["src"];
 
@@ -176,6 +200,7 @@ for (const root of targets) {
       const allowed = allowMap[i] ?? new Set();
       for (const rule of RULES) {
         if (rule.tier === "advisory" && !advisory) continue;
+        if (rule.tier === "geometry" && !geometry) continue;
         if (allowed.has(rule.id) || allowed.has("*")) continue;
         rule.re.lastIndex = 0;
         const hit = rule.re.exec(line);
@@ -194,6 +219,7 @@ for (const root of targets) {
 
 const errors = findings.filter((f) => f.rule.tier === "error");
 const advisories = findings.filter((f) => f.rule.tier === "advisory");
+const geometries = findings.filter((f) => f.rule.tier === "geometry");
 
 const byRule = new Map();
 for (const f of findings) {
@@ -203,7 +229,8 @@ for (const f of findings) {
 
 for (const [id, group] of byRule) {
   const { tier, msg } = group[0].rule;
-  console.log(`\n${tier === "error" ? "ERROR" : "ADVISORY"}  ${id}  (${group.length})`);
+  const banner = tier === "error" ? "ERROR" : tier === "geometry" ? "GEOMETRY" : "ADVISORY";
+  console.log(`\n${banner}  ${id}  (${group.length})`);
   console.log(`  ${msg}`);
   for (const f of group.slice(0, 20)) {
     console.log(`    ${f.path}:${f.line}  ${f.match}`);
@@ -214,11 +241,12 @@ for (const [id, group] of byRule) {
 console.log(
   `\n${errors.length} error${errors.length === 1 ? "" : "s"}` +
     (advisory ? `, ${advisories.length} advisory` : "") +
+    (geometry ? `, ${geometries.length} geometry (2027 destination, not yet enforced)` : "") +
     ` across ${targets.join(", ")}`
 );
 
 if (!advisory && errors.length === 0) {
-  console.log("Run with --advisory to also check spacing against the six-step scale.");
+  console.log("Run with --advisory for spacing, --geometry for the 2027 corner/shadow/gradient debt.");
 }
 
 process.exit(errors.length > 0 ? 1 : 0);

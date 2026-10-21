@@ -26,21 +26,45 @@ linter cannot see the majority of the problem. `scripts/adherence.mjs` reads
 both, has no dependencies, and is therefore one devDependency bump and one CI
 step to adopt rather than a toolchain decision.
 
+## Two tiers, two jobs
+
+The check reports against two different things, and conflating them was a
+mistake worth not repeating.
+
+**The freeze** (default, exit 1). Colour, token and type rules. These describe
+what must not get WORSE while the estate migrates: no new raw hex, no new usage
+of a retired token, no new font. Enforced from phase 1.
+
+**The destination** (`--geometry`, reported only). Square corners, no shadows,
+no gradients. These describe the 2027 brand the estate is moving TO. The chrome
+is correctly rounded today, so failing a repo for it would be failing it for
+being what it is supposed to be. These become errors at the phase 4 flip —
+change their `tier` from `"geometry"` to `"error"` then.
+
+⚠️ **The first version of this check only covered the freeze**, which made the
+estate look 4x closer to done than it is. A token swap alone produces a file
+that passes and still renders rounded pills, gradients and colour-coded award
+bars — visually 2025, mechanically compliant. Geometry is checked separately
+because it survives a colour migration untouched.
+
 ## Rules
 
 | ID | Tier | What it catches |
 |---|---|---|
-| `raw-hex` | error | Any `#rgb` / `#rrggbb` outside `brand.css` |
-| `deprecated-discipline` | error | `--color-animation` / `gamedesign` / `digitalart` / `disc-*` |
-| `deprecated-category` | error | `--color-cat-*` |
-| `deprecated-soft` | error | Every `-soft` tint except `--color-accent-tint` |
-| `non-brand-font` | error | A `font-family` outside the three brand faces |
-| `quicksand` | error | Quicksand anywhere but the `brand.css` fallback |
+| `raw-hex` | freeze | Any `#rgb` / `#rrggbb` outside `brand.css` |
+| `deprecated-discipline` | freeze | `--color-animation` / `gamedesign` / `digitalart` / `disc-*` |
+| `deprecated-category` | freeze | `--color-cat-*` |
+| `deprecated-soft` | freeze | Every `-soft` tint except `--color-accent-tint` |
+| `non-brand-font` | freeze | A `font-family` outside the three brand faces |
+| `quicksand` | freeze | Quicksand anywhere but the `brand.css` fallback |
+| `rounded-corners` | geometry | Any non-zero radius, including `rounded-full` |
+| `drop-shadow` | geometry | Any outer `box-shadow` (inset is allowed — it draws the selected row) |
+| `gradient-fill` | geometry | Any gradient (the photographic text scrim is the brand's one exception) |
 | `off-scale-spacing` | advisory | Padding, margin or gap off the six-step scale |
 
 `brand.css` is exempt: it is where the tokens are defined. Test and spec files
-are exempt: they assert on literals. The advisory tier is off unless you pass
-`--advisory`.
+are exempt: they assert on literals. Advisory and geometry tiers are off unless
+you pass `--advisory` / `--geometry`.
 
 ## Fixing a finding
 
@@ -92,40 +116,46 @@ blast radius. So they stay defined, unchanged, and frozen.
 This check is the freeze. It does not reduce the count; the phase 3 migrations
 do that. It stops the count growing in the meantime.
 
-Phase 1 baseline, 21 Oct 2026, errors per app, measured on current `main`:
+Baseline, 21 Oct 2026, measured on current `main`. Freeze first, then the
+2027 geometry debt:
 
 ```
-studentportal 160   courseapp 100   marketing 93   home      81
-people         70   salesapp   52   scheduling 51   finance   31
-partnerships   18   referrals  16   auditapp    9   governance 9
-launchpad-adm   9   leadership  9   mediacms    4   gca-dash   3
-cgsi-auth       1   app-shell   0
+                 freeze  geometry   total          freeze  geometry   total
+marketing            93       430     523   finance    31        65      96
+scheduling           52       208     260   launchpad   9        72      81
+people               70       196     266   leadership  9        55      64
+salesapp             52       203     255   referrals  16        45      61
+courseapp           100       125     225   partnersh  18        40      58
+studentportal       160        53     213   cgsi-auth   1        50      51
+home                 81       114     195   mediacms    4        36      40
+                                            app-shell   0        29      29
+                                            auditapp    9        18      27
+                                            gca-dash    3        10      13
+                                            governance  9         0       9
 ```
 
-Total 716. Two earlier passes reported 787 and 693; both were wrong, for
-different reasons, and both are worth recording because the mistakes are easy
-to repeat.
+**Freeze 717 · geometry 1,749 · total 2,466.**
 
-**787 counted false positives.** Two bugs in the checker, both fixed before the
-later passes:
+Three earlier passes reported 787, 693 and 716. Every one was wrong, and the
+reasons are worth keeping because each is easy to repeat:
 
-1. *Comments were matched.* `SubNav.tsx` carries the note "#EA27C2 under white
-   fails AA at this size" directly above code that correctly uses the tokens.
-   Flagging prose that explains a rule teaches people to delete the
-   explanation. Comment bodies are now blanked before matching, with newlines
-   preserved so reported line numbers stay correct.
-2. *The font rule matched everything, including the legal declarations.*
-   Written `font-family\s*:\s*(?!...)`, the trailing `\s*` backtracks to zero
-   width, so the lookahead tests the space after the colon rather than the
-   value. The optional whitespace now lives inside the lookahead.
-
-**693 counted stale code.** It was measured against local `main` in each repo
-without fetching first. Those refs were behind by up to 75 commits (marketing),
-34 (home) and 24 (mediacms), so the audit graded code that was months out of
-date. The lesson is narrow and blunt: **fetch before you measure, and never
-treat an unfetched `origin/main` as evidence of anything.** The same stale refs
-also produced a phantom finding that the estate spanned four releases of this
-package; in fact 15 of 17 apps were already on v1.31.0.
+1. **787 counted false positives.** Comment bodies were matched, so the check
+   flagged the note in `SubNav.tsx` explaining why `#EA27C2` is *not* used,
+   above code that correctly uses tokens. And the font rule matched every
+   declaration including the legal ones, because in
+   `font-family\s*:\s*(?!...)` the trailing `\s*` backtracks to zero width and
+   the lookahead tests the space after the colon rather than the value.
+2. **693 counted stale code.** Measured against local `main` in each repo
+   without fetching. Those refs were behind by up to 75 commits (marketing), 34
+   (home) and 24 (mediacms). **Fetch before you measure.** The same stale refs
+   produced a phantom finding that the estate spanned four releases of this
+   package; 15 of 17 apps were already on v1.31.0.
+3. **716 counted only half the brand.** The check had no geometry rules, so
+   1,749 violations of square corners, no shadows and no gradients were
+   invisible. The estate looked 4x closer to done than it is. courseapp's
+   stylesheet is the clearest case: a pure token swap leaves it passing the
+   check while still rendering rounded pills, gradients and sixteen
+   colour-coded award bars.
 
 app-shell is at zero and stays there: this repo gates, because nothing deploys
 from it. The apps report, because a push to main deploys production there before
