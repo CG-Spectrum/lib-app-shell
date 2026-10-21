@@ -1,5 +1,6 @@
 "use client";
 
+import { Fragment } from "react";
 import { rememberTab } from "./last-tab";
 import { badgeText } from "./notifications";
 
@@ -32,6 +33,23 @@ export interface SubNavTab {
    *  from the app's own /api/notifications `paths` map — see notifications.ts
    *  for the estate convention. */
   badge?: number;
+  /** Optional section group. A thin divider renders between two adjacent
+   *  tabs whose groups differ; tabs without a group never get one, so apps
+   *  that don't pass it render exactly as before. Order is the caller's job:
+   *  keep each group's tabs contiguous. */
+  group?: string;
+}
+
+/**
+ * Pure divider helper — exported for direct unit testing. True when a divider
+ * belongs BEFORE tabs[i]: both it and its predecessor carry a group, and the
+ * groups differ.
+ */
+export function startsNewGroup(tabs: readonly SubNavTab[], i: number): boolean {
+  if (i <= 0) return false;
+  const prev = tabs[i - 1].group;
+  const cur = tabs[i].group;
+  return prev !== undefined && cur !== undefined && prev !== cur;
 }
 
 /**
@@ -70,35 +88,47 @@ export function SubNav({
       aria-label="Section navigation"
     >
       <div className="flex items-end gap-1 px-6">
-        {tabs.map((tab) => {
+        {tabs.map((tab, i) => {
           const active = isActiveTab(tab.href, currentPath);
           const badge = badgeText(tab.badge);
           return (
-            <a
-              key={tab.href}
-              href={tab.href}
-              onClick={rememberSection ? () => rememberTab(rememberSection, tab.href) : undefined}
-              aria-current={active ? "page" : undefined}
-              className={[
-                "inline-block px-3 py-2.5 text-sm font-semibold transition-colors duration-100",
-                "border-b-2 -mb-px", // sits on the nav's bottom border
-                active
-                  ? "border-accent text-accent"
-                  : "border-transparent text-text-2 hover:text-text hover:border-border",
-              ].join(" ")}
-            >
-              {tab.label}
-              {badge && (
-                // Chip colouring (accent on accent-soft), not solid accent with
-                // white text — #EA27C2 under white fails AA at this size.
+            <Fragment key={tab.href}>
+              {startsNewGroup(tabs, i) && (
+                // Decorative: a line, not a colour, so it reads for CVD users too.
                 <span
-                  className="ml-1.5 inline-flex min-w-4 items-center justify-center rounded-full border border-accent-border bg-accent-soft px-1 text-[10px] font-bold leading-4 text-accent"
-                  aria-label={`${tab.badge} awaiting action`}
-                >
-                  {badge}
-                </span>
+                  aria-hidden="true"
+                  className="mx-1.5 mb-3 h-4 w-px self-end bg-border"
+                />
               )}
-            </a>
+              <a
+                href={tab.href}
+                onClick={
+                  rememberSection
+                    ? () => rememberTab(rememberSection, tab.href)
+                    : undefined
+                }
+                aria-current={active ? "page" : undefined}
+                className={[
+                  "inline-block px-3 py-2.5 text-sm font-semibold transition-colors duration-100",
+                  "border-b-2 -mb-px", // sits on the nav's bottom border
+                  active
+                    ? "border-accent text-accent"
+                    : "border-transparent text-text-2 hover:text-text hover:border-border",
+                ].join(" ")}
+              >
+                {tab.label}
+                {badge && (
+                  // Chip colouring (accent on accent-soft), not solid accent with
+                  // white text — #EA27C2 under white fails AA at this size.
+                  <span
+                    className="ml-1.5 inline-flex min-w-4 items-center justify-center rounded-full border border-accent-border bg-accent-soft px-1 text-[10px] font-bold leading-4 text-accent"
+                    aria-label={`${tab.badge} awaiting action`}
+                  >
+                    {badge}
+                  </span>
+                )}
+              </a>
+            </Fragment>
           );
         })}
       </div>
