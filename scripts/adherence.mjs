@@ -159,8 +159,15 @@ const RULES = [
   {
     id: "gradient-fill",
     tier: "geometry",
-    re: /\b(?:linear|radial|conic)-gradient\s*\(|\bbg-gradient-to-[a-z]+\b/g,
-    msg: "No gradients. Flat colour grounds only. The one exception in the brand is the text-protection scrim over photography, which is a gradient to the ground and belongs on an image, not on a control or a card.",
+    /* 🔴 A MASK IS NOT A FILL. `mask-image: linear-gradient(...)` paints no
+       colour at all — it is how an edge fade is drawn, and the brand asks for
+       an edge fade on graded photography by name. Flagging it told people to
+       delete the thing the standard requires, and the obvious compliant
+       rewrite (a gradient overlay in the ground colour) is an actual gradient
+       fill, so the check was pushing the estate from a clean mask toward the
+       thing it exists to prevent. */
+    re: /(?<!mask-image:\s{0,8})(?<!mask:\s{0,8})\b(?:linear|radial|conic)-gradient\s*\(|\bbg-gradient-to-[a-z]+\b/g,
+    msg: "No gradients. Flat colour grounds only. The one exception in the brand is the text-protection scrim over photography, which is a gradient to the ground and belongs on an image, not on a control or a card. A mask-image gradient is not a fill and is not flagged: that is how an edge fade is drawn.",
   },
   {
     id: "off-scale-spacing",
@@ -246,6 +253,25 @@ const geometry = args.includes("--geometry");
 const roots = args.filter((a) => !a.startsWith("--"));
 const targets = roots.length ? roots : ["src"];
 
+/* 🔴 A GENERATED FILE IS NOT WHERE THE FIX GOES. people's
+   src/lib/mentor-badges.ts is emitted from @cg-spectrum/catalogue, and its
+   test asserts the result matches the package verbatim. Reported as 16
+   ordinary findings it reads as sixteen edits to make in people; make them and
+   the test fails, which is exactly what happened on 21 Oct — edited, broke,
+   reverted. A check that asks for a change the repo forbids trains people to
+   stop reading it.
+
+   So they are set aside rather than counted. ⛔ NOT silently: a skip that
+   prints nothing would hide real debt behind a generator, which is a better
+   hiding place than a pragma because nobody chose it. The count is printed
+   with the file and the upstream owner named, so the work stays visible and
+   lands where it can actually be done. */
+/* `@generated` gets no leading \b: between a space and an `@` there is no word
+   boundary, both being non-word characters, so the shared one silently never
+   matched the most common marker of the four. */
+const GENERATED = /^(?:.*\n){0,5}?.*(?:\b(?:GENERATED FILE|DO NOT EDIT|auto-generated)\b|@generated\b)/i;
+const generated = [];
+
 const findings = [];
 for (const root of targets) {
   for (const path of walk(root)) {
@@ -256,6 +282,7 @@ for (const root of targets) {
        white fails AA at this size" above code that correctly uses the tokens,
        and a checker that reports it teaches people to delete the comment. */
     const raw = readFileSync(path, "utf8");
+    const isGenerated = GENERATED.test(raw);
     const rawLines = raw.split("\n");
     const lines = stripComments(raw).split("\n");
     /* Pragmas are read from the RAW lines, since matching runs on the
@@ -271,7 +298,7 @@ for (const root of targets) {
         rule.re.lastIndex = 0;
         const hit = rule.re.exec(line);
         if (hit) {
-          findings.push({
+          (isGenerated ? generated : findings).push({
             path: relative(process.cwd(), path),
             line: i + 1,
             rule,
@@ -302,6 +329,19 @@ for (const [id, group] of byRule) {
     console.log(`    ${f.path}:${f.line}  ${f.match}`);
   }
   if (group.length > 20) console.log(`    ... and ${group.length - 20} more`);
+}
+
+if (generated.length) {
+  const byFile = new Map();
+  for (const f of generated) byFile.set(f.path, (byFile.get(f.path) ?? 0) + 1);
+  console.log(`\nUPSTREAM  (${generated.length})`);
+  console.log(
+    "  In a generated file, so not counted here and not fixable here: an edit" +
+      "\n  would be overwritten by the next run and, where a test compares the" +
+      "\n  output to its source, fails immediately. Fix it in the generator's" +
+      "\n  input, re-run the generator, and the finding goes with it."
+  );
+  for (const [p, n] of byFile) console.log(`    ${p}  ${n}`);
 }
 
 console.log(

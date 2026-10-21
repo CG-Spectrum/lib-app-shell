@@ -374,3 +374,91 @@ describe("the comma is a separator in one language and a list in the other", () 
     expect(out).not.toContain("fontSize");
   });
 });
+
+describe("a generated file is not where the fix goes", () => {
+  // people's src/lib/mentor-badges.ts is emitted from @cg-spectrum/catalogue
+  // and its test asserts the output matches the package verbatim. Reported as
+  // 16 ordinary findings it read as sixteen edits to make in people; making
+  // them broke the test, which is what happened on 21 Oct.
+  const banner = "// GENERATED FILE — do not edit by hand.\n";
+
+  test("its findings are set aside, not counted", () => {
+    const { out, exit } = check({ "a.ts": `${banner}export const c = "#EA27C2";` });
+    expect(out).toContain("UPSTREAM");
+    expect(out).toContain("0 errors");
+    expect(exit).toBe(0);
+  });
+
+  test("but they are still printed — a silent skip is a better hiding place than a pragma", () => {
+    const { out } = check({ "a.ts": `${banner}export const c = "#EA27C2";` });
+    expect(out).toContain("a.ts");
+    expect(out).toMatch(/UPSTREAM {2}\(1\)/);
+  });
+
+  test.each(["@generated", "DO NOT EDIT", "auto-generated"])("%s marks it too", (mark) => {
+    const { exit } = check({ "a.ts": `// ${mark}\nexport const c = "#EA27C2";` });
+    expect(exit).toBe(0);
+  });
+
+  test("the banner has to be at the top, not anywhere in the file", () => {
+    // Otherwise a comment mentioning a generated file elsewhere exempts the
+    // whole thing, which is a one-line way to switch the check off.
+    const body = Array(10).fill("// filler").join("\n");
+    const { exit } = check({
+      "a.ts": `${body}\n// GENERATED FILE\nexport const c = "#EA27C2";`,
+    });
+    expect(exit).toBe(1);
+  });
+
+  test("an ordinary file is unaffected", () => {
+    const { out, exit } = check({ "a.ts": 'export const c = "#EA27C2";' });
+    expect(out).not.toContain("UPSTREAM");
+    expect(exit).toBe(1);
+  });
+});
+
+describe("a mask gradient is not a gradient fill", () => {
+  // mask-image paints no colour. It is how an edge fade is drawn, which the
+  // brand asks for by name on graded photography — so flagging it told people
+  // to delete the thing the standard requires, and the obvious "compliant"
+  // rewrite is a real gradient overlay in the ground colour.
+  test("mask-image is not flagged", () => {
+    const { out } = check({
+      "a.css": ".x { mask-image: linear-gradient(0deg, rgba(0,0,0,0) 10%, var(--color-bg) 50%); }",
+    }, "--geometry");
+    expect(out).not.toContain("gradient-fill");
+  });
+
+  test("the -webkit- prefix too", () => {
+    const { out } = check({
+      "a.css": ".x { -webkit-mask-image: linear-gradient(0deg, transparent, var(--color-bg)); }",
+    }, "--geometry");
+    expect(out).not.toContain("gradient-fill");
+  });
+
+  test("the shorthand mask property too", () => {
+    const { out } = check({
+      "a.css": ".x { mask: linear-gradient(0deg, transparent, var(--color-bg)); }",
+    }, "--geometry");
+    expect(out).not.toContain("gradient-fill");
+  });
+
+  test("an actual background gradient is still flagged", () => {
+    const { out } = check({
+      "a.css": ".x { background: linear-gradient(180deg, var(--color-bg), var(--color-surface)); }",
+    }, "--geometry");
+    expect(out).toContain("gradient-fill");
+  });
+
+  test("a gradient on the line after a mask declaration is still flagged", () => {
+    // The lookbehind must not let a mask on one line excuse a fill on the next.
+    const { out } = check({
+      "a.css": [
+        ".x { mask-image: linear-gradient(0deg, transparent, var(--color-bg)); }",
+        ".y { background: linear-gradient(180deg, var(--color-bg), var(--color-surface)); }",
+      ].join("\n"),
+    }, "--geometry");
+    expect(out).toContain("a.css:2");
+    expect(out).not.toContain("a.css:1");
+  });
+});
