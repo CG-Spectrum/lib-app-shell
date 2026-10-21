@@ -31,11 +31,12 @@
    carrying that marker is frozen: no new usage, no new app may adopt it, and
    `_adherence.oxlintrc.json` fails a build that adds one.
 
-   Phase 4 (the value flip) does three things to this file and nothing else:
-   re-points the live tokens to the 2027 palette, gives the deprecated groups
-   neutral values so any straggler degrades to grey rather than vanishing, and
-   drops "Quicksand" from --brand-body. Then the deprecated block comes out in
-   the release after, once usage is zero.
+   Phase 4 (the value flip) does two things to this file and nothing else:
+   re-points the live tokens to the 2027 palette, and gives the deprecated
+   groups neutral values so any straggler degrades to grey rather than
+   vanishing. Then the deprecated block comes out in the release after, once
+   usage is zero. (The third thing it used to list — dropping Quicksand from
+   --brand-body — is done: all three faces are the 2027 ones as of v1.36.0.)
    ──────────────────────────────────────────────────────────────────────────── */
 
 /* `static` because Tailwind otherwise drops any theme variable it cannot see
@@ -265,9 +266,15 @@
    does not fall back to Quicksand, it falls back to whatever the parent had.
    That is why --brand-mono rendered as body type: nothing anywhere defines
    --font-mono, so the token was permanently invalid and the "IBM Plex Mono,
-   ui-monospace, …" written beside it never applied. */
+   ui-monospace, …" written beside it never applied.
+
+   The quoted names are the 2027 faces as of v1.36.0. They are a real fallback
+   only for a reader who has the face installed locally, which for the Stack
+   faces is nobody — they exist so the stack degrades in a named direction
+   rather than silently, and the system list behind them is what actually
+   catches it. */
 :root {
-  --brand-body: var(--font-body, "Quicksand"), -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+  --brand-body: var(--font-body, "Stack Sans Text"), "Jost", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
   --brand-display: var(--font-display, "Stack Sans Notch"), var(--brand-body);
 
   /* The app layer's third face: IBM Plex Mono 500 caps for labels, strips,

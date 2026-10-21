@@ -81,3 +81,55 @@ describe("brand.css and fonts.ts agree on what is defined", () => {
     expect(block).toMatch(/weight:\s*"500"/);
   });
 });
+
+/* After the phase 4 face flip (v1.36.0). The three faces named by the standard
+   are the three the package loads, and no fourth. */
+describe("the three 2027 faces", () => {
+  const fontsTs = readFileSync(new URL("./fonts.ts", import.meta.url), "utf8");
+
+  test("--brand-body lands on Stack Sans Text, and Quicksand is gone from the stack", () => {
+    const stack = /--brand-body\s*:\s*([^;]+);/.exec(brandCss)?.[1] ?? "";
+    expect(stack).toMatch(/var\(\s*--font-body\s*,\s*"Stack Sans Text"\s*\)/);
+    expect(stack).not.toMatch(/Quicksand/);
+  });
+
+  test("no font file in the package is a Quicksand one", () => {
+    expect(fontsTs).not.toMatch(/path:\s*"[^"]*Quicksand/);
+  });
+
+  test.each([
+    ["display", "stack-sans-notch"],
+    ["body", "stack-sans-text"],
+    ["mono", "ibm-plex-mono"],
+  ])("%s loads %s", (exportName, file) => {
+    const block = fontsTs.slice(fontsTs.indexOf(`export const ${exportName}`));
+    expect(block.slice(0, 400)).toContain(file);
+  });
+
+  test("both Stack faces declare the full 200–700 axis", () => {
+    // ⚠️ Their fvar default instance is 200, so a missing or narrowed range
+    // does not degrade to Regular — it degrades to hairlines. And on Notch a
+    // weight outside the axis is synthesised, which smears the notch into a
+    // strikethrough.
+    //
+    // The literal is repeated at both call sites because next/font rejects a
+    // constant ("Font loader values must be explicitly written literals") and
+    // only says so during `next build` — tsc and vitest both pass a version
+    // that breaks every app. So the guard against the two drifting apart is
+    // this test rather than a shared binding.
+    for (const name of ["display", "body"]) {
+      const at = fontsTs.indexOf(`export const ${name}`);
+      expect(fontsTs.slice(at, at + 400)).toContain('weight: "200 700"');
+    }
+  });
+
+  test("no font loader value is a constant — next/font only rejects that at build time", () => {
+    const loaders = [...fontsTs.matchAll(/localFont\(\{[\s\S]*?\n\}\)/g)].map(([m]) => m);
+    expect(loaders).toHaveLength(3);
+    for (const block of loaders) {
+      for (const [, value] of block.matchAll(/(?:path|weight|style|variable|display):\s*([^,\n}]+)/g)) {
+        expect(value.trim()).toMatch(/^["']/);
+      }
+    }
+  });
+});

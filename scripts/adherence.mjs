@@ -137,7 +137,7 @@ const RULES = [
     id: "quicksand",
     tier: "error",
     re: /Quicksand/g,
-    msg: "Quicksand is replaced in the 2027 brand. It survives only as the fallback inside brand.css --brand-body until the phase 4 flip, and nowhere else.",
+    msg: "Quicksand is gone. Stack Sans Text replaced it as the body face in app-shell v1.36.0, and the last fallback naming it came out of brand.css in the same release, so there is no longer anywhere this is correct. Body type reaches the face through var(--brand-body).",
   },
   {
     id: "rounded-corners",
