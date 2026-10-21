@@ -135,7 +135,7 @@ export function UserMenu({
         aria-expanded={open}
         aria-label={avatarAriaLabel(name, email, hasIncomplete)}
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-1.5 rounded border border-border px-1.5 py-1 text-xs text-text-2 hover:border-accent hover:text-accent transition-colors"
+        className="flex items-center gap-1.5 border border-border px-1.5 py-1 text-xs text-text-2 hover:border-accent hover:text-accent transition-colors"
       >
         {/* relative wrapper exists only to anchor the incomplete dot to
             THIS element's corner, not the whole button (which also
@@ -166,12 +166,12 @@ export function UserMenu({
               // h-7 (1.75rem) would render at 24.5px there, not the intended
               // 28px. Arbitrary-value classes compile to literal pixels and
               // stay correct regardless of the host's root size.
-              className="h-[28px] w-[28px] shrink-0 rounded-full object-cover"
+              className="h-[28px] w-[28px] shrink-0 object-cover"
             />
           ) : (
             <span
               aria-hidden
-              className="flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-full bg-accent/15 text-[11px] font-semibold text-accent"
+              className="flex h-[28px] w-[28px] shrink-0 items-center justify-center bg-accent/15 text-[11px] font-semibold text-accent"
             >
               {initials}
             </span>
@@ -185,7 +185,7 @@ export function UserMenu({
             // here: this dot is aria-hidden and decorative only.
             <span
               aria-hidden
-              className="absolute -top-[1px] -right-[1px] h-[6px] w-[6px] rounded-full bg-[var(--color-attention)]"
+              className="absolute -top-[1px] -right-[1px] h-[6px] w-[6px] bg-[var(--color-attention)]"
             />
           )}
         </span>
@@ -209,7 +209,7 @@ export function UserMenu({
         <div
           role="menu"
           aria-label="User menu"
-          className="absolute right-0 top-full z-50 mt-1 w-56 rounded border border-border bg-surface py-1 shadow-lg"
+          className="absolute right-0 top-full z-50 mt-1 w-56 border border-border-strong bg-surface py-1"
         >
           <div className="truncate border-b border-border px-3 py-2 text-xs text-text-3">
             {name && (
@@ -237,7 +237,7 @@ export function UserMenu({
                   // the label.
                   <span
                     aria-hidden
-                    className="inline-block h-[6px] w-[6px] shrink-0 rounded-full bg-[var(--color-attention)]"
+                    className="inline-block h-[6px] w-[6px] shrink-0 bg-[var(--color-attention)]"
                   />
                 )}
               </span>

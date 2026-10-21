@@ -35,17 +35,35 @@ mistake worth not repeating.
 what must not get WORSE while the estate migrates: no new raw hex, no new usage
 of a retired token, no new font. Enforced from phase 1.
 
-**The destination** (`--geometry`, reported only). Square corners, no shadows,
-no gradients. These describe the 2027 brand the estate is moving TO. The chrome
-is correctly rounded today, so failing a repo for it would be failing it for
-being what it is supposed to be. These become errors at the phase 4 flip —
-change their `tier` from `"geometry"` to `"error"` then.
+**The destination** — now also errors, since the phase 4 flip (21 Oct 2026).
+Square corners, no shadows, no gradients: the 2027 brand the estate was moving
+TO. These reported separately for the whole migration, because the chrome was
+correctly rounded at the time and failing a repo for that would have been
+failing it for being what it was supposed to be. The flip ended that argument.
+Every repo is at zero geometry, the estate now wears the brand it is measured
+against, and the only thing a separate tier buys from here is somewhere for
+new rounding to accumulate quietly. `--geometry` is still accepted and does
+nothing, so existing CI keeps working.
 
 ⚠️ **The first version of this check only covered the freeze**, which made the
-estate look 4x closer to done than it is. A token swap alone produces a file
+estate look 4x closer to done than it was. A token swap alone produces a file
 that passes and still renders rounded pills, gradients and colour-coded award
-bars — visually 2025, mechanically compliant. Geometry is checked separately
-because it survives a colour migration untouched.
+bars — visually 2025, mechanically compliant. Geometry was checked separately
+because it survives a colour migration untouched, and that separation is what
+made it countable; it is one tier again now that the count is zero.
+
+⚠️ **Three of these rules draw a distinction a regex wants to miss**, and each
+was found by the rule telling someone to break something:
+
+- a `mask-image` gradient is an **edge fade**, which the brand asks for by name;
+- a `repeating-*-gradient` is a **hatch**, a non-hue channel carrying meaning,
+  and the only way CSS draws one;
+- `box-shadow: 0 0 0 3px` is a **focus ring** — no offset, no blur, casts
+  nothing — and WCAG 2.4.7 requires it.
+
+In all three the "compliant" rewrite was worse than the thing flagged. If a
+geometry finding looks like it is asking you to delete something the standard
+requires, check whether it is one of these before you change the code.
 
 ## Rules
 
@@ -58,14 +76,16 @@ because it survives a colour migration untouched.
 | `deprecated-soft` | freeze | Every `-soft` tint except `--color-accent-tint` |
 | `non-brand-font` | freeze | A `font-family` outside the three brand faces |
 | `quicksand` | freeze | Quicksand anywhere but the `brand.css` fallback |
-| `rounded-corners` | geometry | Any non-zero radius, including `rounded-full` |
-| `drop-shadow` | geometry | Any outer `box-shadow` (inset is allowed — it draws the selected row) |
-| `gradient-fill` | geometry | Any gradient (the photographic text scrim is the brand's one exception) |
+| `rounded-corners` | freeze | Any non-zero radius, including `rounded-full` |
+| `drop-shadow` | freeze | Any outer `box-shadow`. Inset is allowed (it draws the selected row) and so is a zero-offset zero-blur ring, which is a focus indicator, not elevation |
+| `gradient-fill` | freeze | A gradient FILL. Not a `mask-image` gradient (that is an edge fade), not a `repeating-*-gradient` (that is a hatch), and the photographic text scrim is pragma'd |
 | `off-scale-spacing` | advisory | Padding, margin or gap off the six-step scale |
 
 `brand.css` is exempt: it is where the tokens are defined. Test and spec files
-are exempt: they assert on literals. Advisory and geometry tiers are off unless
-you pass `--advisory` / `--geometry`.
+are exempt: they assert on literals — ⛔ and so does `square-corners.mjs` skip
+them, because a codemod that rewrites `rounded-lg` inside `adherence.test.ts`
+is not migrating anything, it is deleting two regression tests and leaving
+them green. The advisory tier is off unless you pass `--advisory`.
 
 ⚠️ **`raw-hex` could not see an alpha hex until 21 Oct.** `#dc262655` slipped
 both arms of the old pattern — the 6-digit one matched `#dc2626` and then

@@ -85,7 +85,7 @@ main input[type="email"],
 main input[type="password"] {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 6px;
+  border-radius: 0;
   padding: 7px 10px;
   font-size: 13px;
   color: var(--color-text);
@@ -105,5 +105,9 @@ main select:focus,
 main input:focus {
   outline: none;
   border-color: var(--color-accent);
-  box-shadow: 0 0 0 3px var(--color-accent-soft);
+  /* The ring, not a shadow: no offset, no blur. ⚠️ It used --color-accent-soft
+     until the flip, which is a RETIRED token and now resolves to neutral grey
+     — a grey focus ring beside an accent-coloured focus border. Mixed from the
+     live accent instead, so it follows the brand and both themes. */
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 35%, transparent);
 }

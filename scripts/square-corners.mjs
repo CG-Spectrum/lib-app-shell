@@ -29,6 +29,15 @@ import { join, relative } from "node:path";
 const SOURCE_EXT = /\.(tsx?|jsx?|mjs|cjs)$/;
 const SKIP_DIR = /^(node_modules|\.next|\.git|dist|build|coverage|out)$/;
 
+/* 🔴 A TEST FILE'S LITERALS ARE ITS FIXTURES. adherence.test.ts contains
+   `rounded-lg` and `rounded-full` because it asserts the CHECKER finds them;
+   rewriting those is not a migration, it is deleting two regression tests and
+   leaving them green. The checker exempts test and spec files for the same
+   reason, and the codemod has to agree with it or running the pair in the
+   obvious order silently weakens the suite. Caught on app-shell itself, where
+   a --dry listed adherence.test.ts among the files it would edit. */
+const SKIP_FILE = /\.(test|spec)\.[tj]sx?$/;
+
 /* Radius utilities, including the side- and corner-specific forms. */
 const RADIUS_CLASS =
   /(?<=^|\s)rounded(?:-(?:t|b|l|r|tl|tr|bl|br|s|e|ss|se|es|ee))?(?:-(?:sm|md|lg|xl|2xl|3xl|full))?(?=\s|$)/g;
@@ -128,7 +137,7 @@ function walk(dir, out = []) {
     const path = join(dir, name);
     const s = statSync(path);
     if (s.isDirectory()) walk(path, out);
-    else if (SOURCE_EXT.test(name)) out.push(path);
+    else if (SOURCE_EXT.test(name) && !SKIP_FILE.test(name)) out.push(path);
   }
   return out;
 }

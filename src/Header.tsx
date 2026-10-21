@@ -39,7 +39,7 @@ export function Header({
     <header className="sticky top-0 z-50 bg-surface/85 backdrop-blur border-b-2 border-accent">
       <div className="w-full px-6 py-3 flex items-center gap-3">
         <AppLauncher catalog={APPS} userApps={user.apps} currentApp={currentApp} />
-        <img src="/cgspectrum-icon.png" alt="CG Spectrum" width={32} height={32} className="rounded" />
+        <img src="/cgspectrum-icon.png" alt="CG Spectrum" width={32} height={32} className="" />
         <a href="/" className="text-base font-bold tracking-tight text-text">
           {wordmark}
         </a>
@@ -50,7 +50,7 @@ export function Header({
           {admin && (
             <a
               href={admin.url}
-              className="rounded border border-border px-2 py-1 text-xs text-text-2 hover:border-accent hover:text-accent transition-colors"
+              className="border border-border px-2 py-1 text-xs text-text-2 hover:border-accent hover:text-accent transition-colors"
             >
               Admin
             </a>

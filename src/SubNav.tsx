@@ -121,7 +121,7 @@ export function SubNav({
                   // Chip colouring (accent on accent-soft), not solid accent with
                   // white text — #EA27C2 under white fails AA at this size.
                   <span
-                    className="ml-1.5 inline-flex min-w-4 items-center justify-center rounded-full border border-accent-border bg-accent-soft px-1 text-[10px] font-bold leading-4 text-accent"
+                    className="ml-1.5 inline-flex min-w-4 items-center justify-center border border-accent-border bg-accent-soft px-1 text-[10px] font-bold leading-4 text-accent"
                     aria-label={`${tab.badge} awaiting action`}
                   >
                     {badge}

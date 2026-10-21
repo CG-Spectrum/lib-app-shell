@@ -172,10 +172,18 @@ describe("things that look like hex but are not", () => {
 });
 
 describe("tiers", () => {
-  test("geometry findings do not fail the build by default", () => {
+  // ⚖️ These two asserted the OPPOSITE until the phase 4 flip, and were right
+  // to: geometry described the destination brand while the estate still wore
+  // 2025, so erroring would have failed every repo for being what it was
+  // supposed to be. The flip ended that argument — the estate now wears the
+  // brand it is measured against, every repo is at zero geometry, and a
+  // separate tier from here is just somewhere for new rounding to accumulate
+  // quietly. Rewritten rather than deleted so the change of contract is
+  // visible to whoever greps for why their build started failing.
+  test("geometry findings fail the build, as of the phase 4 flip", () => {
     const { out, exit } = check({ "a.css": ".x { border-radius: 8px; }" });
-    expect(exit).toBe(0);
-    expect(out).not.toContain("rounded-corners");
+    expect(out).toContain("rounded-corners");
+    expect(exit).toBe(1);
   });
 
   test("freeze findings always fail the build", () => {
@@ -183,12 +191,24 @@ describe("tiers", () => {
     expect(exit).toBe(1);
   });
 
-  test("geometry findings are reported but still do not fail, even when asked for", () => {
-    // They describe the destination brand. The estate is correctly rounded
-    // today; erroring would fail every repo for being what it is meant to be.
-    const { out, exit } = check({ "a.css": ".x { border-radius: 8px; }" }, "--geometry");
-    expect(out).toContain("rounded-corners");
-    expect(exit).toBe(0);
+  test("--geometry is accepted and does nothing", () => {
+    // Kept so CI and muscle memory do not break. ⚠️ It must still be consumed
+    // as a flag: unread, it would fall through to the list of directories to
+    // scan and the run would die on a missing path called "--geometry".
+    const plain = check({ "a.css": ".x { border-radius: 8px; }" });
+    const flagged = check({ "a.css": ".x { border-radius: 8px; }" }, "--geometry");
+    expect(flagged.exit).toBe(plain.exit);
+    expect(flagged.out.replace(/adherence-\w+/g, "")).toBe(plain.out.replace(/adherence-\w+/g, ""));
+  });
+
+  test("the geometry rules are all three enforced", () => {
+    for (const css of [
+      ".x { border-radius: 8px; }",
+      ".x { box-shadow: 0 2px 8px rgba(0,0,0,.4); }",
+      ".x { background: linear-gradient(180deg, red, blue); }",
+    ]) {
+      expect(check({ "a.css": css }).exit, css).toBe(1);
+    }
   });
 });
 
@@ -460,5 +480,82 @@ describe("a mask gradient is not a gradient fill", () => {
     }, "--geometry");
     expect(out).toContain("a.css:2");
     expect(out).not.toContain("a.css:1");
+  });
+});
+
+describe("a focus ring is not a drop shadow", () => {
+  // `box-shadow: 0 0 0 3px <colour>` has no offset and no blur: it draws a
+  // solid outline outside the border box, which is how a focus indicator is
+  // built when `outline` cannot follow the shape. It casts nothing. WCAG 2.4.7
+  // requires the indicator, "accessibility overrides brand" is a standing
+  // ruling, so a rule that flagged it was going to lose that argument every
+  // time it came up.
+  test("a zero-offset zero-blur ring passes", () => {
+    const { out } = check({
+      "a.css": ".x:focus { box-shadow: 0 0 0 3px var(--color-accent); }",
+    }, "--geometry");
+    expect(out).not.toContain("drop-shadow");
+  });
+
+  test("any ring width passes", () => {
+    const { out } = check({
+      "a.css": ".x { box-shadow: 0 0 0 2px var(--color-accent); }\n.y { box-shadow: 0 0 0 12px red; }",
+    }, "--geometry");
+    expect(out).not.toContain("drop-shadow");
+  });
+
+  test("a blur makes it a shadow again", () => {
+    // 0 0 4px is no offset but a real blur — that is elevation.
+    const { out } = check({
+      "a.css": ".x { box-shadow: 0 0 4px rgba(0,0,0,.5); }",
+    }, "--geometry");
+    expect(out).toContain("drop-shadow");
+  });
+
+  test("an offset makes it a shadow again", () => {
+    const { out } = check({
+      "a.css": ".x { box-shadow: -8px 0 32px rgba(0, 0, 0, .5); }",
+    }, "--geometry");
+    expect(out).toContain("drop-shadow");
+  });
+
+  test("Tailwind's shadow utilities are untouched by this", () => {
+    const { out } = check({ "a.tsx": '<div className="shadow-lg" />' }, "--geometry");
+    expect(out).toContain("drop-shadow");
+  });
+});
+
+describe("a hatch is not a gradient fill", () => {
+  // repeating-linear-gradient(…, 0 1px, transparent 1px 5px) draws stripes.
+  // It is not a wash and it fakes no depth — it is a non-hue channel carrying
+  // meaning, which is what this brand asks for everywhere else. marketing
+  // hatches a promotion window; scheduling hatches the over-allocated part of
+  // a utilisation bar, and marketing's test asserts the hatch is present.
+  test("repeating-linear-gradient passes", () => {
+    const { out } = check({
+      "a.css": ".x { background-image: repeating-linear-gradient(135deg, var(--color-accent) 0 1px, transparent 1px 5px); }",
+    }, "--geometry");
+    expect(out).not.toContain("gradient-fill");
+  });
+
+  test("repeating-radial-gradient too", () => {
+    const { out } = check({
+      "a.css": ".x { background: repeating-radial-gradient(circle, red 0 1px, transparent 1px 4px); }",
+    }, "--geometry");
+    expect(out).not.toContain("gradient-fill");
+  });
+
+  test("a plain linear-gradient is still a fill", () => {
+    const { out } = check({
+      "a.css": ".x { background: linear-gradient(180deg, var(--color-bg), var(--color-surface)); }",
+    }, "--geometry");
+    expect(out).toContain("gradient-fill");
+  });
+
+  test("the word repeating elsewhere on the line does not excuse a fill", () => {
+    const { out } = check({
+      "a.css": "/* repeating */ .x { background: linear-gradient(180deg, red, blue); }",
+    }, "--geometry");
+    expect(out).toContain("gradient-fill");
   });
 });

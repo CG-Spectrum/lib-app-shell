@@ -106,7 +106,7 @@ export function SearchBar({ userApps }: { userApps: string[] }) {
         onFocus={() => { if (filtered.length > 0) setOpen(true); }}
         onKeyDown={handleKeyDown}
         className={[
-          "w-64 min-w-0 shrink rounded border px-3 py-1.5 text-sm",
+          "w-64 min-w-0 shrink border px-3 py-1.5 text-sm",
           "bg-surface border-border text-text placeholder:text-text-3",
           "focus:outline-none focus:border-accent transition-colors",
         ].join(" ")}
@@ -118,7 +118,7 @@ export function SearchBar({ userApps }: { userApps: string[] }) {
           aria-label="Search results"
           className={[
             "absolute left-0 top-full mt-1 z-50",
-            "w-72 min-w-full rounded border border-border bg-surface shadow-lg",
+            "w-72 min-w-full border border-border-strong bg-surface",
             "overflow-y-auto max-h-80",
           ].join(" ")}
         >

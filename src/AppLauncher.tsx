@@ -90,16 +90,16 @@ export function AppLauncher({
           if (!open) warm();
           setOpen((o) => !o);
         }}
-        className="flex items-center rounded px-2 py-1 text-text-3 hover:text-accent transition-colors"
+        className="flex items-center px-2 py-1 text-text-3 hover:text-accent transition-colors"
       >
         <span className="relative grid grid-cols-3 gap-0.5">
           {/* 3×3 dot grid — waffle/launcher icon */}
           {Array.from({ length: 9 }).map((_, i) => (
-            <span key={i} className="h-1 w-1 rounded-full bg-current" />
+            <span key={i} className="h-1 w-1 bg-current" />
           ))}
           {anyNotifications && (
             <span
-              className="absolute -right-1.5 -top-1.5 h-2 w-2 rounded-full bg-accent"
+              className="absolute -right-1.5 -top-1.5 h-2 w-2 bg-accent"
               aria-label="An app has items awaiting action"
             />
           )}
@@ -107,7 +107,7 @@ export function AppLauncher({
       </button>
       {open && (
         <div
-          className="absolute left-0 z-50 mt-2 w-72 rounded-lg border border-border bg-surface-2 p-2 shadow-xl"
+          className="absolute left-0 z-50 mt-2 w-72 border border-border-strong bg-surface-2 p-2"
           role="menu"
           aria-label="Switch app"
         >
@@ -120,7 +120,7 @@ export function AppLauncher({
                 href={a.url}
                 role="menuitem"
                 onClick={() => setOpen(false)}
-                className={`block rounded px-3 py-2 transition-colors ${
+                className={`block px-3 py-2 transition-colors ${
                   isCurrent
                     ? "bg-accent-soft text-text"
                     : "text-text-2 hover:bg-surface hover:text-text"
@@ -130,7 +130,7 @@ export function AppLauncher({
                   {a.name}
                   {badge && (
                     <span
-                      className="inline-flex min-w-4 items-center justify-center rounded-full border border-accent-border bg-accent-soft px-1 text-[10px] font-bold leading-4 text-accent"
+                      className="inline-flex min-w-4 items-center justify-center border border-accent-border bg-accent-soft px-1 text-[10px] font-bold leading-4 text-accent"
                       aria-label={`${counts[a.key]} awaiting action`}
                     >
                       {badge}

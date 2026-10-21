@@ -141,7 +141,7 @@ const RULES = [
   },
   {
     id: "rounded-corners",
-    tier: "geometry",
+    tier: "error",
     /* The bare `rounded` alternative needs a class context. Without one it
        matches the IDENTIFIER in `const rounded = Math.round(...)`, which this
        check did — and a blind codemod acting on that flag renamed the variable
@@ -152,22 +152,41 @@ const RULES = [
   },
   {
     id: "drop-shadow",
-    tier: "geometry",
-    re: /box-shadow\s*:(?!\s*(?:none|inset)(?![a-z0-9-]))[^;}\n\]"\x27]+|\bshadow-(?:sm|md|lg|xl|2xl)\b/g,
-    msg: "No shadows. Depth in the 2027 brand is a 1px hairline, not a shadow. (An inset shadow is allowed: it is how the selected-row rule is drawn.)",
+    tier: "error",
+    /* 🔴 A RING IS NOT A SHADOW. `box-shadow: 0 0 0 3px <colour>` has no offset
+       and no blur — it draws a solid outline outside the border box, which is
+       how a focus indicator is built when `outline` cannot follow the corner.
+       It casts nothing. The brand bans shadows because they fake elevation,
+       and a focus ring fakes nothing; WCAG 2.4.7 requires it. Flagging it put
+       the geometry rule in direct conflict with an accessibility requirement,
+       and "accessibility overrides brand" is a standing ruling — so the rule
+       was going to lose that argument every time it was raised. Seven in the
+       estate, all focus or selection rings. */
+    re: /box-shadow\s*:(?!\s*(?:none|inset)(?![a-z0-9-])|\s*0 0 0 [0-9])[^;}\n\]"\x27]+|\bshadow-(?:sm|md|lg|xl|2xl)\b/g,
+    msg: "No shadows. Depth in the 2027 brand is a 1px hairline, not a shadow. (An inset shadow is allowed — it draws the selected-row rule — and so is a zero-offset zero-blur ring, which is a focus indicator, not elevation.)",
   },
   {
     id: "gradient-fill",
-    tier: "geometry",
+    tier: "error",
     /* 🔴 A MASK IS NOT A FILL. `mask-image: linear-gradient(...)` paints no
        colour at all — it is how an edge fade is drawn, and the brand asks for
        an edge fade on graded photography by name. Flagging it told people to
        delete the thing the standard requires, and the obvious compliant
        rewrite (a gradient overlay in the ground colour) is an actual gradient
        fill, so the check was pushing the estate from a clean mask toward the
-       thing it exists to prevent. */
-    re: /(?<!mask-image:\s{0,8})(?<!mask:\s{0,8})\b(?:linear|radial|conic)-gradient\s*\(|\bbg-gradient-to-[a-z]+\b/g,
-    msg: "No gradients. Flat colour grounds only. The one exception in the brand is the text-protection scrim over photography, which is a gradient to the ground and belongs on an image, not on a control or a card. A mask-image gradient is not a fill and is not flagged: that is how an edge fade is drawn.",
+       thing it exists to prevent.
+
+       🔴 A REPEATING GRADIENT IS A HATCH, NOT A FILL.
+       `repeating-linear-gradient(135deg, … 0 1px, transparent 1px 5px)` draws
+       1px stripes. It is not a wash and it fakes no depth — it is a non-hue
+       channel carrying meaning, which is the thing this brand asks for
+       everywhere else. marketing hatches a promotion window on the calendar;
+       scheduling hatches the over-allocated part of a utilisation bar. CSS
+       offers no other way to draw a hatch, so banning it pushes you to an
+       image. marketing's test asserts the hatch is PRESENT, which is a fair
+       measure of how much of a decoration it is not. */
+    re: /(?<!mask-image:\s{0,8})(?<!mask:\s{0,8})(?<!repeating-)\b(?:linear|radial|conic)-gradient\s*\(|\bbg-gradient-to-[a-z]+\b/g,
+    msg: "No gradients. Flat colour grounds only. The one exception in the brand is the text-protection scrim over photography, which is a gradient to the ground and belongs on an image, not on a control or a card. A mask-image gradient is not a fill and is not flagged: that is how an edge fade is drawn. Nor is a repeating-*-gradient, which is a hatch — a non-hue channel carrying meaning, and the only way CSS draws one.",
   },
   {
     id: "off-scale-spacing",
@@ -244,12 +263,20 @@ function walk(dir, out = []) {
 
 const args = process.argv.slice(2);
 const advisory = args.includes("--advisory");
-/* Geometry is the DESTINATION brand, not the freeze. Square corners, no
-   shadows and no gradients are 2027; the estate is still 2025 and its chrome
-   is correctly rounded today. Reporting them as errors now would fail every
-   repo for being what it is supposed to be, so they report separately and
-   become errors at the phase 4 flip (swap tier to "error" then). */
-const geometry = args.includes("--geometry");
+/* ⚖️ GEOMETRY IS ENFORCED AS OF THE PHASE 4 FLIP (21 Oct 2026). It used to be
+   reported separately, because the estate was still 2025 and its chrome was
+   correctly rounded — failing a repo for being what it was supposed to be
+   teaches people to switch the check off. That argument expired the moment
+   the values flipped: every repo is at zero geometry, the brand it is being
+   measured against is the one it now wears, and the only thing a separate
+   tier buys from here is somewhere for new rounding to accumulate quietly.
+
+   The --geometry flag is kept so existing CI and muscle memory do not break.
+   It is now a no-op: the rules it used to reveal run by default. */
+/* Accepted and ignored. Reading it keeps the flag out of `roots` below, which
+   is the only job it still has — without this, `--geometry` would be treated
+   as a directory to scan. */
+void args.includes("--geometry");
 const roots = args.filter((a) => !a.startsWith("--"));
 const targets = roots.length ? roots : ["src"];
 
@@ -293,8 +320,7 @@ for (const root of targets) {
       const allowed = allowMap[i] ?? new Set();
       for (const rule of RULES) {
         if (rule.tier === "advisory" && !advisory) continue;
-        if (rule.tier === "geometry" && !geometry) continue;
-        if (allowed.has(rule.id) || allowed.has("*")) continue;
+              if (allowed.has(rule.id) || allowed.has("*")) continue;
         rule.re.lastIndex = 0;
         const hit = rule.re.exec(line);
         if (hit) {
@@ -312,7 +338,6 @@ for (const root of targets) {
 
 const errors = findings.filter((f) => f.rule.tier === "error");
 const advisories = findings.filter((f) => f.rule.tier === "advisory");
-const geometries = findings.filter((f) => f.rule.tier === "geometry");
 
 const byRule = new Map();
 for (const f of findings) {
@@ -322,7 +347,7 @@ for (const f of findings) {
 
 for (const [id, group] of byRule) {
   const { tier, msg } = group[0].rule;
-  const banner = tier === "error" ? "ERROR" : tier === "geometry" ? "GEOMETRY" : "ADVISORY";
+  const banner = tier === "error" ? "ERROR" : "ADVISORY";
   console.log(`\n${banner}  ${id}  (${group.length})`);
   console.log(`  ${msg}`);
   for (const f of group.slice(0, 20)) {
@@ -347,12 +372,11 @@ if (generated.length) {
 console.log(
   `\n${errors.length} error${errors.length === 1 ? "" : "s"}` +
     (advisory ? `, ${advisories.length} advisory` : "") +
-    (geometry ? `, ${geometries.length} geometry (2027 destination, not yet enforced)` : "") +
     ` across ${targets.join(", ")}`
 );
 
 if (!advisory && errors.length === 0) {
-  console.log("Run with --advisory for spacing, --geometry for the 2027 corner/shadow/gradient debt.");
+  console.log("Run with --advisory for the spacing scale.");
 }
 
 process.exit(errors.length > 0 ? 1 : 0);
