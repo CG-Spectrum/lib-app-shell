@@ -85,13 +85,18 @@ const RULES = [
   {
     id: "rounded-corners",
     tier: "geometry",
-    re: /border-radius\s*:\s*(?!0\b|0px|0%)[^;}\n]+|\brounded(?:-(?:sm|md|lg|xl|2xl|3xl|full))?\b(?!-none)/g,
+    /* The bare `rounded` alternative needs a class context. Without one it
+       matches the IDENTIFIER in `const rounded = Math.round(...)`, which this
+       check did — and a blind codemod acting on that flag renamed the variable
+       and broke the build. `rounded-lg` and friends are distinctive enough to
+       match anywhere; plain `rounded` is an ordinary English word. */
+    re: /border-radius\s*:(?!\s*(?:0\b|0px|0%))[^;}\n]+|\brounded-(?:sm|md|lg|xl|2xl|3xl|full)\b|(?:class|className)\s*=[^>]*?\brounded\b(?!-)/g,
     msg: "Square corners. The 2027 brand is radius 0 on everything: buttons, fields, cards, images, radios. A pill or a circular avatar is a 2025 shape and survives a token swap, which is why this is checked separately from colour.",
   },
   {
     id: "drop-shadow",
     tier: "geometry",
-    re: /box-shadow\s*:\s*(?!none\b|inset\b)[^;}\n]+|\bshadow-(?:sm|md|lg|xl|2xl)\b/g,
+    re: /box-shadow\s*:(?!\s*(?:none\b|inset\b))[^;}\n]+|\bshadow-(?:sm|md|lg|xl|2xl)\b/g,
     msg: "No shadows. Depth in the 2027 brand is a 1px hairline, not a shadow. (An inset shadow is allowed: it is how the selected-row rule is drawn.)",
   },
   {
@@ -141,7 +146,11 @@ function buildAllowMap(rawLines) {
       if (!map[j]) map[j] = new Set();
       for (const id of ids) map[j].add(id);
       const body = rawLines[j].trim();
-      if (j > i && (body === "" || body === "}")) break;
+      /* Ends at a blank line or the close of the block. `endsWith("}")` rather
+         than `=== "}"` because a single-line rule (`.x { color: red; }`) never
+         puts the brace on its own line, and matching only the bare form let a
+         pragma leak into the NEXT selector — caught by adherence.test.ts. */
+      if (j > i && (body === "" || body.endsWith("}"))) break;
     }
   });
   return map;

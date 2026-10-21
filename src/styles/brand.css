@@ -235,6 +235,18 @@
   --color-bg-2: var(--color-surface-2);
   --color-text-1: var(--color-text);
 
+  /* ── Photographic scrim ────────────────────────────────────────────────── */
+  /* The ONE gradient the brand permits: text over an image sits on a gradient
+     back to the ground, never in a solid capsule. ⛔ It belongs on an image,
+     never on a control or a card, and ⛔ never over student work — the falloff
+     and the scrim belong to the graded frames only.
+
+     A token rather than a hand-mixed rgba because apps were hardcoding
+     rgba(3,11,27,.92), which is the 2025 navy ground. That does not follow the
+     phase 4 flip, so every scrim in the estate would have stayed navy over a
+     green-grey page. */
+  --color-scrim-hero: color-mix(in srgb, var(--color-bg) 92%, transparent);
+
   /* ── Layout ────────────────────────────────────────────────────────────── */
   /* Theme-independent, so no light override. */
   --content-max: 1480px;
@@ -246,6 +258,16 @@
 :root {
   --brand-body: var(--font-body), "Quicksand", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
   --brand-display: var(--font-display), "Stack Sans Notch", var(--brand-body);
+
+  /* The app layer's third face: IBM Plex Mono 500 caps for labels, strips,
+     buttons and captions. ⛔ Mono is never reading copy.
+
+     The face is not loaded yet — fonts.ts ships display and body only — so
+     this resolves to the system stack today. Apps reference the token rather
+     than guessing at a local font list, so when phase 4 loads Plex every app
+     picks it up without touching a stylesheet. That is the whole point of
+     naming it now. */
+  --brand-mono: var(--font-mono), "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 /* ── Density ────────────────────────────────────────────────────────────────
