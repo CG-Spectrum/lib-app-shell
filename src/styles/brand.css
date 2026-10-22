@@ -65,9 +65,12 @@
   /* ── Text ──────────────────────────────────────────────────────────────── */
   --color-text: #e9e6df;
   --color-text-2: #b9b6ae;
-  /* Deliberately the same value as --color-series-1. Paper's most recessive
-     step and the chart's lighter grey are the same grey; the standard sets
-     both at #8f8f8b. */
+  /* ⚠️ This used to be deliberately the same value as --color-series-1, on the
+     reasoning that paper's most recessive step and the chart's lighter grey
+     were one grey. The three-step ramp of 22 Oct 2026 parts them: the ramp had
+     to take the whole usable span to clear the ΔE floor, so series-1 is now
+     #cacdc6. Text keeps #8f8f8b, which is what the standard sets it to — the
+     coincidence is gone, the value is not. ⛔ Do not "restore" the match. */
   --color-text-3: #8f8f8b;
 
   /* ── Accent (brand) ────────────────────────────────────────────────────── */
