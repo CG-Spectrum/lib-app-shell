@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { segmentKind, isCurrentPage } from "./breadcrumb-logic";
+import { segmentKind, segmentCase, isCurrentPage } from "./breadcrumb-logic";
 import { Breadcrumb } from "./Breadcrumb";
 
 describe("segmentKind", () => {
@@ -47,6 +47,22 @@ describe("isCurrentPage", () => {
 
   it("single-item trail: the item is the current page", () => {
     expect(isCurrentPage(0, 1)).toBe(true);
+  });
+});
+
+describe("segmentCase", () => {
+  it("a section crumb is uppercased — the trail is chrome", () => {
+    expect(segmentCase({ label: "Conversion", href: "/conversion" })).toBe("upper");
+  });
+
+  // 🔴 "JEREMY CHINN" is the mistake the imported-text rule exists to prevent.
+  it("a name or code keeps its own case", () => {
+    expect(segmentCase({ label: "Jeremy Chinn", verbatim: true })).toBe("verbatim");
+    expect(segmentCase({ label: "ACA-04", verbatim: true })).toBe("verbatim");
+  });
+
+  it("verbatim is the exception, so sections need no flag", () => {
+    expect(segmentCase({ label: "Leadership" })).toBe("upper");
   });
 });
 

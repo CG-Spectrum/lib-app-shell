@@ -5,7 +5,7 @@ export type { ProfileLink } from "./usermenu-logic";
 export { SubNav, isActiveTab, startsNewGroup } from "./SubNav";
 export type { SubNavTab } from "./SubNav";
 export { Breadcrumb } from "./Breadcrumb";
-export { segmentKind, isCurrentPage } from "./breadcrumb-logic";
+export { segmentKind, segmentCase, isCurrentPage } from "./breadcrumb-logic";
 export type { BreadcrumbItem, SegmentKind } from "./breadcrumb-logic";
 export { APPS, FLOOR_APPS, visibleApps } from "./apps";
 export type { AppEntry, ShellUser } from "./apps";

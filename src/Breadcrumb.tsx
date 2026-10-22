@@ -3,8 +3,12 @@ import { Fragment } from "react";
 import {
   type BreadcrumbItem,
   segmentKind,
+  segmentCase,
   isCurrentPage,
 } from "./breadcrumb-logic";
+
+const caseClass = (item: BreadcrumbItem) =>
+  segmentCase(item) === "upper" ? "uppercase" : "";
 
 /**
  * Breadcrumb — shared hierarchical page trail.
@@ -24,6 +28,18 @@ import {
  * Classes use explicit var(--color-*) arbitrary values rather than the @theme
  * shorthands so the trail is pixel-identical to the hand-rolled breadcrumbs
  * it replaces (first consumer: salesapp page headers).
+ *
+ * ⚖️ MONO CAPS SINCE v2.12.0. The trail was body-14 with a semibold current
+ * crumb, which read as content rather than chrome. It now takes the
+ * tab-and-button rung — Mono 500 · 11 · .14em · caps, the same face and
+ * tracking as the eyebrow — because it is navigation and belongs in the same
+ * band as the tabs (Jeremy, 22 Oct 2026). 11 rather than the eyebrow's 10
+ * because a crumb is a click target. The current crumb is distinguished by
+ * COLOUR, not weight: in mono caps 500 is the spec and bolding it fights the
+ * tracking.
+ *
+ * ⚠️ A crumb with `verbatim` keeps the face and size but drops the uppercase.
+ * Section names shout correctly; a person's name does not.
  */
 export function Breadcrumb({
   items,
@@ -34,7 +50,10 @@ export function Breadcrumb({
 }) {
   if (items.length === 0) return null;
   return (
-    <nav aria-label="Breadcrumb" className="flex items-baseline gap-3">
+    <nav
+      aria-label="Breadcrumb"
+      className="flex items-baseline gap-3 font-mono text-[11px] font-medium tracking-[0.14em]"
+    >
       {items.map((item, i) => (
         <Fragment key={i}>
           {i > 0 && <span className="text-[var(--color-text-3)]">/</span>}
@@ -57,14 +76,14 @@ export function Breadcrumb({
                     }
                   : undefined
               }
-              className="text-sm text-[var(--color-text-3)] hover:text-[var(--color-text)]"
+              className={`text-[var(--color-text-3)] hover:text-[var(--color-text)] ${caseClass(item)}`}
             >
               {item.label}
             </a>
           ) : (
             <span
               aria-current={isCurrentPage(i, items.length) ? "page" : undefined}
-              className="text-sm font-semibold text-[var(--color-text)]"
+              className={`text-[var(--color-text)] ${caseClass(item)}`}
             >
               {item.label}
             </span>
