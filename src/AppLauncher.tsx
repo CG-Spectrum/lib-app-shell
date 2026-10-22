@@ -98,8 +98,10 @@ export function AppLauncher({
             <span key={i} className="h-1 w-1 bg-current" />
           ))}
           {anyNotifications && (
+            // ⛔ Attention, not accent — the same rule as SubNav's badge:
+            // "items awaiting action" is a status, and green marks selection.
             <span
-              className="absolute -right-1.5 -top-1.5 h-2 w-2 bg-accent"
+              className="absolute -right-1.5 -top-1.5 h-2 w-2 bg-[var(--color-attention)]"
               aria-label="An app has items awaiting action"
             />
           )}
@@ -137,7 +139,7 @@ export function AppLauncher({
                   {a.name}
                   {badge && (
                     <span
-                      className="inline-flex min-w-4 items-center justify-center border border-accent-border bg-accent-tint px-1 text-[10px] font-bold leading-4 text-accent"
+                      className="inline-flex h-[18px] min-w-[18px] items-center justify-center bg-[var(--color-attention)] px-[5px] text-[10px] font-bold leading-none text-[var(--color-bg)]"
                       aria-label={`${counts[a.key]} awaiting action`}
                     >
                       {badge}

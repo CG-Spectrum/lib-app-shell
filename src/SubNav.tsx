@@ -181,15 +181,17 @@ export function SubNav({
               >
                 {tab.label}
                 {badge && (
-                  // Chip colouring, not solid accent with white text — the
-                  // accent under white fails AA at this size.
-                  // ⚠️ Was bg-accent-soft, a token deleted on 21 Oct once its
-                  // last users moved. An undefined custom property makes the
-                  // background invalid, so the badge would have rendered with
-                  // no fill at all. --color-accent-tint is the one accent fill
-                  // 2027 keeps.
+                  // ⛔ ATTENTION, NOT ACCENT. "Items awaiting action" is a
+                  // STATUS, and the standard is explicit: "green marks
+                  // selection, never status". This badge was accent-tinted
+                  // with accent text, which both broke that rule and spent
+                  // green on something that is not the current item — while
+                  // app-people had quietly built its own amber marker beside
+                  // it, and forked this whole component to hang it on.
+                  // One marker language now, and it is the amber one
+                  // (Jeremy, 22 Oct 2026).
                   <span
-                    className="ml-1.5 inline-flex min-w-4 items-center justify-center border border-accent-border bg-accent-tint px-1 text-[10px] font-bold leading-4 text-accent"
+                    className="ml-1.5 inline-flex h-[18px] min-w-[18px] items-center justify-center bg-[var(--color-attention)] px-[5px] text-[10px] font-bold leading-none text-[var(--color-bg)]"
                     aria-label={`${tab.badge} awaiting action`}
                   >
                     {badge}
