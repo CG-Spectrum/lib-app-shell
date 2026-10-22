@@ -221,9 +221,17 @@ export function UserMenu({
               className="h-[28px] w-[28px] shrink-0 object-cover"
             />
           ) : (
+            // ⛔ NEUTRAL, not accent. This is the initials badge shown when
+            // someone has no profile photo — an identity label, not a current
+            // item, a selection or anything awaiting action, so hard rule 4
+            // does not cover it. It was a permanent green mark on every screen
+            // for every person without a photo, which is the largest remaining
+            // decorative use of the accent in the chrome after the header rule
+            // went neutral (Jeremy, 21 Oct 2026: save the bright green to draw
+            // attention to things).
             <span
               aria-hidden
-              className="flex h-[28px] w-[28px] shrink-0 items-center justify-center bg-accent/15 text-[11px] font-semibold text-accent"
+              className="flex h-[28px] w-[28px] shrink-0 items-center justify-center bg-surface-2 text-[11px] font-semibold text-text-2"
             >
               {initials}
             </span>

@@ -9,7 +9,7 @@ import { SearchBar } from "./SearchBar";
 // Canonical CGSI app header. Presentational: identity facts arrive as props the
 // consuming app extracts from its own auth() session. Shared via @cgsi/app-shell
 // — change here, version-bump, every app updates. Uses only the shared @theme
-// tokens (bg-surface, border-accent, text*) every app already defines.
+// tokens (bg-surface, border-border-strong, text*) every app already defines.
 export function Header({
   currentApp,
   user,
@@ -34,9 +34,27 @@ export function Header({
   const wordmark = entry?.name ?? "CGSI";
   // Far-right Admin shortcut for admin-grant holders — reach the grants/roles
   // page from any app without opening the launcher.
+  // ⛔ The header's bottom rule — the line directly above the SubNav tab row —
+  // is NEUTRAL. It was border-accent from the first build of this package and
+  // nothing in the standard ever asked for it: hard rule 4 reserves the accent
+  // for the current item, the selection, the one series that matters and the
+  // one primary button per view, and a bar on every screen of every app is
+  // none of those.
+  //
+  // It also competed with the one green that does carry meaning. The active
+  // tab's 2px accent rule sits 56px below this, same weight and same colour,
+  // so the informative mark was the SECOND green line on the page
+  // (Jeremy, 21 Oct 2026: "save the green as much as possible").
+  //
+  // Written into cgsi-2027-design, surface-app-layer.md, "The chrome is
+  // neutral", before this line changed.
+  //
+  // ⚠️ Still 2px, not a 1px hairline: SubNav pins itself at top-[58px], which
+  // is this 56px content row plus this border. The weight is load-bearing;
+  // only the colour was wrong.
   const admin = adminEntryFor(user.apps);
   return (
-    <header className="sticky top-0 z-50 bg-surface/85 backdrop-blur border-b-2 border-accent">
+    <header className="sticky top-0 z-50 bg-surface/85 backdrop-blur border-b-2 border-border-strong">
       <div className="w-full px-6 py-3 flex items-center gap-3">
         <AppLauncher catalog={APPS} userApps={user.apps} currentApp={currentApp} />
         <img src="/cgspectrum-icon.png" alt="CG Spectrum" width={32} height={32} className="" />
