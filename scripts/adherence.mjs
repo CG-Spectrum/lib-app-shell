@@ -25,7 +25,7 @@
    ──────────────────────────────────────────────────────────────────────────── */
 
 import { readFileSync, readdirSync, statSync } from "node:fs";
-import { join, relative, basename } from "node:path";
+import { join, relative, basename, resolve, dirname } from "node:path";
 
 const SOURCE_EXT = /\.(tsx?|jsx?|mjs|cjs|css|scss)$/;
 const SKIP_DIR = /^(node_modules|\.next|\.git|dist|build|coverage|out)$/;
@@ -188,6 +188,42 @@ const RULES = [
     re: /(?<!mask-image:\s{0,8})(?<!mask:\s{0,8})(?<!repeating-)\b(?:linear|radial|conic)-gradient\s*\(|\bbg-gradient-to-[a-z]+\b/g,
     msg: "No gradients. Flat colour grounds only. The one exception in the brand is the text-protection scrim over photography, which is a gradient to the ground and belongs on an image, not on a control or a card. A mask-image gradient is not a fill and is not flagged: that is how an edge fade is drawn. Nor is a repeating-*-gradient, which is a hatch — a non-hue channel carrying meaning, and the only way CSS draws one.",
   },
+  /* ── Rebuilt parts ────────────────────────────────────────────────────────
+     ⚖️ WHY THESE EXIST. Every other rule here checks a VALUE — a hex, a face,
+     a radius, a shadow. None of them checks whether a part was rebuilt, and
+     that is the gap that let the estate fork while the count read zero.
+
+     Found 22 Oct 2026 by releasing a change to Ledger, Status and Delta and
+     then discovering no app imports any of them. Apps take Breadcrumb,
+     Header, SubNav, useUrlState, THEME_INIT_SCRIPT, the fonts and the
+     stylesheet; the data parts they hand-rolled. 112 raw <table> files across
+     14 apps, every adherence run green. It also explains the chart-colour
+     sweep needing three passes and still missing two files: a package change
+     cannot reach a part the app rebuilt.
+
+     ⚠️ ADVISORY ON PURPOSE, FOR NOW. Erroring would take 14 repos red in one
+     commit for debt they did not create this week, which is how a checker
+     gets switched off. Advisory makes the number visible and trackable; the
+     tier moves to "error" once the estate is near zero, the way geometry did
+     at the phase 4 flip.
+
+     ⛔ NOT run against the package itself, which is where these parts are
+     SUPPOSED to be defined — see IN_PACKAGE. And HTML email is already exempt
+     by path: an email table is a layout requirement, not a rebuilt part. */
+  {
+    id: "rebuilt-table",
+    tier: "advisory",
+    packageExempt: true,
+    re: /<table\b/g,
+    msg: "Rebuilt table. Hard rule 2: never rebuild a panel, KPI tile, table, filter bar, status, notice, tabs or segmented control in an app — import Ledger from @cgsi/app-shell. A hand-rolled table misses every package change: the mono data treatment, the density rungs, the sort affordance, the sticky first column and the empty and loading states. If Ledger cannot do the job, extend Ledger.",
+  },
+  {
+    id: "rebuilt-part",
+    tier: "advisory",
+    packageExempt: true,
+    re: /\b(?:function|const)\s+(?:Ledger|Panel|Kpi|KPI|Status|StatusBadge|Badge|Notice|FilterBar|SegmentedControl|Segmented|RecordCard|Breadcrumb)\b/g,
+    msg: "Rebuilt part. Hard rule 2: import it from @cgsi/app-shell rather than redefining it locally. A local Badge is usually also a shape the brand does not have — status is a glyph plus a word, never a pill and never a filled badge.",
+  },
   {
     id: "off-scale-spacing",
     tier: "advisory",
@@ -280,6 +316,29 @@ void args.includes("--geometry");
 const roots = args.filter((a) => !a.startsWith("--"));
 const targets = roots.length ? roots : ["src"];
 
+/* The package is where the shared parts are DEFINED, so the rebuilt-part rules
+   must not fire on it.
+   🔴 Keyed to the SCANNED ROOT, not to cwd. Keying it to cwd looked right and
+   was wrong in the one place it matters: the regression tests run the script
+   from the package against a temp directory, so every rebuilt-part case came
+   back clean and would have shipped a rule that never fires.
+   A missing or unreadable manifest means "not the package", which is the safe
+   way round — an app without one still gets checked. */
+function inPackage(start) {
+  let dir = resolve(start);
+  for (;;) {
+    try {
+      const name = JSON.parse(readFileSync(join(dir, "package.json"), "utf8")).name;
+      if (name) return name === "@cgsi/app-shell";
+    } catch {
+      /* keep walking up */
+    }
+    const up = dirname(dir);
+    if (up === dir) return false;
+    dir = up;
+  }
+}
+
 /* 🔴 A GENERATED FILE IS NOT WHERE THE FIX GOES. people's
    src/lib/mentor-badges.ts is emitted from @cg-spectrum/catalogue, and its
    test asserts the result matches the package verbatim. Reported as 16
@@ -301,6 +360,7 @@ const generated = [];
 
 const findings = [];
 for (const root of targets) {
+  const rootInPackage = inPackage(root);
   for (const path of walk(root)) {
     if (EXEMPT(path)) continue;
     /* Comments are stripped before matching, blanked rather than removed so
@@ -320,6 +380,7 @@ for (const root of targets) {
       const allowed = allowMap[i] ?? new Set();
       for (const rule of RULES) {
         if (rule.tier === "advisory" && !advisory) continue;
+        if (rule.packageExempt && rootInPackage) continue;
               if (allowed.has(rule.id) || allowed.has("*")) continue;
         rule.re.lastIndex = 0;
         const hit = rule.re.exec(line);
@@ -376,7 +437,7 @@ console.log(
 );
 
 if (!advisory && errors.length === 0) {
-  console.log("Run with --advisory for the spacing scale.");
+  console.log("Run with --advisory for the spacing scale and rebuilt parts.");
 }
 
 process.exit(errors.length > 0 ? 1 : 0);

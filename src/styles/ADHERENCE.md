@@ -80,6 +80,8 @@ requires, check whether it is one of these before you change the code.
 | `drop-shadow` | freeze | Any outer `box-shadow`. Inset is allowed (it draws the selected row) and so is a zero-offset zero-blur ring, which is a focus indicator, not elevation |
 | `gradient-fill` | freeze | A gradient FILL. Not a `mask-image` gradient (that is an edge fade), not a `repeating-*-gradient` (that is a hatch), and the photographic text scrim is pragma'd |
 | `off-scale-spacing` | advisory | Padding, margin or gap off the six-step scale |
+| `rebuilt-table` | advisory | A raw `<table>` in an app. Import `Ledger`. HTML email is exempt by path |
+| `rebuilt-part` | advisory | A locally defined `Panel` / `Kpi` / `Status` / `Badge` / `Notice` / `FilterBar` / `RecordCard` / `Breadcrumb` |
 
 `brand.css` is exempt: it is where the tokens are defined. Test and spec files
 are exempt: they assert on literals — ⛔ and so does `square-corners.mjs` skip
@@ -99,6 +101,39 @@ replaced the 6-digit head and left `var(--color-bad)55`. That is not a colour,
 the browser drops the declaration, and the border or tint disappears with no
 error anywhere. Tint a token with `color-mix(in srgb, var(--token) NN%,
 transparent)` — never by appending digits.
+
+## 🔴 The gap these two rules close
+
+Every other rule here checks a **value** — a hex, a face, a radius, a shadow,
+a spacing step. Until 22 Oct 2026 none of them checked whether a **part** had
+been rebuilt, and that is how the estate forked while the count read zero.
+
+It was found by releasing a change to `Ledger`, `Status` and `Delta` and then
+discovering that **no app imports any of them**. Apps take `Breadcrumb`,
+`Header`, `SubNav`, `useUrlState`, `THEME_INIT_SCRIPT`, the fonts and the
+stylesheet. The data parts they hand-rolled. First measurement:
+
+| | Count |
+|---|---|
+| `rebuilt-table` | **169** across 14 apps |
+| `rebuilt-part` | **9** across 5 apps |
+
+It also explains older trouble. The chart-colour sweep needed three passes and
+still missed two files; the funnel and the feedback charts had to be found by
+hand. A package change cannot reach a part the app rebuilt, so every fix was
+a manual hunt through 17 repos.
+
+⚠️ **Advisory on purpose, for now.** Erroring would take 14 repos red in one
+commit for debt they did not create this week, which is how a checker gets
+switched off — the same argument that kept geometry on its own tier until the
+phase 4 flip. The tier moves to `error` when the estate is near zero, and not
+before.
+
+⛔ The rules do not run against the package itself, which is where these parts
+are supposed to be defined. The exemption follows the **scanned root**, not
+the working directory: keyed to cwd it looked right and silently never fired
+under the test harness, which runs the script from the package against a temp
+directory.
 
 ## Fixing a finding
 

@@ -559,3 +559,49 @@ describe("a hatch is not a gradient fill", () => {
     expect(out).toContain("gradient-fill");
   });
 });
+
+describe("rebuilt parts — the gap that let the estate fork while the count read zero", () => {
+  // 🔴 Found 22 Oct 2026 by releasing a change to Ledger, Status and Delta and
+  // then discovering no app imports any of them. Every other rule checks a
+  // VALUE; none checked whether a part was rebuilt. 112 raw <table> files
+  // across 14 apps, every adherence run green.
+  test("a hand-rolled table is flagged, and the message names the component", () => {
+    const { out } = check({ "Dash.tsx": "export const D = () => <table><tr /></table>;" }, "--advisory");
+    expect(out).toContain("rebuilt-table");
+    expect(out).toContain("Ledger");
+  });
+
+  test("a locally redefined part is flagged", () => {
+    const { out } = check({ "Badge.tsx": "export function StatusBadge() { return null; }" }, "--advisory");
+    expect(out).toContain("rebuilt-part");
+  });
+
+  test("both are advisory, so they never fail a repo on their own", () => {
+    const { out, exit } = check(
+      { "Dash.tsx": "export const D = () => <table />;\nexport function Panel() { return null; }\n" },
+      "--advisory",
+    );
+    expect(exit).toBe(0);
+    expect(out).toContain("0 errors");
+  });
+
+  test("silent without --advisory, like every other advisory rule", () => {
+    const { out } = check({ "Dash.tsx": "export const D = () => <table />;" });
+    expect(out).not.toContain("rebuilt-table");
+  });
+
+  // ⛔ HTML email needs table layout. Exempt by path, and it must stay that way.
+  test("an email template is not a rebuilt table", () => {
+    const { out } = check({ "email-receipt.tsx": "export const E = () => <table />;" }, "--advisory");
+    expect(out).not.toContain("rebuilt-table");
+  });
+
+  // 🔴 The exemption was keyed to cwd first. That looked right and was wrong
+  // exactly here: these tests run the script FROM the package against a temp
+  // directory, so every case above came back clean and the rule would have
+  // shipped never firing. It is keyed to the scanned root instead.
+  test("the package exemption follows the scanned root, not the working directory", () => {
+    const { out } = check({ "Dash.tsx": "export const D = () => <table />;" }, "--advisory");
+    expect(out).toContain("rebuilt-table");
+  });
+});
