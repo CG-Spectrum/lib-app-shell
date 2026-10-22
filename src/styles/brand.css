@@ -129,9 +129,33 @@
 
      Light is the better ground for charts: 8.90 and 2.91 on #f3f4f2, with
      series-2 reaching 3.21 on white — over the 3:1 a graphical object needs,
-     which the dark pair never reaches. */
-  --color-series-1: #8f8f8b;
-  --color-series-2: #4a5150;
+     which the dark pair never reaches.
+
+     ⚖️ THREE STEPS SINCE 22 OCT 2026, re-measured the same way. Chart-heavy
+     screens read monochromatic (Jeremy, 22 Oct) and the first proposal was a
+     six-step ramp walking deep cool to warm bone. It was measured before it
+     shipped and it failed worse than the four flat greys already rejected
+     above — worst adjacent ΔE 6.4 dark, 4.8 light. A hue walk does not buy
+     separation. What the span actually carries, against the same floor of 15:
+
+       2 greys   ΔE 25.0 dark / 28.9 light   PASS (what this replaces)
+       3 greys   ΔE 20.4 dark / 20.7 light   PASS  ← here
+       4 greys   ΔE 12.8 dark / 13.8 light   FAIL
+       6 greys   ΔE  6.4 dark /  4.8 light   FAIL
+
+     So the budget in chart-logic.ts goes from two to three and no further.
+     Three greys plus the accent plus --color-info as the single comparator is
+     five series, and five is the ceiling: a sixth means the chart is asking
+     too much and wants small multiples or a grouped tail.
+
+     🔴 series-3 is 2.03:1 on #1b2120 and does NOT clear 3:1 — the same
+     position series-2 was in at 2.01, for the same unavoidable reason: a third
+     step that cleared 3:1 would compress the ramp back under the ΔE floor.
+     Direct labels stay mandatory and ChartPanel still always ships the table.
+     The smallest series lands on the weak step, which is where it belongs. */
+  --color-series-1: #cacdc6;
+  --color-series-2: #858781;
+  --color-series-3: #4f514b;
 
   /* New in 2027: the fourth status, for projected and read-only values. It has
      no 2025 equivalent to preserve, so it takes its 2027 values now — safe,
@@ -408,9 +432,16 @@ html[data-theme="light"] {
      lighter on #131919.
 
      Validated on #ffffff: ΔE 26.7 normal and protan, and both steps clear 3:1
-     against the surface — better than the dark pair, which only warns. */
-  --color-series-1: #3E4544;
-  --color-series-2: #8A9190;
+     against the surface — better than the dark pair, which only warns.
+
+     ⚖️ Third step added 22 Oct 2026 with the dark ramp; see the long note on
+     the dark block for what was measured and why it stops at three. Worst
+     adjacent ΔE 20.7 across normal, protan, deutan and tritan. Step 3 is
+     1.92:1 on #ffffff, so on this ground it is the one that no longer clears
+     3:1 — the weak step moved, it did not go away. */
+  --color-series-1: #3c3e39;
+  --color-series-2: #767872;
+  --color-series-3: #babcb6;
 }
 
 
@@ -484,8 +515,12 @@ html[data-theme="light"] {
      lighter on #131919.
 
      Validated on #ffffff: ΔE 26.7 normal and protan, and both steps clear 3:1
-     against the surface — better than the dark pair, which only warns. */
-  --color-series-1: #3E4544;
-  --color-series-2: #8A9190;
+     against the surface — better than the dark pair, which only warns.
+
+     ⚖️ Third step added 22 Oct 2026; same values and same reasoning as the
+     html[data-theme="light"] block above, which is the one to read. */
+  --color-series-1: #3c3e39;
+  --color-series-2: #767872;
+  --color-series-3: #babcb6;
   }
 }

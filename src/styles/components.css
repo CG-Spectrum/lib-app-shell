@@ -218,3 +218,44 @@
   border-radius: 0;
   border: 1px dashed var(--color-border);
 }
+
+/* ── Callout ──────────────────────────────────────────────────────────────
+   A recessed block carrying ONE figure or ONE pulled statement, on reading-
+   heavy screens that have no chart to break the page.
+
+   ⚖️ WHY THIS IS A PART. The website gets its tonal contrast from photography
+   and student work. An app screen has none, so a policy or record page runs
+   body-14 end to end on a single surface with nothing for the eye to land on
+   (Jeremy, 22 Oct 2026: "the chart heavy and text pages are looking very dull
+   and monochromatic"). The surface ramp is the only contrast available and
+   this is where it gets spent.
+
+   ⛔ NOT a notice. A notice carries a status hue on its left hairline and
+   asserts something about the record; a callout takes no hue and asserts
+   nothing. One per screenful, never two in a row, and never for an aside the
+   reader could skip — skippable text belongs behind "Details".
+
+   ⚠️ --color-surface-3 does not mean the same thing in both themes: it is
+   DARKER than the ground on dark and LIGHTER than white on light, so this
+   reads as a recess in one and a third surface in the other. That asymmetry
+   is deliberate and is documented on the token. */
+.callout {
+  background: var(--color-surface-3);
+  padding: 16px;
+  margin: 24px 0;
+  max-width: 65ch;
+}
+.callout .figure {
+  font-family: var(--brand-display);
+  font-weight: 300;
+  font-size: 64px;
+  line-height: 0.94;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+.callout .caption {
+  margin-top: 8px;
+  max-width: 48ch;
+  font-size: 13px;
+  color: var(--color-text-3);
+}

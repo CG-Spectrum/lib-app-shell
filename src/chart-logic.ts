@@ -2,9 +2,9 @@
 // arithmetic is testable — a chart whose labels name values it does not reach
 // is the most common way one of these lies.
 //
-// ── THE SERIES BUDGET, AND WHY IT IS TWO ─────────────────────────────────────
+// ── THE SERIES BUDGET, AND WHY IT IS THREE ───────────────────────────────────
 //
-// The 2027 standard says grey is data (#4a5150 → #8f8f8b) and green is the one
+// The 2027 standard says grey is data and green is the one
 // series the panel is about. That gives no categorical hue palette at all,
 // deliberately. The consequence was measured rather than assumed, with the
 // dataviz palette validator against the panel surface #1b2120:
@@ -13,30 +13,53 @@
 //   3 greys  worst adjacent pair ΔE 9.7 (normal vision)  — FAIL
 //   2 greys  ΔE 22.1 protan / 22.1 normal                — PASS
 //
-// The floor is 15 for normal vision. So a single-hue ramp carries exactly TWO
-// distinguishable series, plus the accent, and that is the whole budget. A
-// third grey is not a worse chart, it is an unreadable one — and unreadable
+// The floor is 15 for normal vision.
+//
+// ⚖️ RE-MEASURED 22 OCT 2026, because chart-heavy screens read monochromatic
+// and the first answer proposed was a six-step ramp walking deep cool to warm
+// bone. It was measured before it shipped and failed worse than the four flat
+// greys above — worst adjacent ΔE 6.4 dark, 4.8 light. A HUE WALK DOES NOT BUY
+// SEPARATION. Beside its own label a six-step ramp looks fine, which is the
+// trap: the floor exists for series a reader must tell apart WITHOUT the label.
+// The same measurement, run across normal, protan, deutan and tritan, says the
+// span carries THREE:
+//
+//   3 greys  ΔE 20.4 dark / 20.7 light  — PASS  ← the budget
+//   4 greys  ΔE 12.8 dark / 13.8 light  — FAIL
+//
+// So three greys, plus the accent, plus --color-info as the single comparator
+// the accent series is measured against. Five series, and five is the ceiling.
+// A fourth grey is not a worse chart, it is an unreadable one — and unreadable
 // for everybody, not only for colour-blind readers.
 //
-// 🔴 BOTH GREYS ALSO SIT UNDER 3:1 AGAINST THE SURFACE (2.01 and 2.36). The
-// validator calls that relief-required, which is why direct labels are not
-// optional on this component and why the table view always exists. CGSI
-// already required the table; the contrast measurement is the second reason.
+// 🔴 THE WEAKEST GREY STILL SITS UNDER 3:1 AGAINST THE SURFACE (series-3 at
+// 2.03 dark, and on light it is series-3 again at 1.92). The validator calls
+// that relief-required, which is why direct labels are not optional on this
+// component and why the table view always exists. CGSI already required the
+// table; the contrast measurement is the second reason. It is not fixable: a
+// third step that cleared 3:1 would compress the ramp back under the ΔE floor.
 //
 // ⚖️ Over budget, fold the tail into "Other", facet into small multiples, or
 // split the panel. ⛔ Never generate a hue — the palette has none to generate.
 
-export const CHART_SERIES_BUDGET = 2;
+export const CHART_SERIES_BUDGET = 3;
 
 /**
- * Grey is data. Two steps, as tokens — the values live in brand.css so they
+ * Grey is data. Three steps, as tokens — the values live in brand.css so they
  * follow the theme: light mode uses its own ramp chosen for white rather than
- * a flip of the dark one, and both pairs were validated against their own
+ * a flip of the dark one, and each ramp was validated against its own
  * surface. Hardcoding the hex here would freeze the dark values into a light
  * page, which is the bug the adherence check caught when this file did exactly
  * that.
+ *
+ * Ordered most-present first, so a caller that takes the first n steps gets
+ * the n most visible ones and the largest series lands on series-1.
  */
-export const SERIES_GREY = ["var(--color-series-1)", "var(--color-series-2)"] as const;
+export const SERIES_GREY = [
+  "var(--color-series-1)",
+  "var(--color-series-2)",
+  "var(--color-series-3)",
+] as const;
 
 export interface Point {
   /** Category or time label, as it appears on the axis. */

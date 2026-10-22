@@ -23,19 +23,23 @@ const s = (key: string, extra: Partial<Series> = {}): Series => ({
 });
 
 describe("the series budget", () => {
-  test("is two, the measured limit of a single-hue ramp", () => {
-    // 3 greys measured ΔE 9.7 against a floor of 15; 2 measured 22.1.
-    expect(CHART_SERIES_BUDGET).toBe(2);
-    expect(SERIES_GREY).toHaveLength(2);
+  test("is three, the measured limit of a single-hue ramp", () => {
+    // Re-measured 22 Oct 2026 across normal/protan/deutan/tritan against a
+    // floor of 15: 3 steps clear at ΔE 20.4 dark and 20.7 light, 4 fail at
+    // 12.8 and 13.8. A six-step ramp with a hue walk failed worst of all.
+    expect(CHART_SERIES_BUDGET).toBe(3);
+    expect(SERIES_GREY).toHaveLength(3);
   });
 
-  test("two greys plus an accent is fine", () => {
-    expect(seriesBudgetError([s("a"), s("b"), s("c", { accent: true })])).toBeNull();
+  test("three greys plus an accent is fine", () => {
+    expect(
+      seriesBudgetError([s("a"), s("b"), s("c"), s("d", { accent: true })]),
+    ).toBeNull();
   });
 
-  test("🔴 three greys is an error, and says what to do instead", () => {
-    const err = seriesBudgetError([s("a"), s("b"), s("c")]);
-    expect(err).toContain("3 grey series");
+  test("🔴 four greys is an error, and says what to do instead", () => {
+    const err = seriesBudgetError([s("a"), s("b"), s("c"), s("d")]);
+    expect(err).toContain("4 grey series");
     expect(err).toMatch(/Other|small multiples|split/);
   });
 
