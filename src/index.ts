@@ -7,7 +7,7 @@ export type { SubNavTab } from "./SubNav";
 export { Breadcrumb } from "./Breadcrumb";
 export { segmentKind, isCurrentPage } from "./breadcrumb-logic";
 export type { BreadcrumbItem, SegmentKind } from "./breadcrumb-logic";
-export { APPS, visibleApps } from "./apps";
+export { APPS, FLOOR_APPS, visibleApps } from "./apps";
 export type { AppEntry, ShellUser } from "./apps";
 export { SearchBar } from "./SearchBar";
 export { visibleResults, groupByApp } from "./searchbar-logic";
@@ -112,6 +112,10 @@ export {
   resolveScale,
   scaleCookieString,
   applyScale,
+  SCALE_RUNGS,
+  stepScale,
+  scaleStepDisabled,
+  scaleLabel,
 } from "./scale";
 export type { Scale } from "./scale";
 

@@ -62,6 +62,66 @@ export function scaleValue(setting: Scale, cssWidth: number): number {
   return setting === "auto" ? scaleForWidth(cssWidth) : Number(setting);
 }
 
+/** The pinned rungs, in order, without `auto`. The stepper walks this. */
+export const SCALE_RUNGS: readonly Scale[] = ["1", "1.15", "1.25", "1.4"];
+
+/**
+ * One step of the Smaller / Larger control.
+ *
+ * ⚖️ STEPPING AWAY FROM AUTO PINS. The step is taken from the rung the reader
+ * is actually LOOKING AT — auto resolves against the viewport first — and the
+ * result is always a pinned rung, never auto. Someone pressing Smaller is
+ * stating a preference about their own screen, and leaving the setting on
+ * auto would have the next resize silently overrule them. `toAuto` is how
+ * they hand the decision back.
+ *
+ * Clamps at both ends rather than wrapping: a control that jumps from the
+ * largest to the smallest on one more press reads as a bug, and the caller
+ * disables the button at the end of the ladder anyway.
+ *
+ * ⛔ There is still no rung below 1 — see SCALE_STEPS. Jeremy, 21 Oct 2026,
+ * found the interface better at about 80% of what auto gave him on a 3072px
+ * viewport; auto puts that screen on 1.4, and 1.15 is 82% of 1.4, so the
+ * ladder already holds what was being asked for. A sub-1 rung would take body
+ * under 13px on the dark ground, which is the one thing the type scale will
+ * not do.
+ */
+export function stepScale(setting: Scale, cssWidth: number, direction: -1 | 1): Scale {
+  const current = scaleValue(setting, cssWidth);
+  // Nearest rung, so an auto value that is not itself on the ladder (it always
+  // is today, but SCALE_STEPS and SCALE_RUNGS are free to drift apart) still
+  // steps somewhere sensible rather than falling off the end.
+  let i = 0;
+  for (let k = 1; k < SCALE_RUNGS.length; k++) {
+    if (Math.abs(Number(SCALE_RUNGS[k]) - current) < Math.abs(Number(SCALE_RUNGS[i]) - current)) i = k;
+  }
+  const next = Math.min(SCALE_RUNGS.length - 1, Math.max(0, i + direction));
+  return SCALE_RUNGS[next]!;
+}
+
+/** True when the control at this end of the ladder can do nothing. */
+export function scaleStepDisabled(setting: Scale, cssWidth: number, direction: -1 | 1): boolean {
+  return stepScale(setting, cssWidth, direction) === scaleSettingAt(setting, cssWidth);
+}
+
+/** The pinned rung a setting currently equates to, for comparing against a step. */
+function scaleSettingAt(setting: Scale, cssWidth: number): Scale {
+  const current = scaleValue(setting, cssWidth);
+  return (SCALE_RUNGS.find((r) => Number(r) === current) ?? "1") as Scale;
+}
+
+/**
+ * What the menu shows. Names the resolved percentage either way, because the
+ * number is the thing the reader is judging; `auto` is a prefix on it, not a
+ * replacement for it. Returns "" before mount, when the width is unknown and
+ * the caller has nothing true to say yet.
+ */
+export function scaleLabel(setting: Scale | null, cssWidth: number): string {
+  if (setting === null) return "";
+  const pct = `${Math.round(scaleValue(setting, cssWidth) * 100)}%`;
+  return setting === "auto" ? `Auto · ${pct}` : pct;
+}
+
 // Domain-scoped to the estate in production, host-only on localhost. Mirrors
 // themeCookieString and densityCookieString deliberately: three cookies that
 // behaved differently would be a bug waiting for whoever ships the fourth.

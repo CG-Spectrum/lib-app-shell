@@ -2,6 +2,14 @@
 import { useEffect, useRef, useState } from "react";
 import { applyTheme, type Theme } from "./theme";
 import {
+  applyScale,
+  resolveScale,
+  scaleLabel,
+  scaleStepDisabled,
+  stepScale,
+  type Scale,
+} from "./scale";
+import {
   anyLinkIncomplete,
   avatarAriaLabel,
   initialsFor,
@@ -32,7 +40,9 @@ export type { ProfileLink };
  *     beside its label, plus visually-hidden text so the dot has a text
  *     alternative for screen readers.
  *  3. Theme toggle, as a text item labelled with the ACTION it performs.
- *  4. Sign out.
+ *  4. Display size — Smaller / Larger either side of the resolved percentage,
+ *     the percentage itself being the way back to automatic.
+ *  5. Sign out.
  *
  * When ANY supplied link is incomplete, the avatar trigger ALSO carries a
  * small dot at its top-right corner (see `anyLinkIncomplete` in
@@ -66,6 +76,11 @@ export function UserMenu({
 }) {
   const [open, setOpen] = useState(false);
   const [theme, setTheme] = useState<Theme | null>(null);
+  // Scale and the width it resolves against. Both null/0 until mount for the
+  // same reason as theme: it is settled pre-paint from the cookie by
+  // CHROME_INIT_SCRIPT, and the server cannot know it.
+  const [scale, setScale] = useState<Scale | null>(null);
+  const [width, setWidth] = useState(0);
   const [imageFailed, setImageFailed] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const initials = initialsFor(name, email);
@@ -90,7 +105,22 @@ export function UserMenu({
   // after mount, same pattern as the standalone ThemeToggle.
   useEffect(() => {
     setTheme(document.documentElement.dataset.theme === "light" ? "light" : "dark");
+    setScale(resolveScale(document.documentElement.dataset.scale));
+    setWidth(window.innerWidth);
   }, []);
+
+  // ⚠️ The label names a resolved percentage, so on `auto` it is only true
+  // for the current viewport — follow the resize or the menu shows a stale
+  // number after the window moves between monitors. `zoom` does not affect
+  // innerWidth (see scale.ts), so this cannot feed back on itself.
+  useEffect(() => {
+    if (!open) return;
+    function onResize() {
+      setWidth(window.innerWidth);
+    }
+    window.addEventListener("resize", onResize, { passive: true });
+    return () => window.removeEventListener("resize", onResize);
+  }, [open]);
 
   // Close on outside click or Escape while open.
   useEffect(() => {
@@ -124,8 +154,30 @@ export function UserMenu({
     setOpen(false);
   }
 
+  // ⛔ The menu deliberately stays OPEN on a scale step, where the theme
+  // toggle closes it. Theme is one press and the result is obvious with the
+  // menu shut; size is judged by pressing again, and a control that dismisses
+  // itself after every press cannot be used to find the right rung.
+  function step(direction: -1 | 1) {
+    if (scale === null) return;
+    const next = stepScale(scale, width, direction);
+    applyScale(next);
+    setScale(next);
+  }
+
+  function toAuto() {
+    applyScale("auto");
+    setScale("auto");
+  }
+
   const itemClass =
     "block w-full px-3 py-2 text-left text-sm text-text-2 hover:bg-accent/10 hover:text-accent transition-colors";
+
+  // Square, hairline, mono — the standard's button. Explicit pixel sizing for
+  // the same reason as the avatar above: Tailwind's rem scale resolves
+  // against the HOST app's root font-size, and people sets 14px.
+  const stepClass =
+    "flex h-[26px] w-[26px] shrink-0 items-center justify-center border border-border font-mono text-[13px] leading-none text-text-2 transition-colors hover:border-accent hover:text-accent disabled:cursor-default disabled:border-border disabled:text-text-3 disabled:hover:border-border disabled:hover:text-text-3";
 
   return (
     <div ref={containerRef} className="relative">
@@ -255,7 +307,68 @@ export function UserMenu({
             {themeToggleLabel(theme)}
           </button>
 
-          <button type="button" role="menuitem" onClick={signOut} className={itemClass}>
+          {/* Display size. Not a toggle like the theme: there are four rungs
+              plus automatic, so Smaller / Larger step the ladder and the
+              percentage in the middle hands the decision back to automatic.
+              Writes the estate-scoped cookie, so a rung set here is the rung
+              every other app opens at — which is the entire point, since
+              Chrome's own zoom is stored per origin and every app in this
+              estate is its own subdomain. */}
+          <div className="border-t border-border px-3 py-2">
+            <div
+              id="cgsi-scale-label"
+              className="font-mono text-[10px] uppercase tracking-[0.14em] text-text-3"
+            >
+              Display size
+            </div>
+            <div className="mt-1.5 flex items-center gap-1.5">
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => step(-1)}
+                disabled={scale === null || scaleStepDisabled(scale, width, -1)}
+                aria-label="Smaller"
+                className={stepClass}
+              >
+                {/* U+2212, a real minus — a hyphen sits too high beside the plus. */}
+                −
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                onClick={toAuto}
+                disabled={scale === null || scale === "auto"}
+                aria-describedby="cgsi-scale-label"
+                aria-label={
+                  scale === "auto"
+                    ? `Display size automatic, ${scaleLabel(scale, width)}`
+                    : `Display size ${scaleLabel(scale, width)}, back to automatic`
+                }
+                // min-h so the row keeps its height in the pre-mount window
+                // when the label is still "" — no shift when it resolves.
+                className="flex min-h-[26px] flex-1 items-center justify-center border border-transparent px-1 font-mono text-[11px] tabular-nums text-text transition-colors hover:border-border hover:text-accent disabled:cursor-default disabled:hover:border-transparent disabled:hover:text-text"
+              >
+                {scaleLabel(scale, width)}
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => step(1)}
+                disabled={scale === null || scaleStepDisabled(scale, width, 1)}
+                aria-label="Larger"
+                className={stepClass}
+              >
+                +
+              </button>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            role="menuitem"
+            onClick={signOut}
+            className={`${itemClass} border-t border-border`}
+          >
             Sign out
           </button>
         </div>

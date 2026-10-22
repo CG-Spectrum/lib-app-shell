@@ -69,6 +69,54 @@ export function isActiveTab(href: string, currentPath: string): boolean {
   return currentPath.startsWith(href + "/");
 }
 
+/**
+ * Pure tab-class helper — exported for direct unit testing.
+ *
+ * ⚖️ THE STANDARD'S TAB, not a smaller body label. Mono 500 at 11 with .14em
+ * tracking, in caps, with a 2px accent rule under the active one
+ * (surface-app-layer.md, "Navigation": "Tabs ... Mono 11 caps, 2px accent rule
+ * under the active tab", and the type table's "Tab, button" row).
+ *
+ * It had been body 600 at 12.25px in sentence case — the face and the case
+ * both wrong, which is most of why the top bars looked like a different
+ * product in each app.
+ *
+ * ⛔ Non-active is PAPER, not --color-text-2. A nav item you can go to is not
+ * secondary information; dimming the whole bar to make one item stand out
+ * spends contrast the brand does not have to spare, and the accent plus the
+ * rule already marks the current page twice over.
+ *
+ * 🔴 `whitespace-nowrap shrink-0` is load-bearing, not tidying. A flex item
+ * defaults to `flex-shrink: 1` and `min-width: auto`, so once the row runs out
+ * of width every multi-word tab shrinks to its min-content width and BREAKS
+ * ACROSS TWO LINES — "Email / Sequences", "Social / Sentiment" — while the row
+ * itself stays one row and the active tab's 2px rule detaches from the nav's
+ * bottom border. Reported in marketing, 21 Oct 2026.
+ *
+ * ⚠️ This is a v2.3.0 regression, not a pre-existing limit. Conforming the nav
+ * swapped body 600 / 12.25px / sentence case for Mono 11 caps at .14em
+ * tracking, which is WIDER per character despite the smaller size: marketing's
+ * fifteen labels went from roughly 1,070px of text to roughly 1,390px.
+ * Display scale compounds it — `zoom` divides the effective viewport, so the
+ * 1.40 rung gives a 2880px screen about 2,060 usable px, and a 1920px screen
+ * at 1.15 gets about 1,670.
+ *
+ * ⛔ Do not "fix" this with flex-wrap. Wrapping the ROW puts every tab but the
+ * last row's off the nav's bottom border, and the active underline then floats
+ * mid-bar. The row stays one row and scrolls; see SubNav's container.
+ */
+export function tabClassName(active: boolean): string {
+  return [
+    "inline-block shrink-0 whitespace-nowrap",
+    "px-3 py-2.5 font-mono text-[11px] font-medium uppercase tracking-[0.14em]",
+    "transition-colors duration-100",
+    "border-b-2 -mb-px", // sits on the nav's bottom border
+    active
+      ? "border-accent text-accent"
+      : "border-transparent text-text hover:text-accent hover:border-border",
+  ].join(" ");
+}
+
 export function SubNav({
   tabs,
   currentPath,
@@ -87,7 +135,13 @@ export function SubNav({
       className="sticky top-[58px] z-40 w-full bg-surface border-b border-border"
       aria-label="Section navigation"
     >
-      <div className="flex items-end gap-1 px-6">
+      {/* ⛔ No flex-wrap — see tabClassName. The row holds one line and scrolls
+          when the tabs outrun it, so the active tab's rule always sits on the
+          nav's bottom border and no tab is ever unreachable. A thin scrollbar
+          rather than a hidden one: hiding it leaves no affordance that there
+          is more, and an edge-fade mask would be a new brand decision for the
+          chrome, which belongs in cgsi-2027-design first. */}
+      <div className="flex items-end gap-1 overflow-x-auto px-6 [scrollbar-width:thin]">
         {tabs.map((tab, i) => {
           const active = isActiveTab(tab.href, currentPath);
           const badge = badgeText(tab.badge);
@@ -97,7 +151,7 @@ export function SubNav({
                 // Decorative: a line, not a colour, so it reads for CVD users too.
                 <span
                   aria-hidden="true"
-                  className="mx-1.5 mb-3 h-4 w-px self-end bg-border"
+                  className="mx-1.5 mb-3 h-4 w-px shrink-0 self-end bg-border"
                 />
               )}
               <a
@@ -108,29 +162,7 @@ export function SubNav({
                     : undefined
                 }
                 aria-current={active ? "page" : undefined}
-                /* ⚖️ THE STANDARD'S TAB, not a smaller body label. Mono 500
-                   at 11 with .14em tracking, in caps, with a 2px accent rule
-                   under the active one (surface-app-layer.md, "Navigation":
-                   "Tabs ... Mono 11 caps, 2px accent rule under the active
-                   tab", and the type table's "Tab, button" row).
-
-                   It had been body 600 at 12.25px in sentence case — the face
-                   and the case both wrong, which is most of why the top bars
-                   looked like a different product in each app.
-
-                   ⛔ Non-active is PAPER, not --color-text-2. A nav item you
-                   can go to is not secondary information; dimming the whole
-                   bar to make one item stand out spends contrast the brand
-                   does not have to spare, and the accent plus the rule
-                   already marks the current page twice over. */
-                className={[
-                  "inline-block px-3 py-2.5 font-mono text-[11px] font-medium uppercase tracking-[0.14em]",
-                  "transition-colors duration-100",
-                  "border-b-2 -mb-px", // sits on the nav's bottom border
-                  active
-                    ? "border-accent text-accent"
-                    : "border-transparent text-text hover:text-accent hover:border-border",
-                ].join(" ")}
+                className={tabClassName(active)}
               >
                 {tab.label}
                 {badge && (

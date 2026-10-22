@@ -43,10 +43,41 @@ export const APPS: AppEntry[] = [
   { key: "admin", name: "Admin", url: "https://auth.cgspectrum.com/admin", description: "Manage app access" },
 ];
 
-// Apps the user may open: those granted, plus the current app (you're in it).
-// Order follows the canonical APPS order.
+/**
+ * The apps every authenticated staffer holds by role rather than by grant.
+ *
+ * 🔴 MUST mirror the floor in the auth host's `composeApps`
+ * (app-auth src/lib/grants.ts). apps.test.ts asserts every key here has an
+ * APPS entry; the auth host's own tests assert the other half.
+ */
+export const FLOOR_APPS: readonly string[] = ["home", "product", "people", "scheduling"];
+
+/**
+ * Apps the user may open: the floor, plus those granted, plus the current app
+ * (you're in it). Order follows the canonical APPS order.
+ *
+ * 🔴 THE FLOOR IS UNIONED IN HERE, not trusted from the token. Grants are
+ * baked into the JWT at SIGN-IN, so a session minted before a key joined the
+ * floor carries no such key and never will until that person happens to
+ * re-authenticate. `home` joined the floor on 2026-09-24 and this is exactly
+ * what happened: staff on older sessions saw no Home tile in any app, and saw
+ * one only while already in Home — where `currentApp` put it back. Reported
+ * by Jeremy, 21 Oct 2026, and read at first as rebrand fallout; `visibleApps`
+ * had in fact not changed since it was written.
+ *
+ * ⚖️ Showing a floor tile the token does not name is the safe direction. The
+ * floor is held unconditionally — composeApps adds it for every email,
+ * including a null one — so the tile cannot grant anything the person did not
+ * already have, and the app behind it does its own authorisation regardless.
+ * The alternative, trusting the snapshot, silently hides a live app from its
+ * whole audience and gives nobody an error to report.
+ *
+ * ⛔ Do not "fix" this by gating the app on the key instead. grants.ts says it
+ * plainly: an app that checked for `home` would have locked out its entire
+ * live audience on the day the key was added.
+ */
 export function visibleApps(catalog: AppEntry[], userApps: string[], currentApp: string): AppEntry[] {
-  const allowed = new Set(userApps);
+  const allowed = new Set([...FLOOR_APPS, ...userApps]);
   return catalog.filter((a) => allowed.has(a.key) || a.key === currentApp);
 }
 

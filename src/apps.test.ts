@@ -1,33 +1,46 @@
 import { describe, it, expect } from "vitest";
-import { APPS, visibleApps, adminEntryFor } from "./apps";
+import { APPS, FLOOR_APPS, visibleApps, adminEntryFor } from "./apps";
 
+/* ⚠️ Every expectation below gained the four floor apps on 21 Oct 2026, when
+   visibleApps stopped trusting the token for them — see the FLOOR_APPS block
+   at the foot of this file for why. The assertions themselves are unchanged
+   in intent: each still pins that a NON-floor app appears only when granted
+   or current, which is the property these tests were written to protect. */
 describe("visibleApps", () => {
-  it("staff (product only) sees just Product", () => {
-    expect(visibleApps(APPS, ["product"], "product").map((a) => a.key)).toEqual(["product"]);
+  it("staff (product only) sees the floor and nothing else", () => {
+    expect(visibleApps(APPS, ["product"], "product").map((a) => a.key)).toEqual([
+      "home", "product", "people", "scheduling",
+    ]);
   });
 
-  it("leadership sees four, not cms", () => {
+  it("leadership sees its grants and the floor, not cms", () => {
     expect(
       visibleApps(APPS, ["product", "audit", "scheduling", "sales"], "audit").map((a) => a.key),
-    ).toEqual(["product", "sales", "scheduling", "audit"]);
+    ).toEqual(["home", "product", "people", "sales", "scheduling", "audit"]);
   });
 
-  it("admin sees all five", () => {
+  it("a cms grant adds cms on top of the rest", () => {
     expect(
       visibleApps(APPS, ["product", "audit", "scheduling", "sales", "cms"], "cms").map((a) => a.key),
-    ).toEqual(["product", "sales", "scheduling", "cms", "audit"]);
+    ).toEqual(["home", "product", "people", "sales", "scheduling", "cms", "audit"]);
   });
 
   it("always includes the current app even when not granted", () => {
-    expect(visibleApps(APPS, ["product"], "audit").map((a) => a.key)).toEqual(["product", "audit"]);
+    expect(visibleApps(APPS, ["product"], "audit").map((a) => a.key)).toEqual([
+      "home", "product", "people", "scheduling", "audit",
+    ]);
   });
 
   it("ignores unknown grant keys", () => {
-    expect(visibleApps(APPS, ["product", "bogus"], "product").map((a) => a.key)).toEqual(["product"]);
+    expect(visibleApps(APPS, ["product", "bogus"], "product").map((a) => a.key)).toEqual([
+      "home", "product", "people", "scheduling",
+    ]);
   });
 
   it("user with no grants still sees the current app", () => {
-    expect(visibleApps(APPS, [], "audit").map((a) => a.key)).toEqual(["audit"]);
+    expect(visibleApps(APPS, [], "audit").map((a) => a.key)).toEqual([
+      "home", "product", "people", "scheduling", "audit",
+    ]);
   });
 
   it("shows the admin entry only when granted", () => {
@@ -71,5 +84,50 @@ describe("visibleApps", () => {
     expect(visibleApps(APPS, ["home", "product", "people", "scheduling"], "home").map((a) => a.key)).toEqual([
       "home", "product", "people", "scheduling",
     ]);
+  });
+});
+
+/* ─── The floor cannot be hidden by a stale token (Jeremy, 21 Oct 2026) ───── */
+
+describe("visibleApps and the floor", () => {
+  // 🔴 The bug as reported: Home was absent from the launcher everywhere
+  // except inside Home itself. Grants bake into the JWT at SIGN-IN and `home`
+  // only joined the floor on 2026-09-24, so every older session carried a
+  // token naming the other three floor apps and not that one.
+  it("shows a floor app the token does not name", () => {
+    const stale = ["product", "people", "scheduling"]; // a pre-2026-09-24 token
+    const keys = visibleApps(APPS, stale, "marketing").map((a) => a.key);
+    expect(keys).toContain("home");
+  });
+
+  it("shows the whole floor even for a token with nothing in it at all", () => {
+    const keys = visibleApps(APPS, [], "marketing").map((a) => a.key);
+    for (const f of FLOOR_APPS) expect(keys).toContain(f);
+  });
+
+  // ⛔ Unioning the floor must not become "show everything".
+  it("still hides an app the user has no grant for", () => {
+    const keys = visibleApps(APPS, [], "marketing").map((a) => a.key);
+    expect(keys).not.toContain("finance");
+    expect(keys).not.toContain("admin");
+    expect(keys).not.toContain("governance");
+  });
+
+  it("still shows the current app even when it is neither floor nor granted", () => {
+    expect(visibleApps(APPS, [], "finance").map((a) => a.key)).toContain("finance");
+  });
+
+  it("never duplicates an app the token also names", () => {
+    const keys = visibleApps(APPS, ["home", "home", "people"], "home").map((a) => a.key);
+    expect(keys.filter((k) => k === "home")).toHaveLength(1);
+  });
+
+  // 🔴 Mirrors the auth host's composeApps floor. If that list changes, this
+  // fails and tells you which half is out of step.
+  it("the floor it unions is the floor the auth host composes", () => {
+    expect([...FLOOR_APPS].sort()).toEqual(["home", "people", "product", "scheduling"]);
+    for (const f of FLOOR_APPS) {
+      expect(APPS.find((a) => a.key === f), `floor key "${f}" has no APPS entry`).toBeDefined();
+    }
   });
 });

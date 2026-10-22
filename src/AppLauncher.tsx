@@ -120,9 +120,16 @@ export function AppLauncher({
                 href={a.url}
                 role="menuitem"
                 onClick={() => setOpen(false)}
+                // ⚠️ Was bg-accent-soft on both this row and the badge below.
+                // --color-accent-soft was retired by the phase 4 value flip, and
+                // an undefined custom property makes the background INVALID — so
+                // the current app has been rendering with no fill at all, marked
+                // only by text-text against text-text-2. SubNav's badge was moved
+                // to the tint in the same sweep; this file was missed.
+                // --color-accent-tint is the one accent fill 2027 keeps.
                 className={`block px-3 py-2 transition-colors ${
                   isCurrent
-                    ? "bg-accent-soft text-text"
+                    ? "bg-accent-tint text-text"
                     : "text-text-2 hover:bg-surface hover:text-text"
                 }`}
               >
@@ -130,7 +137,7 @@ export function AppLauncher({
                   {a.name}
                   {badge && (
                     <span
-                      className="inline-flex min-w-4 items-center justify-center border border-accent-border bg-accent-soft px-1 text-[10px] font-bold leading-4 text-accent"
+                      className="inline-flex min-w-4 items-center justify-center border border-accent-border bg-accent-tint px-1 text-[10px] font-bold leading-4 text-accent"
                       aria-label={`${counts[a.key]} awaiting action`}
                     >
                       {badge}

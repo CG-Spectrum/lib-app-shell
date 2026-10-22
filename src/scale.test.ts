@@ -2,10 +2,14 @@ import { describe, expect, test } from "vitest";
 import {
   CHROME_INIT_SCRIPT,
   SCALE_CHOICES,
+  SCALE_RUNGS,
   SCALE_STEPS,
   applyScale,
   resolveScale,
   scaleCookieString,
+  scaleLabel,
+  scaleStepDisabled,
+  stepScale,
   scaleForWidth,
   scaleValue,
   type Scale,
@@ -173,5 +177,110 @@ describe("applyScale", () => {
     expect(el.dataset.scale).toBe("1.4");
     expect(set).toContain("--ui-scale=1.4");
     expect(written[0]).toContain("cgsi-scale=1.4");
+  });
+});
+
+/* ─── The Smaller / Larger control (Jeremy, 21 Oct 2026) ──────────────────── */
+
+describe("stepScale", () => {
+  // The whole reason the control exists: auto put a 3072px viewport on 1.4 and
+  // the reader was pulling Chrome back to ~80% to undo it (Jeremy, 21 Oct
+  // 2026). A step is ONE rung, so that is two presses — 1.4 → 1.25 (89% of
+  // what auto gave) → 1.15 (82%), which is the ~80% that was asked for. The
+  // ladder already held it; no rung below 1 was needed.
+  test("Smaller walks a 3072px viewport off 1.4 toward the asked-for ~80%", () => {
+    const once = stepScale("auto", 3072, -1);
+    expect(once).toBe("1.25");
+    expect(stepScale(once, 3072, -1)).toBe("1.15");
+    expect(Number("1.15") / Number("1.4")).toBeCloseTo(0.82, 2);
+  });
+
+  // ⚖️ Stepping away from auto PINS. Left on auto, the next resize would
+  // silently overrule the reader's own press.
+  test("a step never returns auto", () => {
+    for (const w of [1280, 1680, 1920, 2560, 3072]) {
+      for (const d of [-1, 1] as const) {
+        expect(stepScale("auto", w, d)).not.toBe("auto");
+      }
+    }
+  });
+
+  test("steps the ladder from a pinned rung", () => {
+    expect(stepScale("1", 1920, 1)).toBe("1.15");
+    expect(stepScale("1.15", 1920, 1)).toBe("1.25");
+    expect(stepScale("1.25", 1920, 1)).toBe("1.4");
+    expect(stepScale("1.4", 1920, -1)).toBe("1.25");
+    expect(stepScale("1.25", 1920, -1)).toBe("1.15");
+    expect(stepScale("1.15", 1920, -1)).toBe("1");
+  });
+
+  // ⛔ Clamps, never wraps: jumping from largest to smallest on one more
+  // press reads as a bug.
+  test("clamps at both ends", () => {
+    expect(stepScale("1", 1920, -1)).toBe("1");
+    expect(stepScale("1.4", 1920, 1)).toBe("1.4");
+  });
+
+  // ⛔ No rung below 1, at the ladder and now at the stepper too.
+  test("cannot step below 1 from any starting point", () => {
+    for (const start of SCALE_CHOICES) {
+      for (const w of [800, 1280, 1680, 2560, 3072]) {
+        expect(Number(stepScale(start, w, -1))).toBeGreaterThanOrEqual(1);
+      }
+    }
+  });
+
+  test("every rung it can return is a valid setting", () => {
+    for (const start of SCALE_CHOICES) {
+      for (const d of [-1, 1] as const) {
+        expect(SCALE_CHOICES).toContain(stepScale(start, 2560, d));
+      }
+    }
+  });
+});
+
+describe("scaleStepDisabled", () => {
+  test("disables the end of the ladder the reader is already on", () => {
+    expect(scaleStepDisabled("1", 1920, -1)).toBe(true);
+    expect(scaleStepDisabled("1", 1920, 1)).toBe(false);
+    expect(scaleStepDisabled("1.4", 1920, 1)).toBe(true);
+    expect(scaleStepDisabled("1.4", 1920, -1)).toBe(false);
+  });
+
+  // On auto the control is judged against the RESOLVED rung, not the word
+  // "auto" — a laptop on auto is at 1 and genuinely cannot go smaller.
+  test("judges auto by the rung it resolves to", () => {
+    expect(scaleStepDisabled("auto", 1440, -1)).toBe(true);
+    expect(scaleStepDisabled("auto", 3072, 1)).toBe(true);
+    expect(scaleStepDisabled("auto", 3072, -1)).toBe(false);
+    expect(scaleStepDisabled("auto", 1440, 1)).toBe(false);
+  });
+
+  test("the middle of the ladder is never disabled", () => {
+    for (const d of [-1, 1] as const) {
+      expect(scaleStepDisabled("1.15", 1920, d)).toBe(false);
+      expect(scaleStepDisabled("1.25", 1920, d)).toBe(false);
+    }
+  });
+});
+
+describe("scaleLabel", () => {
+  test("names the resolved percentage, with auto as a prefix not a substitute", () => {
+    expect(scaleLabel("auto", 3072)).toBe("Auto · 140%");
+    expect(scaleLabel("auto", 1440)).toBe("Auto · 100%");
+    expect(scaleLabel("1.15", 1440)).toBe("115%");
+    expect(scaleLabel("1.4", 1440)).toBe("140%");
+  });
+
+  // Pre-mount the width is unknown and there is nothing true to say; the
+  // caller reserves the row height so there is no shift when it resolves.
+  test("says nothing before mount", () => {
+    expect(scaleLabel(null, 0)).toBe("");
+  });
+
+  test("never renders a fractional percent", () => {
+    for (const r of SCALE_RUNGS) {
+      expect(scaleLabel(r, 1920)).toMatch(/^\d+%$/);
+    }
   });
 });
