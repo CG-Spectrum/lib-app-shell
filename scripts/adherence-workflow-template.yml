@@ -112,6 +112,16 @@ jobs:
         id: check
         run: node /tmp/adherence.mjs src
 
+      # ⚖️ ADVISORY IS REPORTED, NEVER GATED. continue-on-error is deliberate:
+      # rebuilt-table and rebuilt-part together are ~178 findings estate-wide
+      # and would take 14 repos red in one commit for debt they did not create
+      # this week, which is how a checker gets switched off. Reporting makes
+      # the number move in daylight; the tier changes when it is near zero.
+      - name: Advisory (spacing scale, rebuilt parts)
+        if: always()
+        continue-on-error: true
+        run: node /tmp/adherence.mjs src --advisory || true
+
       - name: Record the count
         if: always()
         run: |
