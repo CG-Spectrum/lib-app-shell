@@ -211,6 +211,62 @@ const RULES = [
      SUPPOSED to be defined — see IN_PACKAGE. And HTML email is already exempt
      by path: an email table is a layout requirement, not a rebuilt part. */
   {
+    id: "accent-as-paint",
+    tier: "advisory",
+    /* ── Ink is not paint ─────────────────────────────────────────────────
+       brand.css splits the accent in light mode and in light mode ONLY:
+       --color-accent becomes Ink Green #1e7d10, which clears 5.2:1 as TEXT on
+       white, while --color-accent-mark stays #44d62c for the things that are
+       marks. On dark the two resolve to the same value, so choosing wrong is
+       invisible until someone flips the theme — which is why this needs a
+       checker and not a reviewer. Found live in home 23 Oct 2026: the selected
+       subject tab underlined itself with --color-accent and computed
+       rgb(30,125,16), a dull edge against the hairline beneath it.
+
+       🔴 "DOES THE SAME RULE SET `color:`?" IS THE WRONG TEST, and it was the
+       first one tried. This checker matches a LINE, so it cannot see a block;
+       worse, the test is wrong even given the whole block. `.srp-tab.selected`
+       sets `color: var(--color-text)` AND underlines itself — the ink is
+       beside the mark, not on it. The heuristic would have passed the exact
+       defect that prompted the rule.
+
+       ⚖️ So the rule asks something decidable instead: is the accent being used
+       as PAINT — background, border colour, fill, stroke — rather than as ink?
+       Every such use needs a deliberate answer, because only the author knows
+       whether type sits on that paint. A fill with a label on it (a badge, an
+       active segmented button) genuinely wants Ink Green, since the bright
+       mark under --color-bg is ~1.9:1 and unreadable; those take a pragma with
+       a reason, which is a recorded decision rather than an eyeball.
+
+       ⛔ `outline` IS EXCLUDED, both as a property and as any line mentioning
+       it. A focus indicator is an accessibility requirement, not a brand mark,
+       and on white Ink Green is the VISIBLE one where the bright mark would be
+       the regression — so flagging it would push the estate the wrong way, the
+       same argument `drop-shadow` already lost over focus rings.
+
+       🔴 THE EXCLUSION IS A VARIABLE-LENGTH LOOKBEHIND, NOT A LOOKAHEAD. The
+       estate draws focus as a border under `outline: none`, so the word to
+       suppress on sits BEFORE the paint on the line. A lookahead anchors at
+       the match and can only see what follows it, which let every one of
+       those through on the first draft (3 in home, 2 in the package, all
+       reported as real). `[^{}]*` crosses the `;` between the two
+       declarations but not a brace, so the next rule of a one-line pair is
+       still checked.
+
+       ⚠️ KNOWN AND ACCEPTED: a focus block that puts `outline: none` on its
+       OWN line is still flagged, because the runner matches one line at a
+       time and no lookbehind reaches the line above. 2 in the package, a
+       handful across the estate. They take the pragma. Widening the runner to
+       blocks for one rule's false positive is the worse trade.
+
+       ⚠️ ADVISORY, like the rebuilt parts below and for the same reason: the
+       estate has hundreds of accent uses and erroring takes 17 repos red for
+       debt they did not create this week. Move it to "error" once the count
+       is near zero. */
+    re: /(?<!\boutline\b[^{}]*)(?:background(?:-color)?|border(?:-(?:top|right|bottom|left))?(?:-color)?|fill|stroke)\s*:[^;}]*var\(\s*--color-accent\s*\)/g,
+    msg: "Accent used as paint. In light mode --color-accent is Ink Green #1e7d10 (a TEXT value) while --color-accent-mark stays #44d62c, so a bar, rule, tick or dot written with --color-accent goes dull in light and nobody sees it on dark. Use --color-accent-mark. If type sits ON this paint, --color-accent is correct and the line needs `cgsi-adherence-allow: accent-as-paint — <why>`.",
+  },
+  {
     id: "rebuilt-table",
     tier: "advisory",
     packageExempt: true,
