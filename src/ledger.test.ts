@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { headerGroups, type LedgerColumn } from "./Ledger";
+import { headerGroups, isMonoColumn, type LedgerColumn } from "./Ledger";
 
 type Row = { key: string };
 
@@ -69,5 +69,30 @@ describe("headerGroups", () => {
       { label: undefined, span: 2 },
       { label: "Rate from lead", span: 1 },
     ]);
+  });
+});
+
+describe("isMonoColumn", () => {
+  const c = (over: Partial<LedgerColumn<Row>>): LedgerColumn<Row> => ({
+    key: "k",
+    header: "K",
+    cell: () => null,
+    ...over,
+  });
+
+  // Right-alignment already meant "this column holds numbers", so it is the
+  // trigger and no existing caller had to change.
+  test("a right-aligned column is numbers, so it sets in mono", () => {
+    expect(isMonoColumn(c({ align: "right" }))).toBe(true);
+  });
+
+  test("a left-aligned column is prose by default", () => {
+    expect(isMonoColumn(c({}))).toBe(false);
+    expect(isMonoColumn(c({ align: "left" }))).toBe(false);
+  });
+
+  // 🔴 "2026-T3" is data that happens to read left.
+  test("a left-reading code opts in with mono", () => {
+    expect(isMonoColumn(c({ align: "left", mono: true }))).toBe(true);
   });
 });

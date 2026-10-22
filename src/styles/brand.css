@@ -351,11 +351,18 @@
 :root {
   --density-row: 40px;
   --density-body: 14px;
+  /* One step under the body, because Plex Mono is wider per character than
+     Stack Sans Text: 13 against the body's 14 roughly buys the width back.
+     ⚠️ Mono sets at 500 here, not 400 — at the same optical size Plex Mono
+     400 reads markedly lighter than the body face and a numeric column goes
+     weak (measured on screen, 22 Oct 2026). */
+  --density-data: 13px;
   --density-panel-pad: 24px;
 }
 html[data-density="compact"] {
   --density-row: 32px;
   --density-body: 13px;
+  --density-data: 12px;
   --density-panel-pad: 16px;
 }
 

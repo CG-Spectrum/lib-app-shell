@@ -62,10 +62,19 @@ export function Status({ tone, children, className = "" }: StatusProps) {
       <span aria-hidden className={tone === "error" ? "font-bold" : undefined}>
         {GLYPH[tone]}
       </span>
-      <span>{children}</span>
+      {/* The word takes the mono label rung so a status sits in the same band
+          as the tabs and the filter chips — it is a label, not prose. The
+          glyph stays in the surrounding face: it is a mark, not a character. */}
+      <span className="font-mono text-[11px] font-medium uppercase tracking-[0.14em]">
+        {children}
+      </span>
     </span>
   );
 }
+
+// A delta is a number with a sign, so it takes the mono data rung — the same
+// face and size as the numeric cells it almost always sits beside.
+const DELTA_FACE = "font-mono text-[length:var(--density-data)] font-medium";
 
 // A delta, with its sign. Deltas always carry + or −, so the direction survives
 // without the colour. A zero delta is an em-dash in muted text, not a green 0.
@@ -80,14 +89,14 @@ export function Delta({
   className?: string;
 }) {
   if (value === null || value === undefined || value === 0) {
-    return <span className={`tabular-nums text-text-3 ${className}`}>—</span>;
+    return <span className={`${DELTA_FACE} text-text-3 ${className}`}>—</span>;
   }
   const up = value > 0;
   // 🔴 U+2212 MINUS, not a hyphen. At 10-14px tabular a hyphen is half the
   // width of the plus and the column stops lining up.
   const sign = up ? "+" : "−";
   return (
-    <span className={`tabular-nums ${up ? "text-good" : "text-bad"} ${className}`}>
+    <span className={`${DELTA_FACE} ${up ? "text-good" : "text-bad"} ${className}`}>
       {sign}
       {Math.abs(value)}
       {suffix}

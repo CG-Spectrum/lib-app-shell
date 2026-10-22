@@ -29,8 +29,15 @@ export interface LedgerColumn<T> {
    */
   group?: string;
   cell: (row: T) => ReactNode;
-  /** Numbers right, text left. Defaults to left. */
+  /** Numbers right, text left. Defaults to left. Right ALSO means mono. */
   align?: "left" | "right";
+  /**
+   * Force the mono data treatment on a LEFT-aligned column: a code, an id, a
+   * reference — `2026-T3` is data, not a word. Right-aligned columns get it
+   * already, so this is only for the ones that read left.
+   * ⛔ Not for a name or a title. Those are prose and stay in the body face.
+   */
+  mono?: boolean;
   /** Fixed px width, or omit to let the column size to content. */
   width?: number;
   sortable?: boolean;
@@ -209,7 +216,10 @@ export function Ledger<T extends LedgerRow>({
                       key={c.key}
                       title={c.titleOf?.(row)}
                       className={[
-                        "overflow-hidden text-ellipsis whitespace-nowrap px-4 text-[length:var(--density-body)]",
+                        "overflow-hidden text-ellipsis whitespace-nowrap px-4",
+                        isMonoColumn(c)
+                          ? "font-mono text-[length:var(--density-data)] font-medium"
+                          : "text-[length:var(--density-body)]",
                         c.align === "right" ? "text-right" : "text-left",
                         row.marked ? "text-text" : "text-text-2",
                         sticky ? "sticky left-0 z-10 bg-surface" : "",
@@ -230,7 +240,12 @@ export function Ledger<T extends LedgerRow>({
                 <td
                   key={c.key}
                   className={[
-                    "whitespace-nowrap border-t border-border-strong px-4 text-[length:var(--density-body)] font-medium text-text",
+                    "whitespace-nowrap border-t border-border-strong px-4 font-medium text-text",
+                    // The total row is the same data as the column above it,
+                    // so it takes the same face. The label cell is a word.
+                    isMonoColumn(c) && i !== 0
+                      ? "font-mono text-[length:var(--density-data)]"
+                      : "text-[length:var(--density-body)]",
                     c.align === "right" ? "text-right" : "text-left",
                     wide && i === 0 ? "sticky left-0 z-10 bg-surface" : "",
                   ].join(" ")}
@@ -256,6 +271,20 @@ export function LedgerBar({ value, max }: { value: number; max: number }) {
       <span className="block h-full bg-text-3" style={{ width: `${pct}%` }} />
     </span>
   );
+}
+
+/**
+ * Does this column's data set in mono?
+ *
+ * ⚖️ Numbers and codes in a table are DATA, and data takes Plex Mono — the
+ * same line the website draws, written into the app layer on 22 Oct 2026.
+ * Right-alignment already means "this column holds numbers", so it is the
+ * trigger and no caller had to change. `mono` opts in a left-reading code
+ * column. The text columns beside them stay in the body face: the rule is
+ * data versus prose, not short versus long.
+ */
+export function isMonoColumn<T>(column: LedgerColumn<T>): boolean {
+  return column.align === "right" || column.mono === true;
 }
 
 // Collapse adjacent columns sharing a `group` into header spans. Returns null

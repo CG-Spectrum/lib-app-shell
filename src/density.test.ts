@@ -95,11 +95,28 @@ describe("DENSITY_METRICS", () => {
     const b = DENSITY_METRICS.compact;
     expect(b.row).toBeLessThan(a.row);
     expect(b.body).toBeLessThan(a.body);
+    expect(b.data).toBeLessThan(a.data);
     expect(b.panelPad).toBeLessThan(a.panelPad);
+  });
+
+  // The mono rung sits one step under the body at both densities, because
+  // Plex Mono is wider per character than Stack Sans Text.
+  test("the data rung is one step under the body, at every density", () => {
+    for (const d of ["comfortable", "compact"] as const) {
+      expect(DENSITY_METRICS[d].data).toBe(DENSITY_METRICS[d].body - 1);
+    }
   });
   test("⛔ density carries no typeface, weight or colour — size only", () => {
     for (const d of ["comfortable", "compact"] as const) {
-      expect(Object.keys(DENSITY_METRICS[d]).sort()).toEqual(["body", "panelPad", "row"]);
+      // `data` is a SIZE in px, like the rest. The rule this guards is that
+      // density never carries a face, a weight or a colour — not that it
+      // carries only three numbers.
+      expect(Object.keys(DENSITY_METRICS[d]).sort()).toEqual([
+        "body",
+        "data",
+        "panelPad",
+        "row",
+      ]);
     }
   });
 });

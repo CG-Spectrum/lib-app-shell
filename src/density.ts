@@ -57,10 +57,16 @@ export function applyDensity(density: Density): void {
 // and 13 — not 12, because Stack Sans Text at 400 stops being reliably legible
 // below 13 on #131919, which is the same reason the body weight is 400 rather
 // than the website's 300.
+// `data` is the mono rung for numbers and codes: one step under the body,
+// because Plex Mono is wider per character than Stack Sans Text. It sets at
+// 500, not 400 — see the note beside --density-data in brand.css.
 export const DENSITY_METRICS = {
-  comfortable: { row: 40, body: 14, panelPad: 24 },
-  compact: { row: 32, body: 13, panelPad: 16 },
-} as const satisfies Record<Density, { row: number; body: number; panelPad: number }>;
+  comfortable: { row: 40, body: 14, data: 13, panelPad: 24 },
+  compact: { row: 32, body: 13, data: 12, panelPad: 16 },
+} as const satisfies Record<
+  Density,
+  { row: number; body: number; data: number; panelPad: number }
+>;
 
 export function densityMetrics(density: Density) {
   return DENSITY_METRICS[density];
