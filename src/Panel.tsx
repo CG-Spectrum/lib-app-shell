@@ -1,13 +1,21 @@
 import type { ReactNode } from "react";
 
-// The container every data surface sits in. Surface tone, 1px hairline, square
-// corners, no shadow.
+// The container every data surface sits in. Surface tone, square corners, no
+// shadow, and — since v3.0.0 — no outer border: it is separated by AIR on a
+// near-black field, not by a hairline.
 //
-// 🔴 NEVER A CARD INSIDE A CARD. Panels sit in a hairline grid with NO gap —
-// the 1px border between two panels is the separator, so there is no gap value
-// to drift. That is why this component takes no margin and no spacing prop:
-// the parent grid owns the arrangement, and a panel that spaced itself would
-// break the shared rule the moment two apps chose differently.
+// ⚖️ SPACE, NOT TONE. The gapless hairline grid stood until 22 Oct 2026 and
+// this reverses it. It came from a design canvas with a card floating in a
+// near-black field: sampled, that pair was #141919 on #0d1110, a separation
+// of 1.071:1, against our own 1.088:1. The thing that read better had LESS
+// tonal separation than what we had, so the colours were never what was doing
+// the work — the margin was. Shifting the tokens without the air was mocked
+// and changes almost nothing.
+//
+// 🔴 NEVER A CARD INSIDE A CARD, still. The panel takes no margin and no
+// spacing prop: the parent grid owns the arrangement through --panel-gap, so
+// there is still exactly one value and it still cannot drift per app. That
+// was the real argument for the gapless grid and it survives intact.
 //
 // ⚖️ FRESHNESS BELONGS IN THE HEAD, NOT ON EVERY TILE. One "Updated 11:30 ·
 // HubSpot" per panel, right-aligned in the head. Repeating it on each KPI
@@ -52,7 +60,7 @@ export function Panel({
   return (
     <section
       id={id}
-      className={`min-w-0 border border-border bg-surface ${className}`}
+      className={`min-w-0 bg-surface ${className}`}
     >
       {hasHead && (
         <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-border-strong px-[var(--density-panel-pad)] py-4">
@@ -86,9 +94,10 @@ export function Panel({
   );
 }
 
-// A hairline grid of panels with no gap between them. The shared border IS the
-// separator; `-space-x/-y` collapses the doubled 1px so two adjacent panels
-// read as one rule rather than two.
+// A grid of panels separated by --panel-gap of the near-black field. The AIR
+// is the separator. Before v3.0.0 this collapsed the doubled 1px border with
+// negative margins so two adjacent panels read as one rule; there is no border
+// to collapse now, so the negative margins are gone with it.
 export function PanelGrid({
   columns = 2,
   children,
@@ -108,7 +117,7 @@ export function PanelGrid({
   }[columns];
 
   return (
-    <div className={`grid ${cols} [&>*]:-mb-px [&>*]:-mr-px ${className}`}>
+    <div className={`grid gap-[var(--panel-gap)] ${cols} ${className}`}>
       {children}
     </div>
   );

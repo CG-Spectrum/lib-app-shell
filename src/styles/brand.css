@@ -48,19 +48,48 @@
    custom properties per app. */
 @theme static {
   /* ── Surfaces ──────────────────────────────────────────────────────────── */
-  --color-bg: #131919;
-  --color-surface: #1b2120;
-  --color-surface-2: #222928;
+  /* ⚖️ THE WHOLE RAMP MOVED DOWN ONE STEP, 22 Oct 2026 (v3.0.0). The page is
+     near black and the panel takes what used to be the page, so every token
+     below means what the token above it used to mean.
+
+     🔴 THE COLOURS ARE NOT WHAT MAKES THIS WORK, AND IT MATTERS THAT YOU KNOW
+     THAT BEFORE YOU TOUCH THEM. It started from a design canvas with a card
+     floating in a near-black field. Sampled, that pair was #141919 on #0d1110
+     — a separation of 1.071:1. Ours was #1b2120 on #131919 at 1.088:1. The
+     thing that looked better had LESS tonal separation than what we already
+     had. What it did differently was give the card margin.
+
+     So the separation is carried by --panel-gap, and tone is the secondary
+     channel. Shifting these values without the air was mocked and changes
+     almost nothing. ⛔ Do not "simplify" by removing the gap and restoring the
+     border; that is the gapless hairline grid this replaced, and it is why
+     dense screens read flat for a year. */
+  --color-bg: #0d1110;
+  --color-surface: #131919;
+  --color-surface-2: #1b2120;
   /* ⚠️ SURFACE-3 CHANGED SIDES. In 2025 it was #232A39, LIGHTER than the
      #030B1B ground — a raised third panel. In 2027 it is #0a0c0c, DARKER than
      the ground: a well, for recessed fields and the calendar's out-of-hours
      band. The token kept its name and inverted its meaning, so the 79 uses
      across eleven apps did not move but about half of them now read as a hole
      where they used to read as a card. That is the single largest visual
-     surprise in the flip; it is on the visual-audit list. */
-  --color-surface-3: #0a0c0c;
-  --color-border: #333938;
-  --color-border-strong: #444948;
+     surprise in the flip; it is on the visual-audit list.
+
+     ⚠️ AND IT GOT WEAKER AT v3.0.0, WHICH IS A COST, NOT AN OVERSIGHT. It was
+     #0a0c0c under a #1b2120 panel at 1.20:1; it is now #030908 under a
+     #131919 panel at 1.13:1. A near-black page compresses everything beneath
+     it, and this cannot be won back — with the well at pure black the ceiling
+     is 1.18:1. ⛔ Do not lighten the panel to recover it: that undoes the
+     field, which is the whole point. A callout that must separate harder
+     takes air, the same way the panels did. */
+  --color-surface-3: #030908;
+  --color-border: #2b3130;
+  --color-border-strong: #3d4342;
+
+  /* The air between panels. This is the separation channel now — see the note
+     on --color-bg. One token so it cannot drift per app, the same argument
+     the gapless grid used to make. */
+  --panel-gap: 12px;
 
   /* ── Text ──────────────────────────────────────────────────────────────── */
   --color-text: #e9e6df;
@@ -387,7 +416,12 @@ html[data-density="compact"] {
    Tokens marked DEPRECATED (2027) above get no light values added here. They
    are leaving, and giving them a light ramp now is work that ships twice. */
 html[data-theme="light"] {
-  --color-bg: #f3f4f2;
+  /* ⚠️ LIGHT MOVES DOWN TOO, NOT UP (v3.0.0). Dark went near black so the
+     panel could sit off the field; light does the same by taking the field
+     further from white — 1.23:1 against the panel where it was 1.10:1. The
+     panel stays #ffffff because white is the floor and there is nothing above
+     it to move to, so in light the whole move is in the ground. */
+  --color-bg: #e7e8e7;
   --color-surface: #ffffff;
   --color-surface-2: #f6f7f6;
   /* Before 1.27 this override existed only in `referrals`, so the other seven
@@ -470,7 +504,12 @@ html[data-theme="light"] {
    because this only matches when nothing has stamped anything. */
 @media (prefers-color-scheme: light) {
   html:not([data-theme]) {
-  --color-bg: #f3f4f2;
+  /* ⚠️ LIGHT MOVES DOWN TOO, NOT UP (v3.0.0). Dark went near black so the
+     panel could sit off the field; light does the same by taking the field
+     further from white — 1.23:1 against the panel where it was 1.10:1. The
+     panel stays #ffffff because white is the floor and there is nothing above
+     it to move to, so in light the whole move is in the ground. */
+  --color-bg: #e7e8e7;
   --color-surface: #ffffff;
   --color-surface-2: #f6f7f6;
   /* Before 1.27 this override existed only in `referrals`, so the other seven

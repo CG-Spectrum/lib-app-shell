@@ -184,8 +184,29 @@ describe("the 2027 palette", () => {
   const light = brandCss.slice(lightAt);
 
   test("the ground and the accent are the 2027 pair", () => {
-    expect(dark).toMatch(/--color-bg:\s*#131919;/);
+    // v3.0.0 moved the ramp down a step: the page is near black and the panel
+    // took what used to be the page. #131919 is still in the palette — it is
+    // --color-surface now.
+    expect(dark).toMatch(/--color-bg:\s*#0d1110;/);
+    expect(dark).toMatch(/--color-surface:\s*#131919;/);
     expect(dark).toMatch(/--color-accent:\s*#44d62c;/);
+  });
+
+  // ⚖️ The separation is carried by the gap, not by the tone — the pair this
+  // was modelled on measured 1.071:1, LESS than the 1.088:1 it replaced. A
+  // ramp shifted without the air changes almost nothing, so the token has to
+  // exist for the release to mean anything.
+  test("the panel gap is declared once and is not a theme value", () => {
+    expect(dark).toMatch(/--panel-gap:\s*12px;/);
+    // ⛔ Not redeclared per theme. The air does not change between light and
+    // dark, and a second declaration is exactly the drift the single token
+    // exists to prevent.
+    expect(light).not.toMatch(/--panel-gap:/);
+  });
+
+  test("light moves its ground down too, and keeps the panel at white", () => {
+    expect(light).toMatch(/--color-bg:\s*#e7e8e7;/);
+    expect(light).toMatch(/--color-surface:\s*#ffffff;/);
   });
 
   test("🔴 light overrides --color-accent-mark, and it is the bright green", () => {

@@ -104,12 +104,14 @@ function TargetBar({ actual, target, below }: { actual: number; target: number; 
   );
 }
 
-// KPIs in a hairline row inside one panel. Same no-gap rule as PanelGrid: the
-// 1px divider between tiles is the separator.
+// KPIs as their own surfaces on the field, separated by --panel-gap. Same rule
+// as PanelGrid since v3.0.0: the AIR is the separator, not a 1px divider.
+// Each tile carries the panel tone, so a row of four reads as four objects on
+// the near-black rather than one strip cut into quarters.
 export function KpiRow({ children, className = "" }: { children?: ReactNode; className?: string }) {
   return (
     <div
-      className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 [&>*]:border-border [&>*:not(:last-child)]:border-b sm:[&>*:not(:last-child)]:border-r sm:[&>*:not(:last-child)]:border-b-0 ${className}`}
+      className={`grid grid-cols-1 gap-[var(--panel-gap)] sm:grid-cols-2 lg:grid-cols-4 [&>*]:bg-surface ${className}`}
     >
       {children}
     </div>
