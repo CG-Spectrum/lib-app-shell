@@ -94,7 +94,17 @@
 }
 .filter-pill[aria-pressed="true"],
 .filter-pill.is-selected {
-  border-color: var(--color-accent);
+  /* ⛔ --color-accent-BORDER, not the full accent.
+     A selected chip IS a selection, so rule 4 does allow it the accent — but
+     a filter bar is not one chip. app-sales' funnel carries 54 of them and
+     most are on by default, so a full-strength #44d62c outline on each turned
+     the whole block into a grid of neon boxes (Jeremy, 22 Oct 2026: "it's the
+     highlight colour when they're turned on"). At 35% the selection still
+     reads green and the weight change still carries it, without the bar
+     shouting over the data it filters.
+     ⚠️ Hover KEEPS the full accent: it is one chip at a time, under the
+     pointer, and that is an affordance rather than standing colour. */
+  border-color: var(--color-accent-border);
   /* --color-accent-tint, the one accent fill 2027 keeps, as the pragma that
      used to sit here said it would at phase 2. It was still on
      --color-accent-soft, which the phase 4 flip retired to neutral grey — so
