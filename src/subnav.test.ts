@@ -45,6 +45,33 @@ describe("isActiveTab", () => {
   });
 });
 
+describe("isActiveTab, exact", () => {
+  // 🔴 The gap that caused app-auth to fork this component: a parent route
+  // and its children are all tabs, and prefix matching lit the parent on
+  // every child page.
+  it("a parent tab is NOT lit on its children when exact", () => {
+    expect(isActiveTab("/admin", "/admin/logs", true)).toBe(false);
+    expect(isActiveTab("/admin", "/admin/apps", true)).toBe(false);
+    expect(isActiveTab("/admin", "/admin", true)).toBe(true);
+  });
+
+  it("a child tab is still lit on its own page when exact", () => {
+    expect(isActiveTab("/admin/logs", "/admin/logs", true)).toBe(true);
+    expect(isActiveTab("/admin/logs", "/admin", true)).toBe(false);
+  });
+
+  // ⛔ Default stays prefix, so no existing caller changes behaviour.
+  it("defaults to prefix matching", () => {
+    expect(isActiveTab("/admin", "/admin/logs")).toBe(true);
+    expect(isActiveTab("/admin", "/admin/logs", false)).toBe(true);
+  });
+
+  it("root is exact either way", () => {
+    expect(isActiveTab("/", "/dashboard", false)).toBe(false);
+    expect(isActiveTab("/", "/", true)).toBe(true);
+  });
+});
+
 describe("startsNewGroup", () => {
   const t = (href: string, group?: string): SubNavTab => ({
     href,

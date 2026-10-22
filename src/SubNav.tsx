@@ -38,6 +38,19 @@ export interface SubNavTab {
    *  that don't pass it render exactly as before. Order is the caller's job:
    *  keep each group's tabs contiguous. */
   group?: string;
+  /** Match this tab's href EXACTLY rather than by prefix.
+   *
+   *  🔴 The reason app-auth forked this whole component. A parent route and
+   *  its children ("/admin", "/admin/logs", "/admin/apps") all prefix-match
+   *  the parent, so the parent tab stayed lit on every child page — and
+   *  rather than extend SubNav, the app copied it. The copy then sat out the
+   *  v2.3.0 nav conformance and the v2.6.0 no-wrap fix, which is how it ended
+   *  up rendering body 14px sentence case while the estate moved to Mono 11
+   *  caps (Jeremy, 22 Oct 2026: "the tabs aren't using the right fonts,
+   *  ensure that's all coming from the same place").
+   *
+   *  ⛔ Defaults to false, so every existing caller is unaffected. */
+  exact?: boolean;
 }
 
 /**
@@ -57,12 +70,14 @@ export function startsNewGroup(tabs: readonly SubNavTab[], i: number): boolean {
  *
  * Rules:
  *  - root href "/" → active ONLY on exact "/"
+ *  - `exact` → active ONLY on an exact match, for a parent route whose
+ *    children are themselves tabs ("/admin" beside "/admin/logs")
  *  - any other href → active on exact match OR when currentPath starts with href
  *    followed by "/" (prevents "/schedule" matching "/scheduling")
  */
-export function isActiveTab(href: string, currentPath: string): boolean {
-  if (href === "/") {
-    return currentPath === "/";
+export function isActiveTab(href: string, currentPath: string, exact = false): boolean {
+  if (href === "/" || exact) {
+    return currentPath === href;
   }
   if (currentPath === href) return true;
   // Prefix match — require the next character to be "/" so segments don't bleed
@@ -143,7 +158,7 @@ export function SubNav({
           chrome, which belongs in cgsi-2027-design first. */}
       <div className="flex items-end gap-1 overflow-x-auto px-6 [scrollbar-width:thin]">
         {tabs.map((tab, i) => {
-          const active = isActiveTab(tab.href, currentPath);
+          const active = isActiveTab(tab.href, currentPath, tab.exact);
           const badge = badgeText(tab.badge);
           return (
             <Fragment key={tab.href}>
