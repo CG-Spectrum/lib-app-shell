@@ -70,11 +70,21 @@ const RULES = [
   },
   {
     id: "raw-palette",
-    /* ⚖️ ADVISORY ON ARRIVAL, and this is the governance in ADHERENCE.md, not
-       timidity: 112 findings across seven repos on 23 Oct 2026. A rule that
-       fails every one of them on day one is a rule somebody switches off
-       within the week. Flip it to error per repo as each reaches zero, the
-       way accent-as-paint and off-scale-spacing were flipped.
+    /* 🟢 FLIPPED TO ERROR THE SAME DAY IT ARRIVED, because the estate reached
+       zero the same day. It came in advisory on 123 findings across eight
+       repos — a rule that fails everything on day one is a rule somebody
+       switches off within the week — and the sweep closed all 123 in one
+       pass. Every one was an error line, a callout or a filled pill, so
+       there was no argument to have about whether the rule described the
+       estate wrongly. That argument is what held the spacing ladder up, and
+       it was the right argument to have there and a non-argument here.
+
+       ⚠️ THE FIRST COUNT WAS WRONG AND SAID 112 ACROSS SEVEN. It came from a
+       hand-written list of repo names and cgsi-auth was not on it. The right
+       number came from the filesystem — every directory carrying
+       .github/workflows/adherence.yml. ⛔ Never take an estate count from a
+       list somebody typed. The alpha-hex undercount was the same mistake
+       wearing a different hat.
 
        🔴 THE HOLE raw-hex LEFT OPEN. `#16a34a` is caught; `bg-green-600` is
        the same colour, the same offence and the same screen, and it passed.
@@ -104,7 +114,7 @@ const RULES = [
        `bg`. The opacity suffix likewise — `/40` starts with a non-word
        character, so `bg-green-900/40` closes its `\b` on the `0`. Both
        spellings are in the estate and both were checked. */
-    tier: "advisory",
+    tier: "error",
     re: /\b(?:bg|text|border|ring|from|to|via|decoration|outline|divide|shadow|fill|stroke|caret|accent|placeholder)-(?:red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose|slate|gray|zinc|neutral|stone)-[0-9]{2,3}\b/g,
     msg: `Raw Tailwind palette colour. The stock palette is not the brand: use a token (${TOKENS}) via the app layer's classes, or the part that already carries the hue — Status for a state (glyph plus word, never a filled pill) and Notice for a callout (a hairline in the status hue).`,
   },
