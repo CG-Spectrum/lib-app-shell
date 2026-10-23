@@ -1,15 +1,5 @@
-import { createContext, useContext, type ReactNode } from "react";
+import { Children, cloneElement, isValidElement, type ReactNode } from "react";
 import { Status } from "./Status";
-
-/**
- * Whether the surrounding KpiRow is a definition list.
- *
- * ⚖️ CONTEXT, NOT A PROP ON BOTH. A `<dt>` outside a `<dl>` is invalid HTML
- * that no browser and no linter complains about — it just stops being a term.
- * Passing `as="dl"` to the row AND to every tile would be two things to keep
- * in sync, and the failure of that sync is silent. The row tells the tiles.
- */
-const DefinitionList = createContext(false);
 
 // A single figure with its label, an optional target bar, and one line of
 // context. The tile the leadership and finance boards are made of.
@@ -46,16 +36,22 @@ export interface KpiProps {
   target?: number;
   state?: KpiState;
   className?: string;
+  /**
+   * ⛔ SET BY `KpiRow as="dl"`, NOT BY HAND. The row clones its tiles with it
+   * so there is one switch and no pair of props to keep in sync — a `<dt>`
+   * outside a `<dl>` is invalid HTML that no browser and no linter complains
+   * about, it simply stops being a term.
+   */
+  inList?: boolean;
 }
 
-export function Kpi({ label, value, context, actual, target, state, className = "" }: KpiProps) {
+export function Kpi({ label, value, context, actual, target, state, className = "", inList = false }: KpiProps) {
   const resolved: KpiState = state ?? (target === undefined ? { kind: "no-target" } : { kind: "on-target" });
   const missing = resolved.kind === "missing-target";
   const showBar = !missing && actual !== undefined && target !== undefined && target > 0;
   // Inside a `<dl>` the label is the TERM and the figure is its DEFINITION, so
   // a screen reader pairs them instead of reading two unrelated strings. The
   // elements change; nothing about the look does.
-  const inList = useContext(DefinitionList);
   const Label = inList ? "dt" : "span";
   const Value = inList ? "dd" : "div";
 
@@ -147,13 +143,23 @@ export function KpiRow({
   as?: "div" | "dl";
 }) {
   const Tag = as;
+  // 🔴 CLONED, NOT CONTEXT. Kpi is a SERVER-SAFE component — no hooks, no
+  // "use client" — and `createContext` is a client-only API: a server
+  // component importing a module that calls it dies at page-data collection
+  // with "createContext is not a function", which is how v3.2.0 broke
+  // cgsi-auth's build. Cloning keeps the one-switch property without putting
+  // a hook in a component that does not need one.
+  const tiles =
+    as === "dl"
+      ? Children.map(children, (child) =>
+          isValidElement<KpiProps>(child) ? cloneElement(child, { inList: true }) : child,
+        )
+      : children;
   return (
-    <DefinitionList.Provider value={as === "dl"}>
-      <Tag
-        className={`grid grid-cols-1 gap-[var(--panel-gap)] sm:grid-cols-2 lg:grid-cols-4 [&>*]:bg-surface ${className}`}
-      >
-        {children}
-      </Tag>
-    </DefinitionList.Provider>
+    <Tag
+      className={`grid grid-cols-1 gap-[var(--panel-gap)] sm:grid-cols-2 lg:grid-cols-4 [&>*]:bg-surface ${className}`}
+    >
+      {tiles}
+    </Tag>
   );
 }
