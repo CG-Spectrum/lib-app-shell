@@ -218,9 +218,22 @@ export function Ledger<T extends LedgerRow>({
                 className={[
                   "border-b border-border",
                   row.closed ? "opacity-55" : "",
+                  // 🔴 THE HOVER WASH DREW NOTHING IN LIGHT MODE. It was
+                  // `rgba(233,230,223,0.04)` — #e9e6df is --color-text's DARK
+                  // value, so the wash was the dark theme's ink at 4%, frozen
+                  // as a literal. On light it painted near-white at 4% over
+                  // the #ffffff panel: the estate's table had no row hover at
+                  // all for anyone in light, in every app. Same defect as
+                  // people's globals.css:54, and the reason raw-rgb exists.
+                  //
+                  // The row sits on --color-surface (the sticky first column
+                  // under `wide` repaints it, below), so the hover is the next
+                  // step of the ramp: --color-surface-2, which is a step UP in
+                  // dark and a step DOWN in light and visible in both. A token
+                  // with the meaning, not a mix with the value.
                   row.selected
                     ? "bg-[var(--color-accent-tint)] shadow-[inset_3px_0_0_var(--color-accent-mark)]"
-                    : "hover:bg-[rgba(233,230,223,0.04)]",
+                    : "hover:bg-surface-2",
                 ].join(" ")}
               >
                 {columns.map((c, i) => {

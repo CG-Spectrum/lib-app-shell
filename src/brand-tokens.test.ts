@@ -257,4 +257,23 @@ describe("the 2027 palette", () => {
     expect(brandCss).not.toMatch(/^\s*--color-accent-soft\s*:/m);
     expect(dark).toMatch(/--color-accent-tint:\s*rgba\(68, 214, 44, 0\.08\);/);
   });
+
+  /* ⛔ THE TRAP THIS TOKEN SETS FOR THE NEXT PERSON. The file's standing rule
+     is that every colour in @theme must also appear in the light block, and
+     obeying it here breaks every modal in the estate: a scrim's job is to
+     DARKEN, so a light-mode value derived from the near-white ground veils the
+     page instead of dimming it and the drawer has nothing to sit against. The
+     token is theme-independent on purpose, like --panel-gap above and
+     --color-scrim-hero, and nothing but a test says so out loud. */
+  test("--color-scrim is black at an alpha, and takes no light override", () => {
+    expect(dark).toMatch(/--color-scrim:\s*rgba\(0, 0, 0, 0\.6\);/);
+    expect(light).not.toMatch(/^\s*--color-scrim\s*:/m);
+  });
+
+  test("--color-scrim is not derived from the ground", () => {
+    // --color-scrim-hero IS, correctly: it fades an image back to the page it
+    // sits on. A modal scrim covers the page, so the two cannot share a form.
+    const scrim = /^\s*--color-scrim:\s*([^;]+);/m.exec(brandCss)?.[1] ?? "";
+    expect(scrim).not.toMatch(/--color-bg|--color-surface/);
+  });
 });

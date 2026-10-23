@@ -159,9 +159,31 @@ draws its focus ring (`globals.css` ~:610) and its stepper-dot ring (~:1022) in
 2025 **pink** `rgba(255,62,181,…)` around elements filled with the green token,
 under a pragma naming `drop-shadow` and `raw-hex`. Visible today.
 
-🟢 **The rule's first two findings are in this package**: `Ledger.tsx`'s hover
-wash and `components.css`'s drawer scrim. Both are advisory, so CI is unmoved,
-and both are the rule arguing for itself.
+🟢 **The rule's first two findings were in this package**, and both are now
+cleared — the package is 0 errors and 0 advisory. They are the rule arguing for
+itself twice, in the two different ways a finding can be real:
+
+- **`Ledger.tsx`'s hover wash was a live defect, in every app.** It was
+  `rgba(233,230,223,0.04)` — `#e9e6df` is `--color-text`'s **dark** value, so
+  the wash was the dark theme's ink at 4%, frozen as a literal. On light it
+  painted near-white at 4% over the `#ffffff` panel and drew nothing: the
+  estate's table had **no row hover for anyone working in light**. The same
+  defect `people`'s `globals.css:54` had. → `hover:bg-surface-2`, the next step
+  of the ramp, which is up in dark and down in light and visible in both.
+- **`components.css`'s drawer scrim needed a token that did not exist.** A
+  scrim over content is black at an alpha by nature, and nothing in the palette
+  carried that meaning. The choice was a pragma on one line or a token for the
+  estate, and ⚖️ **the token, because seventeen apps inherit this package and
+  every one of them will eventually write a drawer, a sheet or a confirm
+  dialog.** A pragma here leaves all seventeen meeting the same rule with
+  nothing to reach for — seventeen pragmas, or seventeen literals. That is the
+  argument `--color-scrim-hero` already won in `brand.css`. → `--color-scrim`.
+
+⛔ **`--color-scrim` takes no light override and must not be given one.** A
+scrim's job is to darken; derived from the near-white light ground it would
+veil the page instead of dimming it. Theme-independent on purpose, like
+`--panel-gap`, and pinned by a test — because the file's own "every colour also
+appears in the light block" rule points the wrong way here.
 
 ## 🔴 The email exemption excused 62 files, and was for one
 
