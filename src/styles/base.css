@@ -146,7 +146,7 @@ main input[type="password"] {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: 0;
-  padding: 7px 10px;
+  padding: 8px 12px;
   font-size: 13px;
   color: var(--color-text);
   min-width: 140px;
@@ -164,6 +164,10 @@ main input:hover {
 main select:focus,
 main input:focus {
   outline: none;
+  /* cgsi-adherence-allow: accent-as-paint — a focus indicator, not a brand
+     mark: on white Ink Green is the visible one and the bright mark would be
+     the accessibility regression. The rule excludes `outline` but cannot see
+     it on the line above. */
   border-color: var(--color-accent);
   /* The ring, not a shadow: no offset, no blur. ⚠️ It used --color-accent-soft
      until the flip, which is a RETIRED token and now resolves to neutral grey
