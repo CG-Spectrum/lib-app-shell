@@ -313,6 +313,15 @@ const RULES = [
        strip in one pass. A hairline is a border that happens to be spelled as
        spacing, so it is out of scope, not a tenth step.
 
+       🔴 THE PROPERTY NEEDS A LEFT BOUNDARY. Without `(?<![\w-])` the pattern
+       matches the `margin-top` inside `scroll-margin-top`, which is not
+       spacing at all: home's is 104px, derived from 58px of sticky Header
+       plus ~41px of SubNav plus a buffer, and its own comment says to
+       re-derive it when either component's geometry changes. Rounding that to
+       40 drops every deep-linked card back under the fixed chrome. Same for
+       `scroll-padding-*`. An offset measured from another component is not a
+       step on this ladder.
+
        ⚠️ A NEGATIVE value is a bleed and must cancel the padding it pairs
        with. Sweep the pair together or the cancellation breaks silently.
 
@@ -321,7 +330,7 @@ const RULES = [
        Move to "error" once the estate is near zero, as geometry did at the
        phase 4 flip. @see cgsi-2027-design guidelines/surface-app-layer.md,
        which is the source and was amended FIRST. */
-    re: /(?:padding|margin|gap|row-gap|column-gap)(?:-(?:top|right|bottom|left|block|inline))?\s*:\s*[^;}\n]*?\b(?!(?:0|1|2|4|6|8|12|16|24|32|40)px)\d+px/g,
+    re: /(?<![\w-])(?:padding|margin|gap|row-gap|column-gap)(?:-(?:top|right|bottom|left|block|inline))?\s*:\s*[^;}\n]*?\b(?!(?:0|1|2|4|6|8|12|16|24|32|40)px)\d+px/g,
     msg: "Off-scale spacing. The app layer has nine steps: 2, 4, 6, 8, 12, 16, 24, 32, 40. 1px is the hairline, not a step, and is never flagged. 10 and 14 are the two commonest drifts and both are deliberately NOT steps — 10 goes to 8 or 12, 14 to 12 or 16, and that choice is the rhythm. Row heights (40 / 32) come from the density setting, not a literal.",
   },
 ];
