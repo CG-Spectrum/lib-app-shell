@@ -292,7 +292,7 @@
   --color-bg-2: var(--color-surface-2);
   --color-text-1: var(--color-text);
 
-  /* ── Photographic scrim ────────────────────────────────────────────────── */
+  /* ── Scrims ────────────────────────────────────────────────────────────── */
   /* The ONE gradient the brand permits: text over an image sits on a gradient
      back to the ground, never in a solid capsule. ⛔ It belongs on an image,
      never on a control or a card, and ⛔ never over student work — the falloff
@@ -303,6 +303,29 @@
      phase 4 flip, so every scrim in the estate would have stayed navy over a
      green-grey page. */
   --color-scrim-hero: color-mix(in srgb, var(--color-bg) 92%, transparent);
+
+  /* ⚖️ ADDED 23 Oct 2026, WITH raw-rgb. The modal scrim is the one place in
+     the palette where black at an alpha IS the brand value, and no token
+     carried that meaning: components.css drew its drawer overlay as a bare
+     rgba(0,0,0,.6). Seventeen apps inherit this package and every one of them
+     will eventually write a drawer, a sheet or a confirm dialog. Pragmaing the
+     one line here would have left all seventeen to meet the same rule with no
+     token to reach for — seventeen pragmas, or seventeen literals. That is the
+     argument --color-scrim-hero already won in the paragraph above, and it is
+     the same argument.
+
+     ⛔ IT IS NOT DERIVED FROM --color-bg, and must not be. A scrim's job is to
+     DARKEN what is behind it so the thing on top is the only lit surface. On
+     light, --color-bg is #e7e8e7, so the derived form would veil the page in
+     near-white — the page would go pale rather than recede, and the drawer
+     would have nothing to sit against.
+
+     ⚠️ SO IT TAKES NO LIGHT OVERRIDE, deliberately, and the file's "every
+     colour in @theme also appears in the light block" rule does not reach it
+     for the same reason it does not reach --color-scrim-hero or the layout
+     tokens: this is theme-independent. ⛔ Do not "complete" it by adding a
+     lighter value to the two light blocks. A test below pins that. */
+  --color-scrim: rgba(0, 0, 0, 0.6);
 
   /* ── Layout ────────────────────────────────────────────────────────────── */
   /* Theme-independent, so no light override.

@@ -161,7 +161,13 @@
 .drawer-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, .6);
+  /* A scrim over content is black at an alpha by nature — it darkens the page
+     so the drawer is the only lit surface — and that is the one meaning the
+     palette had no token for. It has one now: --color-scrim, theme-independent
+     on purpose (brand.css says why). Not --color-scrim-hero, which is the
+     photographic gradient and is derived from the ground, so on light it would
+     veil the page in near-white instead of dimming it. */
+  background: var(--color-scrim);
   z-index: 100;
   backdrop-filter: blur(2px);
 }
