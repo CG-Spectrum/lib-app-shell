@@ -301,13 +301,28 @@ const RULES = [
        and 14 → 12/16 are the estate's two commonest corrections (338 values)
        and they are the whole point of having a scale.
 
+       🔴 1px IS NOT A STEP AND IS NOT FLAGGED. It is the hairline, and this
+       standard is built on hairlines: "Panels sit in a hairline grid with no
+       gap (1px border between them)" is the spacing section's own second
+       bullet. `gap: 1px` over a border-coloured grid is how the estate draws
+       the dividers between the three question panels; `margin-bottom: -1px`
+       is how a tab strip sits on its rule; `margin: -1px` is the clip in
+       every visually-hidden utility. Rounding those is not tidying, it is
+       deleting a divider — which a sweep of home did on 23 Oct 2026 before
+       this line existed, removing the panel dividers and un-seating the tab
+       strip in one pass. A hairline is a border that happens to be spelled as
+       spacing, so it is out of scope, not a tenth step.
+
+       ⚠️ A NEGATIVE value is a bleed and must cancel the padding it pairs
+       with. Sweep the pair together or the cancellation breaks silently.
+
        ⚠️ Still advisory. 736 values remain, 663 of which move 2px or less and
        are a mechanical sweep; the other 73 are design decisions and want eyes.
        Move to "error" once the estate is near zero, as geometry did at the
        phase 4 flip. @see cgsi-2027-design guidelines/surface-app-layer.md,
        which is the source and was amended FIRST. */
-    re: /(?:padding|margin|gap|row-gap|column-gap)(?:-(?:top|right|bottom|left|block|inline))?\s*:\s*[^;}\n]*?\b(?!(?:0|2|4|6|8|12|16|24|32|40)px)\d+px/g,
-    msg: "Off-scale spacing. The app layer has nine steps: 2, 4, 6, 8, 12, 16, 24, 32, 40. 10 and 14 are the two commonest drifts and both are deliberately NOT steps — 10 goes to 8 or 12, 14 to 12 or 16, and that choice is the rhythm. Row heights (40 / 32) come from the density setting, not a literal.",
+    re: /(?:padding|margin|gap|row-gap|column-gap)(?:-(?:top|right|bottom|left|block|inline))?\s*:\s*[^;}\n]*?\b(?!(?:0|1|2|4|6|8|12|16|24|32|40)px)\d+px/g,
+    msg: "Off-scale spacing. The app layer has nine steps: 2, 4, 6, 8, 12, 16, 24, 32, 40. 1px is the hairline, not a step, and is never flagged. 10 and 14 are the two commonest drifts and both are deliberately NOT steps — 10 goes to 8 or 12, 14 to 12 or 16, and that choice is the rhythm. Row heights (40 / 32) come from the density setting, not a literal.",
   },
 ];
 
