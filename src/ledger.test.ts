@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { headerGroups, isMonoColumn, type LedgerColumn } from "./Ledger";
+import { headerGroups, isMonoColumn, isRowHeader, type LedgerColumn } from "./Ledger";
 
 type Row = { key: string };
 
@@ -94,5 +94,26 @@ describe("isMonoColumn", () => {
   // 🔴 "2026-T3" is data that happens to read left.
   test("a left-reading code opts in with mono", () => {
     expect(isMonoColumn(c({ align: "left", mono: true }))).toBe(true);
+  });
+});
+
+describe("isRowHeader", () => {
+  const c = (over: Partial<LedgerColumn<Row>>): LedgerColumn<Row> =>
+    ({ key: "k", header: "K", cell: () => null, ...over });
+
+  test("a column opts in and becomes the row's name", () => {
+    expect(isRowHeader(c({ rowHeader: true }))).toBe(true);
+  });
+
+  test("a column that does not ask is an ordinary cell", () => {
+    expect(isRowHeader(c({}))).toBe(false);
+  });
+
+  // ⛔ The guard, and the reason this is a function rather than a doc comment.
+  // Right-aligned means numbers, and "72%" announced as the header of its own
+  // row tells a screen-reader user nothing while displacing the name that
+  // would have.
+  test("a numeric column is refused even when it asks", () => {
+    expect(isRowHeader(c({ rowHeader: true, align: "right" }))).toBe(false);
   });
 });
