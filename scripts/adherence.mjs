@@ -30,19 +30,64 @@ import { join, relative, basename, resolve, dirname } from "node:path";
 const SOURCE_EXT = /\.(tsx?|jsx?|mjs|cjs|css|scss)$/;
 const SKIP_DIR = /^(node_modules|\.next|\.git|dist|build|coverage|out)$/;
 
-/* brand.css is the one file allowed to hold raw colour: it is where the tokens
-   are defined. Tests assert on literals, so they are exempt too. */
 /* 🔴 EMAIL IS NOT THE APP LAYER. Email clients do not support CSS variables,
    so an email template MUST inline its hex and use a web-safe face — one
    marketing file carries the note "every colour is explicit: an inherited one
    has rendered dark-on-dark". Flagging those teaches people the check is
    wrong rather than the code. The brand treats email as its own surface
-   (600 wide) for the same reason. Anything outside this naming convention
-   should carry a pragma naming email as the reason. */
+   (600 wide) for the same reason.
+
+   ⛔ IT WAS WRITTEN AS `/email/i.test(path)` AND MATCHED ANY SEGMENT OR
+   FILENAME, so it exempted 62 source files across six repos from EVERY rule,
+   the error tier included. Counted from the filesystem, 23 Oct 2026:
+   marketing 41 (`src/app/email-sequences/`, an app SECTION), referrals 8,
+   salesapp 6 (`src/app/coaching/email-response/`, a dashboard with a table
+   and a local StatusBadge), launchpad-admin 3 (`src/app/mentors/[email]/`, a
+   Next DYNAMIC SEGMENT), people 2, studentportal 2. ⛔ Every "0 errors" this
+   estate recorded before that date excluded them. Found by renaming
+   `[email]` in a scratch copy and getting 11 tables instead of 10.
+
+   ⚖️ WHAT THE EXEMPTION TURNED OUT TO BE FOR: one file. Of the 62, exactly
+   ONE emits inline-styled email markup — marketing's
+   `src/lib/events/event-email-props.ts`, 13 HTML tags and 12 style
+   attributes, the file carrying the note above. Two more are ordinary app
+   JSX that happened to be named after the thing they list; the other 59 are
+   route handlers, validation helpers, aggregates and their tests. No repo
+   ships React Email, mjml or a templates directory — the estate has no email
+   naming convention at all, which is why a substring was reached for.
+
+   So the exemption names a convention instead: a directory literally called
+   `emails/` or `email-templates/`, or a `*.email.*` suffix. ⛔ NEVER under
+   `app/`. In Next's router every segment is a URL, not a claim about
+   content — `src/app/api/events/[id]/emails/route.ts` is named after the
+   RESOURCE it serves, and three repos have one. `[email]` proves a segment
+   name can be an accident outright.
+
+   ⚖️ A segment named `app` anywhere excludes, rather than only `src/app`,
+   because the script is also run as `npx cgsi-adherence app`. Any ambiguity
+   in an exemption resolves toward CHECKING the file: that is the only
+   direction that cannot hide debt, and hiding debt is the whole of what went
+   wrong here.
+
+   A genuine template outside this convention takes a pragma naming email as
+   the reason — a recorded decision, not a substring. */
+const EMAIL_SURFACE = (path) => {
+  const segments = path.split(/[\\/]/);
+  const file = segments.pop() ?? "";
+  if (segments.includes("app")) return false;
+  return (
+    segments.includes("emails") ||
+    segments.includes("email-templates") ||
+    /\.email\.(tsx?|jsx?|mjs|cjs|css|scss)$/.test(file)
+  );
+};
+
+/* brand.css is the one file allowed to hold raw colour: it is where the tokens
+   are defined. Tests assert on literals, so they are exempt too. */
 const EXEMPT = (path) =>
   basename(path) === "brand.css" ||
   /\.(test|spec)\.[tj]sx?$/.test(path) ||
-  /email/i.test(path);
+  EMAIL_SURFACE(path);
 
 /* The live app-layer tokens, for the "use this instead" hint. */
 const TOKENS =
