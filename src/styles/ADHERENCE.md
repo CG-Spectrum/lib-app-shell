@@ -81,7 +81,7 @@ requires, check whether it is one of these before you change the code.
 | `gradient-fill` | freeze | A gradient FILL. Not a `mask-image` gradient (that is an edge fade), not a `repeating-*-gradient` (that is a hatch), and the photographic text scrim is pragma'd |
 | `accent-as-paint` | freeze | `--color-accent` used as PAINT — a bar, tick, rule or dot. Marks take `--color-accent-mark`; every `color:` use of the accent is correct and untouched |
 | `off-scale-spacing` | freeze | Padding, margin or gap off the nine-step scale (2, 4, 6, 8, 12, 16, 24, 32, 40) |
-| `raw-palette` | advisory | A stock Tailwind palette class: `bg-green-100`, `dark:text-amber-400`, `bg-red-900/40`. The hole `raw-hex` left open |
+| `raw-palette` | freeze | A stock Tailwind palette class: `bg-green-100`, `dark:text-amber-400`, `bg-red-900/40`. The hole `raw-hex` left open |
 | `rebuilt-table` | advisory | A raw `<table>` in an app. Import `Ledger`. HTML email is exempt by path |
 | `rebuilt-part` | advisory | A locally defined `Panel` / `Kpi` / `Status` / `Badge` / `Notice` / `FilterBar` / `RecordCard` / `Breadcrumb` |
 
@@ -106,8 +106,17 @@ of them, and not for the hue: a filled pill carries its meaning in colour
 ALONE, which is what hard rule 5 exists to stop, and one of these boards
 belongs to someone who is colour blind.
 
-It arrives **advisory**, per the governance above: flip it to freeze per repo
-as each reaches zero, the way `accent-as-paint` and `off-scale-spacing` were.
+🟢 It arrived **advisory** and was flipped to **freeze the same day**, because
+the sweep closed all 123 in one pass and every repo reached zero together.
+There was no argument to have about whether the rule described the estate
+wrongly — which is the argument that held the spacing ladder up for a day, and
+was the right argument to have there.
+
+⚠️ **The first count said 112 across seven repos and was wrong.** It came from
+a hand-written list of repo names, and `cgsi-auth` was not on it. The right
+number came from the filesystem — every directory carrying
+`.github/workflows/adherence.yml`. ⛔ Never take an estate count from a list
+somebody typed; the alpha-hex undercount above is the same mistake.
 
 ⚠️ **`raw-hex` could not see an alpha hex until 21 Oct.** `#dc262655` slipped
 both arms of the old pattern — the 6-digit one matched `#dc2626` and then
@@ -137,7 +146,7 @@ stylesheet. The data parts they hand-rolled. First measurement:
 |---|---|
 | `rebuilt-table` | **169** across 14 apps |
 | `rebuilt-part` | **9** across 5 apps |
-| `raw-palette` | **112** across 7 apps (`salesapp` 59, `marketing` 42, five more with a red error line each) |
+| `raw-palette` | **123** across 8 apps (`salesapp` 59, `marketing` 42, `cgsi-auth` 11, five more with a red error line each) — **cleared 23 Oct** |
 
 It also explains older trouble. The chart-colour sweep needed three passes and
 still missed two files; the funnel and the feedback charts had to be found by

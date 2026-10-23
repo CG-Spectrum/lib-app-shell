@@ -618,9 +618,13 @@ describe("the stock Tailwind palette — the hole raw-hex left open", () => {
     expect(out).toContain("raw-palette");
   });
 
-  test("it is advisory on arrival, so it cannot fail a repo on day one", () => {
+  // 🟢 Arrived advisory on 123 findings and flipped to error the same day,
+  // because the sweep closed all 123 in one pass. Asserted rather than
+  // described so the change of contract is visible to whoever greps for why
+  // their build started failing.
+  test("a palette class fails the build, as of the same-day flip", () => {
     const { exit } = check({ "a.tsx": `<span className="bg-green-100" />` });
-    expect(exit).toBe(0);
+    expect(exit).toBe(1);
   });
 
   test("a dark-mode variant is still a palette class", () => {
