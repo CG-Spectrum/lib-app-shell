@@ -10,6 +10,7 @@
  * term. So the pairing is asserted in both directions.
  */
 import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
 import { renderToStaticMarkup } from "react-dom/server";
 import { Kpi, KpiRow } from "./Kpi";
 
@@ -60,5 +61,28 @@ describe("a dl row pairs each label with its figure", () => {
     // same either way; only the element names differ.
     const strip = (s: string) => s.replace(/<\/?(div|dl|dt|dd|span)/g, "<x");
     expect(strip(html)).toBe(strip(row()));
+  });
+});
+
+describe("Kpi stays server-safe", () => {
+  // 🔴 v3.2.0 SHIPPED A CONTEXT HERE AND BROKE EVERY SERVER COMPONENT THAT
+  // IMPORTED IT. `createContext` is a client-only API; a server component
+  // importing a module that calls it dies at page-data collection with
+  // "(0 , f.createContext) is not a function". It passed this package's CI
+  // (a library never runs a Next build) and surfaced only when cgsi-auth
+  // bumped to it.
+  const src = readFileSync(new URL("./Kpi.tsx", import.meta.url), "utf8");
+  const code = src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, "");
+
+  it("calls no React hook", () => {
+    expect(code).not.toMatch(/\buse[A-Z]\w*\s*\(/);
+  });
+
+  it("creates no context", () => {
+    expect(code).not.toMatch(/\bcreateContext\b/);
+  });
+
+  it("needs no 'use client', so a server page can render a tile directly", () => {
+    expect(code).not.toContain('"use client"');
   });
 });
