@@ -322,6 +322,16 @@ const RULES = [
        `scroll-padding-*`. An offset measured from another component is not a
        step on this ladder.
 
+       🔴 THE RUN-UP STOPS AT A COMMA, and this one is dangerous rather than
+       merely noisy. A JSX style object separates its properties with commas,
+       so `[^;}\n]*?` sails past one and lands on the next property:
+       `gap: "8px", maxWidth: "480px"` reported 480px as off-scale SPACING in
+       governance, and a sweep acting on that sets maxWidth to 40px and
+       collapses the layout. Three of those were queued before the comma was
+       excluded. The cost is real but small — a value after a comma inside
+       `max(44px, calc(...))` is no longer seen — and under-reporting a
+       computed gutter beats telling someone to break a width.
+
        ⚠️ A NEGATIVE value is a bleed and must cancel the padding it pairs
        with. Sweep the pair together or the cancellation breaks silently.
 
@@ -330,7 +340,7 @@ const RULES = [
        Move to "error" once the estate is near zero, as geometry did at the
        phase 4 flip. @see cgsi-2027-design guidelines/surface-app-layer.md,
        which is the source and was amended FIRST. */
-    re: /(?<![\w-])(?:padding|margin|gap|row-gap|column-gap)(?:-(?:top|right|bottom|left|block|inline))?\s*:\s*[^;}\n]*?\b(?!(?:0|1|2|4|6|8|12|16|24|32|40)px)\d+px/g,
+    re: /(?<![\w-])(?:padding|margin|gap|row-gap|column-gap)(?:-(?:top|right|bottom|left|block|inline))?\s*:\s*[^;}\n,]*?\b(?!(?:0|1|2|4|6|8|12|16|24|32|40)px)\d+px/g,
     msg: "Off-scale spacing. The app layer has nine steps: 2, 4, 6, 8, 12, 16, 24, 32, 40. 1px is the hairline, not a step, and is never flagged. 10 and 14 are the two commonest drifts and both are deliberately NOT steps — 10 goes to 8 or 12, 14 to 12 or 16, and that choice is the rhythm. Row heights (40 / 32) come from the density setting, not a literal.",
   },
 ];
