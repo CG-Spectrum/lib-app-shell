@@ -69,6 +69,46 @@ const RULES = [
     msg: `Raw hex colour. Use a token: ${TOKENS}. If the colour is missing, add it to app-shell brand.css, not to this app.`,
   },
   {
+    id: "raw-palette",
+    /* ⚖️ ADVISORY ON ARRIVAL, and this is the governance in ADHERENCE.md, not
+       timidity: 112 findings across seven repos on 23 Oct 2026. A rule that
+       fails every one of them on day one is a rule somebody switches off
+       within the week. Flip it to error per repo as each reaches zero, the
+       way accent-as-paint and off-scale-spacing were flipped.
+
+       🔴 THE HOLE raw-hex LEFT OPEN. `#16a34a` is caught; `bg-green-600` is
+       the same colour, the same offence and the same screen, and it passed.
+       Found 23 Oct in two StatusBadge components in marketing that had been
+       sitting at "0 errors" through four sweeps while written entirely in
+       Tailwind's stock palette. ⛔ So "0 errors estate-wide" was never a
+       statement about colour; it was a statement about SPELLINGS OF COLOUR.
+
+       What was actually there, in all 112: an error line in red, a warning
+       callout, or a filled status pill. None of them a third-party embed, a
+       syntax-highlighting theme or anything else with a claim to its own
+       palette — the usual reasons to exempt. So unlike the spacing ladder,
+       this is not a rule the estate is breaking because the rule is wrong.
+
+       🔴 THE PILLS ARE THE WORST OF THEM, and not because of the hue. A
+       filled pill carries its meaning in colour ALONE, which is the thing
+       hard rule 5 exists to stop; Status draws a glyph and a word. One of
+       these boards belongs to someone who is colour blind.
+
+       ⛔ BRAND TOKEN CLASSES MUST NOT MATCH. `bg-surface-2`, `text-text-3`,
+       `border-border-strong` are the package's own and correct. The palette
+       names are listed explicitly rather than matched as `\w+` for exactly
+       this reason — a generic pattern reports Ledger.tsx against itself.
+
+       The variant prefix needs no handling: `dark:` and `hover:` end in a
+       colon, which is a word boundary, so `dark:bg-amber-950` matches on the
+       `bg`. The opacity suffix likewise — `/40` starts with a non-word
+       character, so `bg-green-900/40` closes its `\b` on the `0`. Both
+       spellings are in the estate and both were checked. */
+    tier: "advisory",
+    re: /\b(?:bg|text|border|ring|from|to|via|decoration|outline|divide|shadow|fill|stroke|caret|accent|placeholder)-(?:red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose|slate|gray|zinc|neutral|stone)-[0-9]{2,3}\b/g,
+    msg: `Raw Tailwind palette colour. The stock palette is not the brand: use a token (${TOKENS}) via the app layer's classes, or the part that already carries the hue — Status for a state (glyph plus word, never a filled pill) and Notice for a callout (a hairline in the status hue).`,
+  },
+  {
     id: "glued-alpha",
     tier: "error",
     /* 🔴 THE CODEMOD MADE THIS ONE. Swapping `#dc2626` for `var(--color-bad)`
