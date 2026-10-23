@@ -79,7 +79,9 @@ requires, check whether it is one of these before you change the code.
 | `rounded-corners` | freeze | Any non-zero radius, including `rounded-full` |
 | `drop-shadow` | freeze | Any outer `box-shadow`. Inset is allowed (it draws the selected row) and so is a zero-offset zero-blur ring, which is a focus indicator, not elevation |
 | `gradient-fill` | freeze | A gradient FILL. Not a `mask-image` gradient (that is an edge fade), not a `repeating-*-gradient` (that is a hatch), and the photographic text scrim is pragma'd |
-| `off-scale-spacing` | advisory | Padding, margin or gap off the six-step scale |
+| `accent-as-paint` | freeze | `--color-accent` used as PAINT — a bar, tick, rule or dot. Marks take `--color-accent-mark`; every `color:` use of the accent is correct and untouched |
+| `off-scale-spacing` | freeze | Padding, margin or gap off the nine-step scale (2, 4, 6, 8, 12, 16, 24, 32, 40) |
+| `raw-palette` | advisory | A stock Tailwind palette class: `bg-green-100`, `dark:text-amber-400`, `bg-red-900/40`. The hole `raw-hex` left open |
 | `rebuilt-table` | advisory | A raw `<table>` in an app. Import `Ledger`. HTML email is exempt by path |
 | `rebuilt-part` | advisory | A locally defined `Panel` / `Kpi` / `Status` / `Badge` / `Notice` / `FilterBar` / `RecordCard` / `Breadcrumb` |
 
@@ -88,6 +90,24 @@ are exempt: they assert on literals — ⛔ and so does `square-corners.mjs` ski
 them, because a codemod that rewrites `rounded-lg` inside `adherence.test.ts`
 is not migrating anything, it is deleting two regression tests and leaving
 them green. The advisory tier is off unless you pass `--advisory`.
+
+⚠️ **`raw-hex` never saw a Tailwind palette class, and nothing did until
+23 Oct.** `#16a34a` was a freeze finding; `bg-green-600` is the same colour on
+the same screen and passed every run. 112 occurrences across seven repos were
+sitting behind "0 errors" when `raw-palette` was written — `salesapp` 59,
+`marketing` 42, and a red error line each in five more. ⛔ **So any colour
+count taken before that date is a count of SPELLINGS, not of colour.**
+
+All 112 were one of three things: an error line in red, a warning callout, or
+a filled status pill. None was a third-party embed or a syntax-highlighting
+theme — the usual reasons to exempt — so unlike the spacing ladder this is not
+a rule the estate breaks because the rule is wrong. 🔴 The pills are the worst
+of them, and not for the hue: a filled pill carries its meaning in colour
+ALONE, which is what hard rule 5 exists to stop, and one of these boards
+belongs to someone who is colour blind.
+
+It arrives **advisory**, per the governance above: flip it to freeze per repo
+as each reaches zero, the way `accent-as-paint` and `off-scale-spacing` were.
 
 ⚠️ **`raw-hex` could not see an alpha hex until 21 Oct.** `#dc262655` slipped
 both arms of the old pattern — the 6-digit one matched `#dc2626` and then
@@ -117,6 +137,7 @@ stylesheet. The data parts they hand-rolled. First measurement:
 |---|---|
 | `rebuilt-table` | **169** across 14 apps |
 | `rebuilt-part` | **9** across 5 apps |
+| `raw-palette` | **112** across 7 apps (`salesapp` 59, `marketing` 42, five more with a red error line each) |
 
 It also explains older trouble. The chart-colour sweep needed three passes and
 still missed two files; the funnel and the feedback charts had to be found by

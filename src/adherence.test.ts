@@ -605,3 +605,60 @@ describe("rebuilt parts — the gap that let the estate fork while the count rea
     expect(out).toContain("rebuilt-table");
   });
 });
+
+describe("the stock Tailwind palette — the hole raw-hex left open", () => {
+  // 🔴 `#16a34a` was caught and `bg-green-600` was not, though they are the
+  // same colour on the same screen. Two StatusBadge components in marketing
+  // sat at "0 errors" through four sweeps while written entirely in Tailwind's
+  // stock palette; 112 occurrences across seven repos were found the day the
+  // rule was written.
+
+  test("a palette class is a finding", () => {
+    const { out } = check({ "a.tsx": `<span className="bg-green-100 text-green-800" />` }, "--advisory");
+    expect(out).toContain("raw-palette");
+  });
+
+  test("it is advisory on arrival, so it cannot fail a repo on day one", () => {
+    const { exit } = check({ "a.tsx": `<span className="bg-green-100" />` });
+    expect(exit).toBe(0);
+  });
+
+  test("a dark-mode variant is still a palette class", () => {
+    // `dark:` ends in a colon, which is a word boundary, so the match lands on
+    // the `bg`. Half the estate's findings are spelled this way.
+    const { out } = check({ "a.tsx": `<span className="dark:bg-amber-950" />` }, "--advisory");
+    expect(out).toContain("raw-palette");
+  });
+
+  test("an opacity suffix does not hide it", () => {
+    // `/40` starts with a non-word character, so `\b` closes on the `0`.
+    const { out } = check({ "a.tsx": `<span className="bg-green-900/40" />` }, "--advisory");
+    expect(out).toContain("raw-palette");
+  });
+
+  test("it reads CSS as well as components", () => {
+    const { out } = check({ "a.css": `.badge { @apply bg-red-100 text-red-700; }` }, "--advisory");
+    expect(out).toContain("raw-palette");
+  });
+
+  // ⛔ THE REGRESSION THAT WOULD MATTER MOST. The palette names are listed
+  // explicitly rather than matched as `\w+` so that the package's own classes
+  // do not report themselves. A generic pattern flags Ledger.tsx against the
+  // brand it defines.
+  test("a brand token class is not a palette class", () => {
+    const { out, exit } = check(
+      { "a.tsx": `<td className="bg-surface-2 text-text-3 border-border-strong bg-surface-3" />` },
+      "--advisory",
+    );
+    expect(out).not.toContain("raw-palette");
+    expect(exit).toBe(0);
+  });
+
+  test("a utility that merely ends in a number is not a colour", () => {
+    const { out } = check(
+      { "a.tsx": `<div className="grid-cols-2 gap-4 ring-2 shadow-lg text-[13px] z-10" />` },
+      "--advisory",
+    );
+    expect(out).not.toContain("raw-palette");
+  });
+});
