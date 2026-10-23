@@ -164,6 +164,43 @@ const RULES = [
     msg: `Raw Tailwind palette colour. The stock palette is not the brand: use a token (${TOKENS}) via the app layer's classes, or the part that already carries the hue — Status for a state (glyph plus word, never a filled pill) and Notice for a callout (a hairline in the status hue).`,
   },
   {
+    id: "raw-rgb",
+    tier: "advisory",
+    /* 🔴 THE THIRD SPELLING. raw-hex catches `#dc2626`, raw-palette catches
+       `bg-red-600`, and neither sees `rgba(251,191,36,.4)` — referrals drew its
+       chip borders that way through every sweep. ⛔ A third time: a colour count
+       is a count of SPELLINGS until the rule names all of them.
+
+       ⚖️ ADVISORY ON DAY ONE, flipped to error the afternoon the sweep closes —
+       the raw-palette playbook, and for a reason raw-palette did not have. 12 of
+       the 38 sit under pragmas naming `raw-hex`, a DIFFERENT rule, so erroring
+       immediately would break studentportal, home and people over exemptions
+       that were already argued and recorded. ⛔ Letting a `raw-hex` pragma also
+       suppress `raw-rgb` was considered and REJECTED: cheap now, and
+       un-auditable the moment anyone asks which rule a pragma actually answers.
+       Those lines get their own pragma in the sweep.
+
+       🔴 ZERO ALPHA IS NOT A COLOUR. `rgba(0,0,0,0)` is `transparent` with the
+       hue carried for readability; it is how a mask or gradient writes its
+       invisible stop. The lookahead covers the comma AND the slash form.
+
+       🔴 A COMPUTED COLOUR IS NOT A RAW ONE. `rgba(${r},${g},${b},${a})` is a
+       chart ramp, not a value someone typed — marketing's heatColor builds a
+       per-cell Okabe-Ito diverging scale that no token expresses. The argument
+       char class is digits/%/,/ / only, so a template literal cannot match.
+
+       ⛔ NOT INSIDE color-mix(). That is the fix this rule asks for, and a rule
+       that fires on its own remedy is a rule people route around. 🔴 The
+       lookbehind has to tolerate ONE level of nesting: written `[^()]{0,120}`
+       it stops at the first parenthesis, so `color-mix(in srgb, var(--token)
+       40%, rgba(0,0,0,.5))` — a tinted token, which is the shape the remedy
+       actually takes — was flagged while the bare form was not. The estate has
+       no rgb() inside a color-mix() today, so this cost nothing to miss and
+       will cost exactly one confused sweep to leave. */
+    re: /(?<!color-mix\((?:[^()]|\([^()]*\)){0,60})\b(?:rgb|hsl)a?\s*\(\s*(?![\d.]+%?\s*[,\s]\s*[\d.]+%?\s*[,\s]\s*[\d.]+%?\s*[,\/]\s*0*\.?0*\s*\))[\d.%\s,\/]*\)/g,
+    msg: `Raw rgb()/hsl() colour. A translucent brand colour is color-mix(in srgb, var(--token) NN%, transparent) — rgba(251,191,36,.4) is var(--color-warn-border) and the estate already ships -border and -tint tokens for the common alphas. Use a token: ${TOKENS}. A fully transparent stop (alpha 0) and a computed ramp are not flagged. If the value is genuinely outside the palette — a colourblind-safe chart scale, a public-website render — the line needs \`cgsi-adherence-allow: raw-rgb — <why>\`.`,
+  },
+  {
     id: "glued-alpha",
     tier: "error",
     /* 🔴 THE CODEMOD MADE THIS ONE. Swapping `#dc2626` for `var(--color-bad)`
