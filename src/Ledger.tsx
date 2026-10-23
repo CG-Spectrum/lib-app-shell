@@ -43,6 +43,20 @@ export interface LedgerColumn<T> {
   sortable?: boolean;
   /** Plain text for the title attribute when the cell may truncate. */
   titleOf?: (row: T) => string | undefined;
+  /**
+   * Render this column's cell as `<th scope="row">` rather than `<td>`.
+   *
+   * ⚖️ AT MOST ONE COLUMN, and it is the one that NAMES the row — the prompt,
+   * the campaign, the page. A screen reader then announces that name with
+   * every figure in the row, so "72%" is heard as "Mention us, 72%, Does
+   * Unreal have a good animation pipeline" instead of "72%" alone. Without it
+   * a dense numeric row is unreadable without counting columns.
+   *
+   * ⛔ Not a style. It changes nothing visually; the header treatment stays
+   * with `<thead>`. Setting it on a numeric column is wrong — a quantity does
+   * not identify a row.
+   */
+  rowHeader?: boolean;
 }
 
 export interface LedgerRow {
@@ -211,12 +225,18 @@ export function Ledger<T extends LedgerRow>({
               >
                 {columns.map((c, i) => {
                   const sticky = wide && i === 0;
+                  // A row header is a <th>, not a styled <td>: same classes,
+                  // different element, so the name travels with every figure
+                  // in the row for anyone not reading by eye.
+                  const asHeader = isRowHeader(c);
+                  const Cell = asHeader ? "th" : "td";
                   return (
-                    <td
+                    <Cell
                       key={c.key}
+                      scope={asHeader ? "row" : undefined}
                       title={c.titleOf?.(row)}
                       className={[
-                        "overflow-hidden text-ellipsis whitespace-nowrap px-4",
+                        "overflow-hidden text-ellipsis whitespace-nowrap px-4 font-normal",
                         isMonoColumn(c)
                           ? "font-mono text-[length:var(--density-data)] font-medium"
                           : "text-[length:var(--density-body)]",
@@ -226,7 +246,7 @@ export function Ledger<T extends LedgerRow>({
                       ].join(" ")}
                     >
                       {c.cell(row)}
-                    </td>
+                    </Cell>
                   );
                 })}
               </tr>
@@ -283,6 +303,19 @@ export function LedgerBar({ value, max }: { value: number; max: number }) {
  * column. The text columns beside them stay in the body face: the rule is
  * data versus prose, not short versus long.
  */
+/**
+ * Whether this column renders as `<th scope="row">`.
+ *
+ * ⛔ A RIGHT-ALIGNED COLUMN IS NEVER A ROW HEADER, whatever it asks for. Right
+ * means numbers (see isMonoColumn), and a quantity does not identify a row —
+ * "72%" announced as the header of its own row tells a screen-reader user
+ * nothing and displaces the name that would have. The guard lives here rather
+ * than in a doc comment because the doc comment is what was already there.
+ */
+export function isRowHeader<T>(c: LedgerColumn<T>): boolean {
+  return c.rowHeader === true && c.align !== "right";
+}
+
 export function isMonoColumn<T>(column: LedgerColumn<T>): boolean {
   return column.align === "right" || column.mono === true;
 }
