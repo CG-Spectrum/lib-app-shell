@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -23,7 +23,14 @@ const dirs: string[] = [];
 function check(files: Record<string, string>, ...flags: string[]) {
   const dir = mkdtempSync(join(tmpdir(), "adherence-"));
   dirs.push(dir);
-  for (const [name, body] of Object.entries(files)) writeFileSync(join(dir, name), body);
+  // A name may carry directories ("src/app/emails/route.ts"): the email
+  // exemption is about WHERE a file sits, not only what it is called, so the
+  // harness has to be able to build a path and not just a filename.
+  for (const [name, body] of Object.entries(files)) {
+    const target = join(dir, name);
+    mkdirSync(dirname(target), { recursive: true });
+    writeFileSync(target, body);
+  }
   try {
     const out = execFileSync("node", [SCRIPT, dir, ...flags], { encoding: "utf8" });
     return { out, exit: 0 };
@@ -590,9 +597,11 @@ describe("rebuilt parts — the gap that let the estate fork while the count rea
     expect(out).not.toContain("rebuilt-table");
   });
 
-  // ⛔ HTML email needs table layout. Exempt by path, and it must stay that way.
+  // ⛔ HTML email needs table layout. Exempt by path, and it must stay that
+  // way — but by the CONVENTION, not by the substring. See the exemption block
+  // below for what the substring cost.
   test("an email template is not a rebuilt table", () => {
-    const { out } = check({ "email-receipt.tsx": "export const E = () => <table />;" }, "--advisory");
+    const { out } = check({ "emails/receipt.tsx": "export const E = () => <table />;" }, "--advisory");
     expect(out).not.toContain("rebuilt-table");
   });
 
@@ -664,5 +673,86 @@ describe("the stock Tailwind palette — the hole raw-hex left open", () => {
       "--advisory",
     );
     expect(out).not.toContain("raw-palette");
+  });
+});
+
+describe("the email exemption — a substring that excused 62 files", () => {
+  // 🔴 `/email/i.test(path)` matched any PATH SEGMENT OR FILENAME, so every
+  // "0 errors" this estate recorded excluded 62 source files across six
+  // repos, the error tier included: marketing's `src/app/email-sequences/`
+  // section (41), salesapp's `coaching/email-response/` dashboard (6),
+  // launchpad-admin's `[email]` dynamic segment (3), and 12 more. Counted
+  // from the filesystem, 23 Oct 2026. Exactly ONE of the 62 emitted email
+  // markup.
+  const TABLE = "export const E = () => <table />;";
+
+  test("a templates directory is exempt", () => {
+    const { out } = check({ "lib/emails/receipt.tsx": TABLE }, "--advisory");
+    expect(out).not.toContain("rebuilt-table");
+  });
+
+  test("email-templates/ too", () => {
+    const { out } = check({ "email-templates/receipt.tsx": TABLE }, "--advisory");
+    expect(out).not.toContain("rebuilt-table");
+  });
+
+  test("a .email.tsx suffix is exempt wherever it sits", () => {
+    const { out } = check({ "lib/events/confirmation.email.tsx": TABLE }, "--advisory");
+    expect(out).not.toContain("rebuilt-table");
+  });
+
+  test("a .email.css suffix too — the markup is only half of a template", () => {
+    const { out } = check({ "lib/receipt.email.css": ".x { color: #dc2626; }" });
+    expect(out).not.toContain("raw-hex");
+  });
+
+  // ⛔ THE 41. An app section named after the thing it lists is the app layer.
+  test("an app section named email-sequences is NOT exempt", () => {
+    const { out } = check({ "app/email-sequences/View.tsx": TABLE }, "--advisory");
+    expect(out).toContain("rebuilt-table");
+  });
+
+  // ⛔ THE 6. A dashboard about email responses is a dashboard.
+  test("a dashboard under coaching/email-response is NOT exempt", () => {
+    const { out, exit } = check({
+      "app/coaching/email-response/Dash.tsx": 'const c = "bg-amber-50";',
+    });
+    expect(out).toContain("raw-palette");
+    expect(exit).toBe(1);
+  });
+
+  // ⛔ THE 3. A Next dynamic segment is a URL parameter, not a surface.
+  test("a [email] dynamic segment is NOT exempt", () => {
+    const { out } = check({ "app/mentors/[email]/page.tsx": TABLE }, "--advisory");
+    expect(out).toContain("rebuilt-table");
+  });
+
+  // 🔴 THE ONE THAT DECIDED THE SHAPE OF THE RULE. Three repos serve an
+  // `emails` RESOURCE from a route handler. Under Next's router a segment is
+  // a URL, not a claim about content, so the directory form must not reach
+  // inside `app/` — otherwise the convention re-opens the hole it closed.
+  test("an emails/ directory under app/ is a route, not a template", () => {
+    const { out } = check({ "app/api/settings/emails/route.ts": TABLE }, "--advisory");
+    expect(out).toContain("rebuilt-table");
+  });
+
+  test("a .email.tsx under app/ is checked too — ambiguity resolves toward checking", () => {
+    const { out } = check({ "app/events/confirm.email.tsx": TABLE }, "--advisory");
+    expect(out).toContain("rebuilt-table");
+  });
+
+  // ⛔ The word on its own was never the convention, and this is the case
+  // that carried 41 of the 62.
+  test("a file merely named after email is NOT exempt", () => {
+    const { out } = check({ "lib/email-validation.ts": 'const c = "#dc2626";' });
+    expect(out).toContain("raw-hex");
+  });
+
+  test("a template outside the convention still has the pragma", () => {
+    const { out } = check({
+      "lib/legacy-mailer.ts":
+        '/* cgsi-adherence-allow: raw-hex — HTML email: clients drop CSS variables */\nconst c = "#dc2626";',
+    });
+    expect(out).not.toContain("raw-hex");
   });
 });

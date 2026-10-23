@@ -82,7 +82,7 @@ requires, check whether it is one of these before you change the code.
 | `accent-as-paint` | freeze | `--color-accent` used as PAINT — a bar, tick, rule or dot. Marks take `--color-accent-mark`; every `color:` use of the accent is correct and untouched |
 | `off-scale-spacing` | freeze | Padding, margin or gap off the nine-step scale (2, 4, 6, 8, 12, 16, 24, 32, 40) |
 | `raw-palette` | freeze | A stock Tailwind palette class: `bg-green-100`, `dark:text-amber-400`, `bg-red-900/40`. The hole `raw-hex` left open |
-| `rebuilt-table` | advisory | A raw `<table>` in an app. Import `Ledger`. HTML email is exempt by path |
+| `rebuilt-table` | advisory | A raw `<table>` in an app. Import `Ledger`. An email template is exempt by the convention below |
 | `rebuilt-part` | advisory | A locally defined `Panel` / `Kpi` / `Status` / `Badge` / `Notice` / `FilterBar` / `RecordCard` / `Breadcrumb` |
 
 `brand.css` is exempt: it is where the tokens are defined. Test and spec files
@@ -90,6 +90,66 @@ are exempt: they assert on literals — ⛔ and so does `square-corners.mjs` ski
 them, because a codemod that rewrites `rounded-lg` inside `adherence.test.ts`
 is not migrating anything, it is deleting two regression tests and leaving
 them green. The advisory tier is off unless you pass `--advisory`.
+
+## 🔴 The email exemption excused 62 files, and was for one
+
+Email clients do not support CSS variables, so an HTML email template must
+inline its hex and use a web-safe face. That is a real exemption and it stays.
+
+⛔ **It was written as `/email/i.test(path)` and matched any path segment or
+filename.** Counted from the filesystem on 23 Oct 2026, it exempted **62
+source files across six repos from every rule, the error tier included**:
+
+| repo | files | what they are |
+|---|---|---|
+| `marketing` | 41 | `src/app/email-sequences/` — an app SECTION, plus route handlers and lib helpers |
+| `referrals` | 8 | `api/admin/referrers/emails` and an export loader |
+| `salesapp` | 6 | `src/app/coaching/email-response/` — a dashboard with a table and a local `StatusBadge` |
+| `launchpad-admin` | 3 | `src/app/mentors/[email]/` — a Next DYNAMIC SEGMENT |
+| `people` | 2 | `email-validation.ts` |
+| `studentportal` | 2 | `api/settings/emails` |
+
+⛔ **So every "0 errors" this estate recorded before that date excluded them**,
+the same shape of mistake as counting spellings of colour. It was found by the
+`launchpad-admin` agent renaming `[email]` in a scratch copy and getting 11
+tables instead of 10.
+
+⚖️ **What the exemption was actually for: one file.** Of the 62, exactly one
+emits inline-styled email markup — `marketing`'s
+`src/lib/events/event-email-props.ts`, 13 HTML tags and 12 `style` attributes,
+and the file carrying the note the checker quotes ("every colour is explicit:
+an inherited one has rendered dark-on-dark"). Two more are ordinary app JSX
+that happen to be named after the thing they list. The other 59 are route
+handlers, validation helpers, aggregates and their tests. No repo in the estate
+ships React Email, mjml or a templates directory — **there was no email naming
+convention at all**, which is why a substring got reached for.
+
+So the exemption now **names a convention** instead:
+
+- a directory literally called `emails/` or `email-templates/`, or
+- a `*.email.*` suffix (`confirmation.email.tsx`, `receipt.email.css`),
+- ⛔ **and never under `app/`.**
+
+The `app/` exclusion is not tidiness. In Next's router every segment is a URL,
+not a claim about content: three repos serve an `emails` RESOURCE from
+`app/api/.../emails/route.ts`, and without the exclusion the convention would
+re-open the hole it closed. `[email]` shows a segment name can be an accident
+outright. ⚖️ A segment named `app` anywhere excludes, rather than only
+`src/app`, because the script is also run as `npx cgsi-adherence app`, and
+**any ambiguity in an exemption resolves toward checking the file** — the one
+direction that cannot hide debt.
+
+A genuine template outside the convention takes a pragma naming email as the
+reason. That is a decision somebody can read in review; a substring is not.
+
+⚠️ **One repo goes red at the error tier when the ref is bumped.** `marketing`
+moves 0 → **17 errors** and 8 → 15 advisory, all 17 in
+`event-email-props.ts`: 8 `raw-hex`, 5 `off-scale-spacing`, 3
+`rounded-corners`, 1 `non-brand-font`. Every one of them is correct for an
+email and wrong for the app layer, so the fix there is to put the file inside
+the convention — `src/lib/events/emails/` or `event-email-props.email.ts` —
+not to change a colour. The other sixteen repos are unmoved. ⛔ That sweep
+happens **before** the ref bump, not after.
 
 ⚠️ **`raw-hex` never saw a Tailwind palette class, and nothing did until
 23 Oct.** `#16a34a` was a freeze finding; `bg-green-600` is the same colour on
