@@ -756,3 +756,131 @@ describe("the email exemption — a substring that excused 62 files", () => {
     expect(out).not.toContain("raw-hex");
   });
 });
+
+describe("raw-rgb — the third spelling of a raw colour", () => {
+  // 🔴 raw-hex catches `#dc2626`, raw-palette catches `bg-red-600`, and
+  // neither saw `rgba(251,191,36,.4)`. referrals drew its chip borders that
+  // way through every sweep. ⛔ A colour count is a count of SPELLINGS until
+  // the rule names all of them, and this is the third time that has been true.
+  test("a translucent rgba IS flagged", () => {
+    const { out } = check({ "a.css": ".x { border-color: rgba(251, 191, 36, .4); }" }, "--advisory");
+    expect(out).toContain("raw-rgb");
+    expect(out).toContain("color-mix");
+  });
+
+  test("the slash form is the same colour in a newer spelling", () => {
+    const { out } = check({ "a.css": ".x { color: rgb(255 0 0 / 40%); }" }, "--advisory");
+    expect(out).toContain("raw-rgb");
+  });
+
+  test("hsl is covered too, though the estate has none today", () => {
+    const { out } = check({ "a.css": ".x { color: hsl(120 50% 50%); }" }, "--advisory");
+    expect(out).toContain("raw-rgb");
+  });
+
+  // 🔴 ZERO ALPHA IS NOT A COLOUR. It is `transparent` with the hue carried
+  // for readability — how a mask or a gradient writes its invisible stop.
+  test("an alpha-0 stop is transparent, not a colour", () => {
+    const { out } = check({ "a.css": ".x { background: rgba(0,0,0,0); }" }, "--advisory");
+    expect(out).not.toContain("raw-rgb");
+  });
+
+  test("the slash form of alpha 0 too", () => {
+    const { out } = check({ "a.css": ".x { background: rgb(0 0 0 / 0); }" }, "--advisory");
+    expect(out).not.toContain("raw-rgb");
+  });
+
+  test("0.0 is still zero", () => {
+    const { out } = check({ "a.css": ".x { background: rgba(0, 0, 0, 0.0); }" }, "--advisory");
+    expect(out).not.toContain("raw-rgb");
+  });
+
+  test("but 0.04 is not zero, and a near-invisible wash is still a colour", () => {
+    const { out } = check({ "a.css": ".x { background: rgba(0,0,0,0.04); }" }, "--advisory");
+    expect(out).toContain("raw-rgb");
+  });
+
+  // 🔴 A COMPUTED COLOUR IS NOT A RAW ONE. marketing's heatColor builds a
+  // per-cell Okabe-Ito diverging scale that no token expresses.
+  test("a template-literal ramp is computed, not typed", () => {
+    const { out } = check(
+      { "heat.ts": "export const c = (r: number) => `rgba(${r},${r},${r},${r})`;" },
+      "--advisory",
+    );
+    expect(out).not.toContain("raw-rgb");
+  });
+
+  // ⛔ A rule that fires on its own remedy is a rule people route around.
+  test("inside color-mix is the fix, not the finding", () => {
+    const { out } = check(
+      { "a.css": ".x { background: color-mix(in srgb, rgba(0,0,0,.5) 50%, transparent); }" },
+      "--advisory",
+    );
+    expect(out).not.toContain("raw-rgb");
+  });
+
+  // 🔴 The lookbehind has to tolerate one level of nesting. Written
+  // `[^()]{0,120}` it stops at the first parenthesis, so the tinted-token
+  // form — which is the shape the remedy actually takes — was flagged while
+  // the bare form was not.
+  test("a var() between color-mix and the rgba does not reopen it", () => {
+    const { out } = check(
+      { "a.css": ".x { background: color-mix(in srgb, var(--color-warn) 40%, rgba(0,0,0,.5)); }" },
+      "--advisory",
+    );
+    expect(out).not.toContain("raw-rgb");
+  });
+
+  test("an identifier that merely starts with rgba is not a colour", () => {
+    const { out } = check({ "a.ts": "const rgbaOf = (c: string) => c;" }, "--advisory");
+    expect(out).not.toContain("raw-rgb");
+  });
+
+  // ⚖️ A dead fallback that disagrees with its token is worth a finding: the
+  // value is unreachable AND wrong, and raw-hex has no fallback carve-out
+  // either. 3 of the 38 are exactly this — delete six characters.
+  test("a dead var() fallback IS flagged", () => {
+    const { out } = check(
+      { "a.css": ".x { border: 1px solid var(--color-border, rgba(0,0,0,.04)); }" },
+      "--advisory",
+    );
+    expect(out).toContain("raw-rgb");
+  });
+
+  // ⚖️ Advisory on day one because 12 of the 38 sit under pragmas naming
+  // raw-hex, a different rule. Flips to error the afternoon the sweep closes.
+  test("advisory on day one — it never fails a repo on its own", () => {
+    const { out, exit } = check({ "a.css": ".x { color: rgba(251,191,36,.4); }" }, "--advisory");
+    expect(exit).toBe(0);
+    expect(out).toContain("0 errors");
+  });
+
+  test("silent without --advisory", () => {
+    const { out } = check({ "a.css": ".x { color: rgba(251,191,36,.4); }" });
+    expect(out).not.toContain("raw-rgb");
+  });
+
+  // ⛔ REJECTED: letting a raw-hex pragma suppress this too. Cheap now,
+  // un-auditable the moment anyone asks which rule a pragma answers.
+  test("a raw-hex pragma does NOT suppress raw-rgb", () => {
+    const { out } = check(
+      {
+        "a.css":
+          "/* cgsi-adherence-allow: raw-hex — 2025 pink ring, scheduled for the sweep */\n.x { box-shadow: 0 0 0 3px rgba(255,62,181,.35); }",
+      },
+      "--advisory",
+    );
+    expect(out).toContain("raw-rgb");
+  });
+
+  test("its own pragma does", () => {
+    const { out } = check(
+      {
+        "a.css":
+          "/* cgsi-adherence-allow: raw-rgb — Okabe-Ito chart ramp, no token expresses it */\n.x { color: rgba(230,159,0,.6); }",
+      },
+      "--advisory",
+    );
+    expect(out).not.toContain("raw-rgb");
+  });
+});

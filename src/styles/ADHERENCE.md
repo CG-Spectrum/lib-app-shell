@@ -82,6 +82,7 @@ requires, check whether it is one of these before you change the code.
 | `accent-as-paint` | freeze | `--color-accent` used as PAINT — a bar, tick, rule or dot. Marks take `--color-accent-mark`; every `color:` use of the accent is correct and untouched |
 | `off-scale-spacing` | freeze | Padding, margin or gap off the nine-step scale (2, 4, 6, 8, 12, 16, 24, 32, 40) |
 | `raw-palette` | freeze | A stock Tailwind palette class: `bg-green-100`, `dark:text-amber-400`, `bg-red-900/40`. The hole `raw-hex` left open |
+| `raw-rgb` | advisory | A raw `rgba()` / `rgb()` / `hsl()` / `hsla()`. The third spelling. Not an alpha-0 stop, not a computed ramp, not inside `color-mix()` |
 | `rebuilt-table` | advisory | A raw `<table>` in an app. Import `Ledger`. An email template is exempt by the convention below |
 | `rebuilt-part` | advisory | A locally defined `Panel` / `Kpi` / `Status` / `Badge` / `Notice` / `FilterBar` / `RecordCard` / `Breadcrumb` |
 
@@ -90,6 +91,77 @@ are exempt: they assert on literals — ⛔ and so does `square-corners.mjs` ski
 them, because a codemod that rewrites `rounded-lg` inside `adherence.test.ts`
 is not migrating anything, it is deleting two regression tests and leaving
 them green. The advisory tier is off unless you pass `--advisory`.
+
+## 🔴 `raw-rgb` — the third spelling
+
+`raw-hex` catches `#dc2626`. `raw-palette` catches `bg-red-600`. **Neither sees
+`rgba(251,191,36,.4)`**, which is how `referrals` drew its chip borders through
+every sweep. ⛔ A third time: **a colour count is a count of SPELLINGS until the
+rule names all of them.**
+
+Surveyed from the filesystem, 23 Oct 2026 — **33 findings across 11 of 17
+repos**, plus 15 in a generated file the runner already diverts to `UPSTREAM`:
+
+| `studentportal` 9 | `courseapp` 8 | `people` 5 (+15 upstream) | `marketing` 2 | `referrals` 2 | `salesapp` 2 | `auditapp` 1 | `finance` 1 | `gca-dashboard` 1 | `home` 1 | `partnerships` 1 |
+|---|---|---|---|---|---|---|---|---|---|---|
+
+⚠️ **The earlier survey said 38 and 19, and both numbers are also right.** It
+counted LITERALS; the checker reports **one finding per line per rule**, as
+every other rule here does. Five lines carry two `rgba()` each — three in
+`courseapp`'s `globals.css` and the byte-identical `.pill.live` in
+`gca-dashboard` and `partnerships` — and the generated file has 19 literals on
+15 lines. 33 + 5 = 38, 15 lines = 19 literals. Nothing is missing; the two
+numbers measure different things, and the per-line one is what CI will print.
+
+Every live literal in the estate is `rgba()`. The only `rgb(` are three inside
+comments, which the checker strips. The rule covers `rgb` / `hsl` / `hsla`
+anyway — that is the lesson of the first two spellings.
+
+**What is actually there**: 24 are a one-token swap with an exact equivalent
+already in `brand.css` (`--color-warn-border`, `--color-bad-border`,
+`--color-surface-2`); 3 are dead `var(--x, rgba(...))` fallbacks; 5 take a
+pragma on a decision already recorded.
+
+### Three things the rule deliberately does not flag
+
+- **Alpha 0 is not a colour.** `rgba(0,0,0,0)` is `transparent` with the hue
+  carried for readability — how a mask or a gradient writes its invisible stop.
+  The comma and the slash form are both covered.
+- **A computed colour is not a raw one.** `rgba(${r},${g},${b},${a})` is a chart
+  ramp, not a value somebody typed; `marketing`'s `heatColor` builds a per-cell
+  Okabe-Ito diverging scale no token expresses. The argument character class is
+  digits, `%`, `,`, `/` and space, so a template literal cannot match.
+- **Not inside `color-mix()`.** That is the fix this rule asks for, and a rule
+  that fires on its own remedy is a rule people route around. 🔴 The exclusion
+  has to tolerate one level of nesting: stopped at the first parenthesis it
+  flagged `color-mix(in srgb, var(--token) 40%, rgba(...))` — the shape the
+  remedy actually takes — while passing the bare form.
+
+A **dead `var()` fallback does** flag. The value is unreachable and disagrees
+with the token it backs, and `raw-hex` has no fallback carve-out either.
+
+### ⚖️ Advisory on day one, and why that is not the raw-palette story
+
+`raw-palette` flipped to freeze the same afternoon because every one of its 123
+was plainly wrong. This one arrives advisory for a reason that rule did not
+have: **12 of the findings sit under pragmas naming `raw-hex`** — a different
+rule — so erroring on day one breaks `studentportal`, `home` and `people` over
+exemptions that were already argued and recorded. Those lines get their own
+pragma in the sweep.
+
+⛔ **Letting a `raw-hex` pragma also suppress `raw-rgb` was considered and
+rejected.** It is cheap now and un-auditable the moment anyone asks which rule
+a given pragma answers. The tier flips to freeze the afternoon the sweep
+closes, the way `raw-palette` did.
+
+⚠️ **One finding in the sweep is a live defect, not debt.** `studentportal`
+draws its focus ring (`globals.css` ~:610) and its stepper-dot ring (~:1022) in
+2025 **pink** `rgba(255,62,181,…)` around elements filled with the green token,
+under a pragma naming `drop-shadow` and `raw-hex`. Visible today.
+
+🟢 **The rule's first two findings are in this package**: `Ledger.tsx`'s hover
+wash and `components.css`'s drawer scrim. Both are advisory, so CI is unmoved,
+and both are the rule arguing for itself.
 
 ## 🔴 The email exemption excused 62 files, and was for one
 
