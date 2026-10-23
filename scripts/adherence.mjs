@@ -212,7 +212,7 @@ const RULES = [
      by path: an email table is a layout requirement, not a rebuilt part. */
   {
     id: "accent-as-paint",
-    tier: "advisory",
+    tier: "error",
     /* ── Ink is not paint ─────────────────────────────────────────────────
        brand.css splits the accent in light mode and in light mode ONLY:
        --color-accent becomes Ink Green #1e7d10, which clears 5.2:1 as TEXT on
@@ -282,7 +282,7 @@ const RULES = [
   },
   {
     id: "off-scale-spacing",
-    tier: "advisory",
+    tier: "error",
     /* ⚖️ NINE STEPS SINCE 23 OCT 2026, up from six (4, 8, 12, 16, 24, 40).
        Counted across all 17 apps: 1,631 padding/margin/gap values, 969 of them
        off the six steps. A rule a mature estate breaks 59% of the time is
@@ -550,7 +550,7 @@ console.log(
 );
 
 if (!advisory && errors.length === 0) {
-  console.log("Run with --advisory for the spacing scale and rebuilt parts.");
+  console.log("Run with --advisory for the rebuilt parts.");
 }
 
 process.exit(errors.length > 0 ? 1 : 0);
