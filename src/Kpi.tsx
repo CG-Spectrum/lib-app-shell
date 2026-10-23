@@ -1,5 +1,15 @@
-import type { ReactNode } from "react";
+import { createContext, useContext, type ReactNode } from "react";
 import { Status } from "./Status";
+
+/**
+ * Whether the surrounding KpiRow is a definition list.
+ *
+ * ⚖️ CONTEXT, NOT A PROP ON BOTH. A `<dt>` outside a `<dl>` is invalid HTML
+ * that no browser and no linter complains about — it just stops being a term.
+ * Passing `as="dl"` to the row AND to every tile would be two things to keep
+ * in sync, and the failure of that sync is silent. The row tells the tiles.
+ */
+const DefinitionList = createContext(false);
 
 // A single figure with its label, an optional target bar, and one line of
 // context. The tile the leadership and finance boards are made of.
@@ -42,11 +52,17 @@ export function Kpi({ label, value, context, actual, target, state, className = 
   const resolved: KpiState = state ?? (target === undefined ? { kind: "no-target" } : { kind: "on-target" });
   const missing = resolved.kind === "missing-target";
   const showBar = !missing && actual !== undefined && target !== undefined && target > 0;
+  // Inside a `<dl>` the label is the TERM and the figure is its DEFINITION, so
+  // a screen reader pairs them instead of reading two unrelated strings. The
+  // elements change; nothing about the look does.
+  const inList = useContext(DefinitionList);
+  const Label = inList ? "dt" : "span";
+  const Value = inList ? "dd" : "div";
 
   return (
     <div className={`min-w-0 p-[var(--density-panel-pad)] ${className}`}>
       <div className="flex items-baseline gap-2">
-        <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-text-3">{label}</span>
+        <Label className="font-mono text-[10px] uppercase tracking-[0.14em] text-text-3">{label}</Label>
         {resolved.kind === "not-validated" && (
           <Status tone="warning" className="font-mono text-[10px] uppercase tracking-[0.14em]">
             Unvalidated
@@ -54,13 +70,13 @@ export function Kpi({ label, value, context, actual, target, state, className = 
         )}
       </div>
 
-      <div
+      <Value
         className={`mt-3 mb-2 font-[family-name:var(--brand-display)] text-[36px] leading-none tracking-[-0.02em] tabular-nums ${
           missing ? "text-text-3" : "text-text"
         }`}
       >
         {missing ? "Not set" : value}
-      </div>
+      </Value>
 
       {showBar && <TargetBar actual={actual} target={target} below={resolved.kind === "below-target"} />}
 
@@ -108,12 +124,36 @@ function TargetBar({ actual, target, below }: { actual: number; target: number; 
 // as PanelGrid since v3.0.0: the AIR is the separator, not a 1px divider.
 // Each tile carries the panel tone, so a row of four reads as four objects on
 // the near-black rather than one strip cut into quarters.
-export function KpiRow({ children, className = "" }: { children?: ReactNode; className?: string }) {
+export function KpiRow({
+  children,
+  className = "",
+  as = "div",
+}: {
+  children?: ReactNode;
+  className?: string;
+  /**
+   * `"dl"` makes the row a definition list: each tile's label becomes its
+   * `<dt>` and its figure the `<dd>`.
+   *
+   * ⚖️ A ROW OF KPI TILES IS A DEFINITION LIST — a term and the figure that
+   * defines it, four times over. Rendered as divs it is four labels and four
+   * numbers in reading order and nothing says which belongs to which; a
+   * screen reader user counts. It is not the default because the markup only
+   * pays for itself when the tiles ARE label-and-figure pairs, and some rows
+   * carry a bar and two lines of context as well.
+   *
+   * ⛔ Nothing about the look changes. This is semantics, not style.
+   */
+  as?: "div" | "dl";
+}) {
+  const Tag = as;
   return (
-    <div
-      className={`grid grid-cols-1 gap-[var(--panel-gap)] sm:grid-cols-2 lg:grid-cols-4 [&>*]:bg-surface ${className}`}
-    >
-      {children}
-    </div>
+    <DefinitionList.Provider value={as === "dl"}>
+      <Tag
+        className={`grid grid-cols-1 gap-[var(--panel-gap)] sm:grid-cols-2 lg:grid-cols-4 [&>*]:bg-surface ${className}`}
+      >
+        {children}
+      </Tag>
+    </DefinitionList.Provider>
   );
 }
