@@ -283,8 +283,31 @@ const RULES = [
   {
     id: "off-scale-spacing",
     tier: "advisory",
-    re: /(?:padding|margin|gap|row-gap|column-gap)(?:-(?:top|right|bottom|left|block|inline))?\s*:\s*[^;}\n]*?\b(?!(?:0|4|8|12|16|24|40)px)\d+px/g,
-    msg: "Off-scale spacing. The app layer has six steps: 4, 8, 12, 16, 24, 40. Row heights (40 / 32) come from the density setting, not a literal.",
+    /* ⚖️ NINE STEPS SINCE 23 OCT 2026, up from six (4, 8, 12, 16, 24, 40).
+       Counted across all 17 apps: 1,631 padding/margin/gap values, 969 of them
+       off the six steps. A rule a mature estate breaks 59% of the time is
+       describing the estate wrongly; it is not a backlog of 969 mistakes.
+
+       2 and 6 complete the FINE end. 223 values sit on them, almost all nudges
+       inside a text block — a name and its sub-line, the inside of a chip. The
+       old ladder started at 4, so the only compliant move was rounding up,
+       which loosens dense type in 103 places estate-wide and buys nothing.
+       32 fills the 24 → 40 jump and was already the compact table row.
+
+       ⛔ 10, 14 and 20 were considered and REJECTED, though adding them would
+       have taken the count from 969 to 355. They are where layout values drift
+       TO, and legalising them turns the ladder into "any even number" — the
+       rhythm the scale exists to create, traded for a better report. 10 → 8/12
+       and 14 → 12/16 are the estate's two commonest corrections (338 values)
+       and they are the whole point of having a scale.
+
+       ⚠️ Still advisory. 736 values remain, 663 of which move 2px or less and
+       are a mechanical sweep; the other 73 are design decisions and want eyes.
+       Move to "error" once the estate is near zero, as geometry did at the
+       phase 4 flip. @see cgsi-2027-design guidelines/surface-app-layer.md,
+       which is the source and was amended FIRST. */
+    re: /(?:padding|margin|gap|row-gap|column-gap)(?:-(?:top|right|bottom|left|block|inline))?\s*:\s*[^;}\n]*?\b(?!(?:0|2|4|6|8|12|16|24|32|40)px)\d+px/g,
+    msg: "Off-scale spacing. The app layer has nine steps: 2, 4, 6, 8, 12, 16, 24, 32, 40. 10 and 14 are the two commonest drifts and both are deliberately NOT steps — 10 goes to 8 or 12, 14 to 12 or 16, and that choice is the rhythm. Row heights (40 / 32) come from the density setting, not a literal.",
   },
 ];
 
