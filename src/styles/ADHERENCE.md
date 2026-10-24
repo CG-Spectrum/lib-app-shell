@@ -375,11 +375,54 @@ button that opens an empty panel. A control that lies about there being
 something behind it, once per row down a column of forty, is worse than no
 control.
 
-⚠️ **`wide` pins the toggle AND the row header, not just the first column.**
-The toggle column is first, and pinning only it would pin 32px of chevrons that
-identify nothing while the row's name scrolls away — the defect already on
-record for a 56px ordinal. Pinning only the name would scroll the control out
-from under its own row. Both pin: toggle at 0, name at 32.
+### `wide` pins the column that NAMES the row
+
+🔴 **`wide` pins the `rowHeader` column, wherever it sits in the model** — plus
+the toggle column at `0` when `expand` is set, with the row header immediately
+after it at `32`. With no `rowHeader` column declared, the first column is
+pinned, exactly as it always was, so no existing caller changes; a test pins
+that.
+
+⛔ **It is not column index 0.** Until v3.4.1 it was, and the same defect
+surfaced twice: `governance`'s registers pinned a **56px ordinal**, and
+`scheduling`'s `FindingsTable` had its naming column **fifth** and was worked
+around by reordering the model — a layout decision forced by a pinning bug. A
+pinned column that identifies nothing costs the reader the width and the name
+at once, and `wide` exists for exactly one reason: so the row's NAME stays
+beside the figures while the figures scroll.
+
+⚖️ **Columns BEFORE the row header scroll underneath it, and that is correct.**
+It is the caller's own declaration read back to them: they named one column as
+the one that identifies the row, so every other column — left of it or right of
+it — is less identifying than that one by their own account. Pinning the whole
+run from 0 to the row header would pin an arbitrary number of columns decided
+by model order rather than by anybody's intent. ⚠️ If a column to the left must
+stay visible too, **move it to the right of the row header**; do not reach for a
+second pin.
+
+⚠️ A right-aligned column is refused as the pin, the same way `isRowHeader`
+refuses it as a row header. A quantity does not identify a row, and `wide` must
+not pin what `rowHeader` would not accept.
+
+⚠️ With a toggle column, pinning only the toggle would pin 32px of chevrons;
+pinning only the name would scroll the control out from under its own row, so a
+reader scrolled right could not close the panel they opened. Both pin.
+
+### Column keys can be typed
+
+`LedgerColumn<T, K extends string = string>`. ⚖️ **`K` defaults to `string`, so
+nothing an app has written changes.** An app whose column keys are already a
+union gets `K` inferred from its `columns` array, and `sort.key`, `onSort(key)`
+and `total.cells` are then checked against it — the three places a column name
+could be mistyped, and the three places a mistake is silent (a `total` keyed to
+a column that does not exist is a figure that renders nowhere). ⛔ **Do not cast
+at the boundary any more.** A cast there was the signal that the part's type was
+too loose, not that the app's was too tight.
+
+⚠️ `expand.onToggle` takes the **ROW** key, which is `LedgerRow.key: string`,
+and stays `string`. Rows are not generic in this part, and narrowing the
+callback without narrowing `expanded: ReadonlySet<string>` with it would be a
+type promising something the set beside it cannot keep.
 
 ⛔ **An open row is not restyled.** `selected`, `marked` and `closed` are claims
 about the RECORD; "open" is a claim about the reader's screen. `aria-expanded`
