@@ -768,6 +768,19 @@ describe("raw-rgb — the third spelling of a raw colour", () => {
     expect(out).toContain("color-mix");
   });
 
+  // 🟢 Arrived advisory on 33 lines across 11 repos and flipped to error the
+  // same afternoon, once all 17 came back at 0 — the raw-palette playbook,
+  // third run. Asserted rather than described, for the same reason that rule
+  // asserts it: whoever greps for why their build started failing should land
+  // on the contract, not on a comment about it.
+  //
+  // ⚠️ Every other case in this describe passes --advisory, which reports BOTH
+  // tiers, so none of them would notice the flip reversing. This one would.
+  test("a raw rgba fails the build, as of the same-day flip", () => {
+    const { exit } = check({ "a.css": ".x { border-color: rgba(251, 191, 36, .4); }" });
+    expect(exit).toBe(1);
+  });
+
   test("the slash form is the same colour in a newer spelling", () => {
     const { out } = check({ "a.css": ".x { color: rgb(255 0 0 / 40%); }" }, "--advisory");
     expect(out).toContain("raw-rgb");
@@ -847,17 +860,24 @@ describe("raw-rgb — the third spelling of a raw colour", () => {
     expect(out).toContain("raw-rgb");
   });
 
-  // ⚖️ Advisory on day one because 12 of the 38 sit under pragmas naming
-  // raw-hex, a different rule. Flips to error the afternoon the sweep closes.
-  test("advisory on day one — it never fails a repo on its own", () => {
-    const { out, exit } = check({ "a.css": ".x { color: rgba(251,191,36,.4); }" }, "--advisory");
-    expect(exit).toBe(0);
-    expect(out).toContain("0 errors");
+  // ⚖️ These two pinned the ADVISORY contract and are inverted here, 23 Oct
+  // 2026, by the flip. Advisory bought one thing: the 12 findings sitting
+  // under pragmas that named raw-hex, a different rule, got their own pragma
+  // instead of a rule change that would have broken studentportal, home and
+  // people over exemptions already argued. That is spent. Keeping them as
+  // `.skip` or deleting them silently would both leave the repo without a
+  // statement of which tier the rule is on, so they are REWRITTEN rather than
+  // removed — the pair reads as a record of the change.
+  test("it is reported without --advisory, and names the error tier", () => {
+    const { out } = check({ "a.css": ".x { color: rgba(251,191,36,.4); }" });
+    expect(out).toContain("raw-rgb");
+    expect(out).toContain("ERROR");
   });
 
-  test("silent without --advisory", () => {
-    const { out } = check({ "a.css": ".x { color: rgba(251,191,36,.4); }" });
-    expect(out).not.toContain("raw-rgb");
+  test("and it fails the repo on its own, which advisory never did", () => {
+    const { out, exit } = check({ "a.css": ".x { color: rgba(251,191,36,.4); }" });
+    expect(exit).toBe(1);
+    expect(out).not.toContain("0 errors");
   });
 
   // ⛔ REJECTED: letting a raw-hex pragma suppress this too. Cheap now,

@@ -82,7 +82,7 @@ requires, check whether it is one of these before you change the code.
 | `accent-as-paint` | freeze | `--color-accent` used as PAINT — a bar, tick, rule or dot. Marks take `--color-accent-mark`; every `color:` use of the accent is correct and untouched |
 | `off-scale-spacing` | freeze | Padding, margin or gap off the nine-step scale (2, 4, 6, 8, 12, 16, 24, 32, 40) |
 | `raw-palette` | freeze | A stock Tailwind palette class: `bg-green-100`, `dark:text-amber-400`, `bg-red-900/40`. The hole `raw-hex` left open |
-| `raw-rgb` | advisory | A raw `rgba()` / `rgb()` / `hsl()` / `hsla()`. The third spelling. Not an alpha-0 stop, not a computed ramp, not inside `color-mix()` |
+| `raw-rgb` | freeze | A raw `rgba()` / `rgb()` / `hsl()` / `hsla()`. The third spelling. Not an alpha-0 stop, not a computed ramp, not inside `color-mix()` |
 | `rebuilt-table` | advisory | A raw `<table>` in an app. Import `Ledger`. An email template is exempt by the convention below |
 | `rebuilt-part` | advisory | A locally defined `Panel` / `Kpi` / `Status` / `Badge` / `Notice` / `FilterBar` / `RecordCard` / `Breadcrumb` |
 
@@ -140,19 +140,35 @@ pragma on a decision already recorded.
 A **dead `var()` fallback does** flag. The value is unreachable and disagrees
 with the token it backs, and `raw-hex` has no fallback carve-out either.
 
-### ⚖️ Advisory on day one, and why that is not the raw-palette story
+### 🟢 Advisory on day one, freeze the same afternoon — 23 Oct 2026
+
+**The history, in one line: 33 lines across 11 repos, all cleared the same day,
+advisory → freeze the same afternoon. Same as `raw-palette`.** Third time the
+playbook has run and the third time the estate closed in one pass.
 
 `raw-palette` flipped to freeze the same afternoon because every one of its 123
-was plainly wrong. This one arrives advisory for a reason that rule did not
-have: **12 of the findings sit under pragmas naming `raw-hex`** — a different
-rule — so erroring on day one breaks `studentportal`, `home` and `people` over
-exemptions that were already argued and recorded. Those lines get their own
-pragma in the sweep.
+was plainly wrong. This one arrived advisory for a reason that rule did not
+have: **12 of the findings sat under pragmas naming `raw-hex`** — a different
+rule — so erroring on day one would have broken `studentportal`, `home` and
+`people` over exemptions that were already argued and recorded. Those lines
+took their own pragma in the sweep, which is the whole of what the advisory day
+bought and why the day was worth having.
 
 ⛔ **Letting a `raw-hex` pragma also suppress `raw-rgb` was considered and
 rejected.** It is cheap now and un-auditable the moment anyone asks which rule
-a given pragma answers. The tier flips to freeze the afternoon the sweep
-closes, the way `raw-palette` did.
+a given pragma answers.
+
+⚠️ **The gate for the flip was the 17-repo re-run at the error tier**, counted
+from the filesystem — every directory carrying
+`.github/workflows/adherence.yml` — and not from a list anybody typed. That is
+the mistake that undercounted `raw-palette` at 112 across seven and left
+`cgsi-auth`'s eleven findings out of a sweep which reported itself complete, in
+the app that holds everyone's sign-in. The flip did not land until all 17 came
+back at 0.
+
+⚠️ **The ref is pinned per app, so this does not reach anybody yet.** Each
+repo's `adherence.yml` names a SHA; a merged rule change is inert until that
+pin moves. The bump wave follows this, one PR per repo.
 
 ⚠️ **One finding in the sweep is a live defect, not debt.** `studentportal`
 draws its focus ring (`globals.css` ~:610) and its stepper-dot ring (~:1022) in

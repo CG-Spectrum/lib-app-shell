@@ -165,20 +165,37 @@ const RULES = [
   },
   {
     id: "raw-rgb",
-    tier: "advisory",
     /* 🔴 THE THIRD SPELLING. raw-hex catches `#dc2626`, raw-palette catches
        `bg-red-600`, and neither sees `rgba(251,191,36,.4)` — referrals drew its
        chip borders that way through every sweep. ⛔ A third time: a colour count
        is a count of SPELLINGS until the rule names all of them.
 
-       ⚖️ ADVISORY ON DAY ONE, flipped to error the afternoon the sweep closes —
-       the raw-palette playbook, and for a reason raw-palette did not have. 12 of
-       the 38 sit under pragmas naming `raw-hex`, a DIFFERENT rule, so erroring
-       immediately would break studentportal, home and people over exemptions
-       that were already argued and recorded. ⛔ Letting a `raw-hex` pragma also
-       suppress `raw-rgb` was considered and REJECTED: cheap now, and
+       🟢 FLIPPED TO ERROR 23 OCT 2026, THE SAME DAY IT ARRIVED — 33 lines
+       across 11 of 17 repos, all cleared the same day, advisory→error the same
+       afternoon. The raw-palette playbook, third time it has run and third time
+       the estate closed in one pass. The estate-wide count was taken from the
+       FILESYSTEM, not a typed list: every directory carrying
+       .github/workflows/adherence.yml, 17 of them, re-run at the error tier
+       before this line changed. ⛔ Never take an estate count from a list
+       somebody typed — that is what undercounted raw-palette at 112 across
+       seven and left cgsi-auth's eleven findings out of a sweep that reported
+       itself complete.
+
+       ⚖️ IT ARRIVED ADVISORY, and for a reason raw-palette did not have. 12 of
+       the 38 literals sat under pragmas naming `raw-hex`, a DIFFERENT rule, so
+       erroring on day one would have broken studentportal, home and people over
+       exemptions that were already argued and recorded. ⛔ Letting a `raw-hex`
+       pragma also suppress `raw-rgb` was considered and REJECTED: cheap now, and
        un-auditable the moment anyone asks which rule a pragma actually answers.
-       Those lines get their own pragma in the sweep.
+       Those lines took their own pragma in the sweep, which is the whole of what
+       the advisory day bought and why the day was worth having.
+
+       🟢 THE FIRST TWO FINDINGS WERE IN THIS PACKAGE and are both cleared (#13).
+       Ledger's hover wash was a live defect in all 17 apps — the dark theme's
+       ink at 4%, frozen as a literal, drawing NOTHING on light. The drawer scrim
+       is why --color-scrim now exists: a scrim is black at an alpha by nature
+       and no token carried that meaning, so the honest answer for seventeen
+       inheriting apps was a token, not a pragma.
 
        🔴 ZERO ALPHA IS NOT A COLOUR. `rgba(0,0,0,0)` is `transparent` with the
        hue carried for readability; it is how a mask or gradient writes its
@@ -197,6 +214,7 @@ const RULES = [
        actually takes — was flagged while the bare form was not. The estate has
        no rgb() inside a color-mix() today, so this cost nothing to miss and
        will cost exactly one confused sweep to leave. */
+    tier: "error",
     re: /(?<!color-mix\((?:[^()]|\([^()]*\)){0,60})\b(?:rgb|hsl)a?\s*\(\s*(?![\d.]+%?\s*[,\s]\s*[\d.]+%?\s*[,\s]\s*[\d.]+%?\s*[,\/]\s*0*\.?0*\s*\))[\d.%\s,\/]*\)/g,
     msg: `Raw rgb()/hsl() colour. A translucent brand colour is color-mix(in srgb, var(--token) NN%, transparent) — rgba(251,191,36,.4) is var(--color-warn-border) and the estate already ships -border and -tint tokens for the common alphas. Use a token: ${TOKENS}. A fully transparent stop (alpha 0) and a computed ramp are not flagged. If the value is genuinely outside the palette — a colourblind-safe chart scale, a public-website render — the line needs \`cgsi-adherence-allow: raw-rgb — <why>\`.`,
   },
