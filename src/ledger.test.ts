@@ -12,6 +12,7 @@ import {
   isRowHeader,
   type LedgerColumn,
   type LedgerExpand,
+  type LedgerProps,
 } from "./Ledger";
 
 type Row = { key: string };
@@ -147,6 +148,9 @@ const PAGE_COLUMNS: LedgerColumn<Page>[] = [
   { key: "name", header: "Page", cell: (r) => r.name, rowHeader: true },
   { key: "views", header: "Views", align: "right", cell: (r) => r.views },
 ];
+
+/** The key union an app with a typed column model would already own. */
+type PageKey = "name" | "views";
 
 function ledger(over: Partial<LedgerExpand<Page>> | null, props: Record<string, unknown> = {}) {
   const expand: LedgerExpand<Page> | undefined = over
@@ -312,6 +316,259 @@ describe("expansion leaves the rest of the table alone", () => {
     const html = ledger(null, { wide: true });
     expect(html).toContain("left:0");
     expect(html).not.toContain(`left:${EXPAND_COLUMN_WIDTH}px`);
+  });
+});
+
+// ── `wide` pins the row header, not column 0 ───────────────────────────────
+// 🔴 The defect this closes, twice over: governance's registers pinned a 56px
+// ordinal, and scheduling's FindingsTable had its naming column FIFTH and was
+// worked around by reordering the model. A pinned column that identifies
+// nothing costs the reader the width and the name at once.
+
+type Finding = { key: string; ord: number; category: string; severity: string; finding: string };
+
+const FINDINGS: Finding[] = [
+  { key: "f1", ord: 1, category: "Naming", severity: "High", finding: "Row name is column five" },
+  { key: "f2", ord: 2, category: "Naming", severity: "Low", finding: "Ordinal pinned instead" },
+];
+
+// The shape the gap was reported against: an ordinal first, two columns of
+// repeated category words, and the column that actually names the row fourth.
+const FINDING_COLUMNS: LedgerColumn<Finding>[] = [
+  { key: "ord", header: "Ord", align: "right", width: 56, cell: (r) => r.ord },
+  { key: "category", header: "Category", cell: (r) => r.category },
+  { key: "severity", header: "Severity", cell: (r) => r.severity },
+  { key: "finding", header: "Finding", cell: (r) => r.finding, rowHeader: true },
+];
+
+const ROW_HEADER_INDEX = 3;
+
+/** Every `<th>`/`<td>` opening tag in a slice of markup, in document order. */
+function cellTags(section: string): string[] {
+  return [...section.matchAll(/<t[hd]\b[^>]*>/g)].map((m) => m[0]);
+}
+
+const stickiness = (tags: string[]) => tags.map((t) => t.includes("sticky"));
+const offsets = (tags: string[]) => tags.map((t) => /left:(\d+)/.exec(t)?.[1]);
+
+function sections(html: string) {
+  const head = html.slice(html.indexOf("<thead>"), html.indexOf("</thead>"));
+  const bodyStart = html.indexOf("<tbody>");
+  const body = html.slice(bodyStart, html.indexOf("</tr>", bodyStart));
+  const foot = html.slice(html.indexOf("<tfoot>"));
+  return { head: cellTags(head), body: cellTags(body), foot: cellTags(foot) };
+}
+
+function findings(props: Record<string, unknown> = {}) {
+  return renderToStaticMarkup(
+    h(Ledger<Finding>, {
+      columns: FINDING_COLUMNS,
+      rows: FINDINGS,
+      wide: true,
+      total: { cells: { ord: 2 } },
+      ...props,
+    }),
+  );
+}
+
+describe("wide pins the column that names the row", () => {
+  const s = sections(findings());
+
+  it("pins the rowHeader column, wherever it sits in the model", () => {
+    expect(stickiness(s.head)).toEqual([false, false, false, true]);
+    // The sticky cell is the one headed "Finding", not merely the fourth.
+    expect(findings()).toMatch(/sticky[^>]*>Finding</);
+    expect(findings()).toMatch(/sticky[^>]*>Row name is column five</);
+  });
+
+  // ⛔ The whole point: a 56px column of ordinals is not what a reader needs
+  // held beside the figures.
+  it("does not pin column 0 when column 0 is not the name", () => {
+    expect(s.head[0]).not.toContain("sticky");
+    expect(s.body[0]).not.toContain("sticky");
+    expect(s.foot[0]).not.toContain("sticky");
+  });
+
+  // ⚖️ Ord, Category and Severity scroll underneath the name. That is the
+  // caller's own declaration read back: they named ONE column as the one that
+  // identifies the row, so the three to its left are less identifying than it
+  // by their own account.
+  it("lets the columns before it scroll underneath", () => {
+    expect(stickiness(s.head).slice(0, ROW_HEADER_INDEX)).toEqual([false, false, false]);
+  });
+
+  // A pin in the header and not the body is a column that detaches as soon as
+  // anyone scrolls, which is worse than no pin at all.
+  it("agrees across header, body and total", () => {
+    expect(stickiness(s.body)).toEqual(stickiness(s.head));
+    expect(stickiness(s.foot)).toEqual(stickiness(s.head));
+    expect(offsets(s.body)).toEqual(offsets(s.head));
+    expect(offsets(s.foot)).toEqual(offsets(s.head));
+  });
+
+  // The label is a word and belongs where the eye starts; the pin is about
+  // which column survives a scroll. Two questions, two answers.
+  it("leaves the total's label in column 0 while pinning the name", () => {
+    const foot = findings().slice(findings().indexOf("<tfoot>"));
+    expect(foot).toContain("Total");
+    expect(foot.indexOf("Total")).toBeLessThan(foot.indexOf("sticky"));
+  });
+});
+
+describe("wide with a toggle column and a late row header", () => {
+  const s = sections(
+    findings({
+      expand: { expanded: new Set<string>(), onToggle: () => {}, render: () => "detail" },
+    }),
+  );
+
+  // Cells are [toggle, ord, category, severity, finding].
+  it("pins the toggle at 0 and the row header at 32", () => {
+    expect(stickiness(s.head)).toEqual([true, false, false, false, true]);
+    expect(offsets(s.head)).toEqual(["0", undefined, undefined, undefined, "32"]);
+  });
+
+  it("agrees across header, body and total", () => {
+    expect(stickiness(s.body)).toEqual([true, false, false, false, true]);
+    expect(offsets(s.body)).toEqual(["0", undefined, undefined, undefined, "32"]);
+    expect(stickiness(s.foot)).toEqual([true, false, false, false, true]);
+    expect(offsets(s.foot)).toEqual(["0", undefined, undefined, undefined, "32"]);
+  });
+});
+
+describe("wide with no rowHeader column behaves exactly as before", () => {
+  // 🔴 THE NO-CHANGE GUARANTEE. Every `wide` caller in the estate that has not
+  // declared a row header must keep the pin it has, or this is a silent layout
+  // change in 17 apps rather than a fix.
+  const UNNAMED: LedgerColumn<Finding>[] = FINDING_COLUMNS.map(({ rowHeader: _r, ...c }) => c);
+
+  const s = sections(
+    renderToStaticMarkup(
+      h(Ledger<Finding>, {
+        columns: UNNAMED,
+        rows: FINDINGS,
+        wide: true,
+        total: { cells: { ord: 2 } },
+      }),
+    ),
+  );
+
+  it("falls back to index 0", () => {
+    expect(stickiness(s.head)).toEqual([true, false, false, false]);
+    expect(offsets(s.head)).toEqual(["0", undefined, undefined, undefined]);
+    expect(stickiness(s.body)).toEqual([true, false, false, false]);
+    expect(stickiness(s.foot)).toEqual([true, false, false, false]);
+  });
+
+  // ⛔ A right-aligned column is refused as a row header everywhere else
+  // (isRowHeader), so it must be refused as the pin too — or `wide` would pin
+  // a quantity that `rowHeader` itself would not accept.
+  it("ignores a rowHeader a numeric column asked for, and pins index 0", () => {
+    const refused: LedgerColumn<Finding>[] = UNNAMED.map((c) =>
+      c.key === "ord" ? { ...c, rowHeader: true } : c,
+    );
+    const head = sections(
+      renderToStaticMarkup(
+        h(Ledger<Finding>, { columns: refused, rows: FINDINGS, wide: true }),
+      ),
+    ).head;
+    // Index 0 both because it is the fallback and because it is `ord` — the
+    // assertion that matters is that nothing ELSE became the pin.
+    expect(stickiness(head)).toEqual([true, false, false, false]);
+  });
+});
+
+describe("without wide, nothing is pinned at all", () => {
+  it("draws no sticky cell wherever the row header sits", () => {
+    expect(findings({ wide: false })).not.toContain("sticky");
+  });
+});
+
+// ── Typed column keys ──────────────────────────────────────────────────────
+// ⚖️ These assert at COMPILE time; `npm run typecheck` is where they fail. The
+// `expect`s below exist so the runner reports the block rather than silently
+// skipping it. There is no type-assertion library in this package and this
+// does not earn one.
+
+type Expect<T extends true> = T;
+type Equals<A, B> =
+  (<G>() => G extends A ? 1 : 2) extends <G>() => G extends B ? 1 : 2 ? true : false;
+
+/** Captures whatever `K` a props object infers, so the union can be asserted. */
+function inferredKey<K extends string>(props: LedgerProps<Page, K>): K {
+  return props.columns[0]!.key;
+}
+
+describe("the column key is generic", () => {
+  it("infers the union from a column model that declares one", () => {
+    const key = inferredKey({
+      columns: [
+        { key: "name", header: "Page", cell: (r) => r.name, rowHeader: true },
+        { key: "views", header: "Views", align: "right", cell: (r) => r.views },
+      ],
+      rows: PAGES,
+    });
+    type _Union = Expect<Equals<typeof key, "name" | "views">>;
+    expect(key).toBe("name");
+  });
+
+  // 🔴 THE NO-CHANGE GUARANTEE for the type. `K` defaults to `string`, so a
+  // caller who annotates `LedgerColumn<Page>[]` — which is every caller in the
+  // estate today — gets exactly the API they had, and nothing has to cast.
+  it("stays string for a model that declares no union", () => {
+    const key = inferredKey({ columns: PAGE_COLUMNS, rows: PAGES });
+    type _Wide = Expect<Equals<typeof key, string>>;
+    expect(key).toBe("name");
+  });
+
+  it("threads the union through sort, onSort and total", () => {
+    const seen: PageKey[] = [];
+    const props: LedgerProps<Page, PageKey> = {
+      columns: PAGE_COLUMNS as LedgerColumn<Page, PageKey>[],
+      rows: PAGES,
+      sort: { key: "views", direction: "desc" },
+      // ⚖️ The whole point of the change: `key` arrives as the union, so a
+      // caller with a typed key does not cast at the boundary.
+      onSort: (key) => {
+        type _Narrowed = Expect<Equals<typeof key, PageKey>>;
+        seen.push(key);
+      },
+      total: { cells: { views: 19 } },
+    };
+    props.onSort!("name");
+    expect(seen).toEqual(["name"]);
+  });
+
+  it("totals only some columns, so cells is Partial", () => {
+    const partial: LedgerProps<Page, PageKey>["total"] = { cells: { views: 19 } };
+    expect(partial!.cells.name).toBeUndefined();
+  });
+
+  // ⛔ The three places a column name could be mistyped, each now a compile
+  // error rather than a figure that renders nowhere.
+  it("refuses a key the model does not have", () => {
+    // @ts-expect-error — "clicks" is not one of this model's column keys
+    const badSort: LedgerProps<Page, PageKey>["sort"] = { key: "clicks", direction: "asc" };
+    // @ts-expect-error — a total for a column this table does not have
+    const badTotal: LedgerProps<Page, PageKey>["total"] = { cells: { clicks: 1 } };
+    // @ts-expect-error — a column whose key is outside the declared union
+    const badColumn: LedgerColumn<Page, PageKey> = { key: "clicks", header: "C", cell: () => null };
+    expect([badSort, badTotal, badColumn]).toHaveLength(3);
+  });
+
+  // ⚖️ `onToggle` takes the ROW key, and `LedgerRow.key` is `string`. Rows are
+  // not generic in this part, so narrowing the callback would promise
+  // something `expanded: ReadonlySet<string>` beside it cannot keep.
+  it("leaves onToggle on the row key, which is string", () => {
+    const expand: LedgerExpand<Page> = {
+      expanded: new Set<string>(),
+      onToggle: (key) => {
+        type _RowKey = Expect<Equals<typeof key, string>>;
+        void key;
+      },
+      render: () => null,
+    };
+    expect(expand.expanded.size).toBe(0);
   });
 });
 

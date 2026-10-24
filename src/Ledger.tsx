@@ -39,8 +39,18 @@ import type { ReactNode } from "react";
 // it would have put the package's two interactive affordances in two different
 // shapes for no gain, and a reader would have to learn both.
 
-export interface LedgerColumn<T> {
-  key: string;
+/**
+ * A column.
+ *
+ * `K` is the column-key union. ⚖️ It DEFAULTS TO `string`, so a caller who
+ * writes `LedgerColumn<Row>[]` gets exactly what they had before. A caller
+ * whose keys are a union — a model built `as const`, or a key type the app
+ * already owns — gets `K` inferred from the array and then `sort.key`,
+ * `onSort` and `total.cells` are checked against it instead of being three
+ * more places to mistype a column name.
+ */
+export interface LedgerColumn<T, K extends string = string> {
+  key: K;
   /** Mono caps, 10px. Put units here: "Revenue (AUD)". */
   header: ReactNode;
   /**
@@ -76,6 +86,13 @@ export interface LedgerColumn<T> {
    * ⛔ Not a style. It changes nothing visually; the header treatment stays
    * with `<thead>`. Setting it on a numeric column is wrong — a quantity does
    * not identify a row.
+   *
+   * ⚠️ IT IS ALSO WHAT `wide` PINS. This column does not have to be first, and
+   * when it is not, the columns BEFORE it scroll underneath it. That is
+   * correct and it is the caller's own declaration: a column that is not the
+   * one naming the row is, by definition, less identifying than the one that
+   * is. If a column to its left must stay visible too, move it to the right of
+   * the row header rather than reaching for a second pin.
    */
   rowHeader?: boolean;
 }
@@ -126,6 +143,13 @@ export type SortDirection = "asc" | "desc";
 export interface LedgerExpand<T> {
   /** The row keys currently open. The caller owns this. */
   expanded: ReadonlySet<string>;
+  /**
+   * ⚖️ THIS KEY IS THE ROW'S, NOT A COLUMN'S, so it is `string` and stays
+   * `string` while `onSort` is generic. `LedgerRow.key` is declared `string`
+   * and rows are not generic in this part; narrowing the callback without
+   * narrowing `expanded` and `LedgerRow.key` with it would be a type that
+   * promises something the set beside it cannot keep.
+   */
   onToggle: (key: string) => void;
   /**
    * The panel's contents. ⚖️ Returning `null` means THIS ROW HAS NOTHING TO
@@ -144,14 +168,26 @@ export interface LedgerExpand<T> {
   label?: (row: T) => string;
 }
 
-export interface LedgerProps<T extends LedgerRow> {
-  columns: LedgerColumn<T>[];
+/**
+ * `T` is the row. `K` is the column-key union, inferred from `columns` and
+ * defaulting to `string` — see `LedgerColumn`.
+ */
+export interface LedgerProps<T extends LedgerRow, K extends string = string> {
+  columns: LedgerColumn<T, K>[];
   rows: T[];
   caption?: string;
-  sort?: { key: string; direction: SortDirection };
-  onSort?: (key: string) => void;
-  /** Strong rule above, label "Total". Cells keyed by column. */
-  total?: { label?: ReactNode; cells: Record<string, ReactNode> };
+  sort?: { key: K; direction: SortDirection };
+  onSort?: (key: K) => void;
+  /**
+   * Strong rule above, label "Total". Cells keyed by column.
+   *
+   * ⚖️ `Partial`, because most tables total some columns and not others — a
+   * name column has no total and a rate rarely has an honest one. It is the
+   * KEYS that are checked: a cell keyed to a column this table does not have
+   * is a figure that renders nowhere, which is the quiet version of a wrong
+   * total.
+   */
+  total?: { label?: ReactNode; cells: Partial<Record<K, ReactNode>> };
   /** Skeleton bars in the row slots, at the same row height. */
   loading?: boolean;
   /** Rows to draw while loading. Match the usual page size, not 3. */
@@ -162,9 +198,17 @@ export interface LedgerProps<T extends LedgerRow> {
    */
   empty?: { what: string; fix: string };
   /**
-   * Sticky first column with horizontal scroll INSIDE the panel.
+   * Horizontal scroll INSIDE the panel, with the row's NAME pinned.
    * 🔴 Never let the page scroll sideways — the side gutter is the one thing
    * holding a dense board together at phone width.
+   *
+   * ⚖️ WHAT GETS PINNED is the `rowHeader` column, wherever it sits — plus the
+   * toggle column at `left: 0` when `expand` is set, with the row header
+   * immediately after it. With no `rowHeader` column declared, the first
+   * column is pinned, as before.
+   *
+   * ⚠️ Columns to the LEFT of the row header scroll underneath it. See
+   * `LedgerColumn.rowHeader`.
    */
   wide?: boolean;
   /** Row expansion. See LedgerExpand. Controlled only. */
@@ -210,7 +254,10 @@ export function detailPanelId(rowKey: string): string {
  * is the thing that tells them apart, and the row-header column is where that
  * name already lives.
  */
-export function expandLabel<T extends LedgerRow>(columns: LedgerColumn<T>[], row: T): string {
+export function expandLabel<T extends LedgerRow, K extends string = string>(
+  columns: LedgerColumn<T, K>[],
+  row: T,
+): string {
   const named = columns.find(isRowHeader);
   const fromTitle = named?.titleOf?.(row);
   if (fromTitle) return `Show details for ${fromTitle}`;
@@ -219,7 +266,7 @@ export function expandLabel<T extends LedgerRow>(columns: LedgerColumn<T>[], row
   return `Show details for ${row.key}`;
 }
 
-export function Ledger<T extends LedgerRow>({
+export function Ledger<T extends LedgerRow, K extends string = string>({
   columns,
   rows,
   caption,
@@ -232,25 +279,42 @@ export function Ledger<T extends LedgerRow>({
   wide = false,
   expand,
   className = "",
-}: LedgerProps<T>) {
+}: LedgerProps<T, K>) {
   const groups = headerGroups(columns);
   const showEmpty = !loading && rows.length === 0;
   // The toggle column is not in `columns`, so every colSpan and every skeleton
   // row has to count it separately. One name for it, used everywhere.
   const allColumns = columns.length + (expand ? 1 : 0);
 
-  // 🔴 WHICH COLUMN `wide` PINS, once there is a toggle column.
+  // 🔴 WHICH COLUMN `wide` PINS.
   //
   // `wide` exists so the row's NAME stays beside the figures while the figures
-  // scroll. Pinning only the toggle would pin a 32px strip of chevrons that
-  // identify nothing and let the name scroll away — the defect already on
-  // record for a 56px ordinal column. Pinning only the first data column leaves
-  // the toggle scrolling out from under its own row, so a reader scrolled right
-  // cannot close the panel they opened.
+  // scroll. So it pins the column that NAMES the row — the one the caller
+  // declared `rowHeader` — wherever that column sits in the model.
   //
-  // So BOTH pin: the toggle at 0 and the first data column immediately after
-  // it. The name stays visible, the control stays with the row, and the two
-  // together are 32px plus one column — still a minority of a wide table.
+  // ⛔ It is NOT index 0. Until v3.4.1 it was, and the two defects that came of
+  // it are the same defect: governance's registers pinned a 56px ordinal, and
+  // scheduling's FindingsTable would have pinned a column of repeated category
+  // words with its naming column fifth (worked around by reordering the model —
+  // a layout decision forced by a pinning bug). A pinned column that identifies
+  // nothing costs the reader the width AND the name at once.
+  //
+  // ⚖️ COLUMNS BEFORE THE ROW HEADER SCROLL UNDERNEATH IT. That is the caller's
+  // own declaration read back to them: they named one column as the one that
+  // identifies the row, so every other column — left or right of it — is less
+  // identifying than that one. Pinning the run from 0 to the row header would
+  // pin an arbitrary number of columns decided by model order rather than by
+  // anybody's intent.
+  //
+  // With no `rowHeader` column, index 0 is pinned, exactly as before — a test
+  // pins that, so no existing caller changes.
+  //
+  // The toggle column, when there is one, pins at 0 and the row header follows
+  // at 32: pinning only the toggle would pin a strip of chevrons, and pinning
+  // only the name would scroll the control out from under its own row, so a
+  // reader scrolled right could not close the panel they opened.
+  const namedIndex = columns.findIndex(isRowHeader);
+  const pinnedIndex = namedIndex === -1 ? 0 : namedIndex;
   const stickyLeft = (dataColumn: boolean) =>
     dataColumn && expand ? EXPAND_COLUMN_WIDTH : 0;
 
@@ -307,7 +371,7 @@ export function Ledger<T extends LedgerRow>({
             {columns.map((c, i) => {
               const active = sort?.key === c.key;
               const glyph = active ? SORT_GLYPH[sort.direction] : SORT_GLYPH.none;
-              const sticky = wide && i === 0;
+              const sticky = wide && i === pinnedIndex;
               return (
                 <th
                   key={c.key}
@@ -448,7 +512,7 @@ export function Ledger<T extends LedgerRow>({
                   </td>
                 )}
                 {columns.map((c, i) => {
-                  const sticky = wide && i === 0;
+                  const sticky = wide && i === pinnedIndex;
                   // A row header is a <th>, not a styled <td>: same classes,
                   // different element, so the name travels with every figure
                   // in the row for anyone not reading by eye.
@@ -532,16 +596,21 @@ export function Ledger<T extends LedgerRow>({
               {columns.map((c, i) => (
                 <td
                   key={c.key}
-                  style={wide && i === 0 ? { left: stickyLeft(true) } : undefined}
+                  style={wide && i === pinnedIndex ? { left: stickyLeft(true) } : undefined}
                   className={[
                     "whitespace-nowrap border-t border-border-strong px-4 font-medium text-text",
                     // The total row is the same data as the column above it,
                     // so it takes the same face. The label cell is a word.
+                    //
+                    // ⚖️ The label stays in column 0 while the PIN follows the
+                    // row header. The two are different questions: "Total" is a
+                    // word and belongs where the eye starts, and the pin is
+                    // about which column must survive a scroll.
                     isMonoColumn(c) && i !== 0
                       ? "font-mono text-[length:var(--density-data)]"
                       : "text-[length:var(--density-body)]",
                     c.align === "right" ? "text-right" : "text-left",
-                    wide && i === 0 ? "sticky z-10 bg-surface" : "",
+                    wide && i === pinnedIndex ? "sticky z-10 bg-surface" : "",
                   ].join(" ")}
                 >
                   {i === 0 ? (total.label ?? "Total") : total.cells[c.key]}
@@ -586,19 +655,19 @@ export function LedgerBar({ value, max }: { value: number; max: number }) {
  * nothing and displaces the name that would have. The guard lives here rather
  * than in a doc comment because the doc comment is what was already there.
  */
-export function isRowHeader<T>(c: LedgerColumn<T>): boolean {
+export function isRowHeader<T, K extends string = string>(c: LedgerColumn<T, K>): boolean {
   return c.rowHeader === true && c.align !== "right";
 }
 
-export function isMonoColumn<T>(column: LedgerColumn<T>): boolean {
+export function isMonoColumn<T, K extends string = string>(column: LedgerColumn<T, K>): boolean {
   return column.align === "right" || column.mono === true;
 }
 
 // Collapse adjacent columns sharing a `group` into header spans. Returns null
 // when no column declares one, so the grouped header row is not rendered at
 // all rather than rendered empty.
-export function headerGroups<T>(
-  columns: LedgerColumn<T>[],
+export function headerGroups<T, K extends string = string>(
+  columns: LedgerColumn<T, K>[],
 ): { label: string | undefined; span: number }[] | null {
   if (!columns.some((c) => c.group)) return null;
   const out: { label: string | undefined; span: number }[] = [];
