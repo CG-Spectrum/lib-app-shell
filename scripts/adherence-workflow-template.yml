@@ -87,6 +87,13 @@ env:
   #   three things the geometry rules were wrong about: a mask-image gradient
   #   (edge fade), a repeating gradient (hatch), and a zero-offset zero-blur
   #   box-shadow (focus ring, required by WCAG 2.4.7).
+  # dfb1100 = raw-palette, and it is a FREEZE rule. A stock Tailwind palette
+  #   class (bg-green-100, dark:text-amber-400, bg-red-900/40) is the same
+  #   offence as a raw hex and raw-hex never saw one, so every colour count
+  #   this estate recorded before 23 Oct 2026 was a count of SPELLINGS. 123
+  #   findings across 8 repos, all of them an error line, a callout or a
+  #   filled pill; all cleared before this bump. If yours is not zero,
+  #   something landed between the sweep and the merge.
   # 8a11185 = 23 Oct 2026. Two rule changes. THE EMAIL EXEMPTION IS NARROWED to
   #   a directory named `emails/` or `email-templates/`, or a `*.email.*`
   #   suffix, and never under a segment named `app`. It had matched any path
