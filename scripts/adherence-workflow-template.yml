@@ -87,7 +87,20 @@ env:
   #   three things the geometry rules were wrong about: a mask-image gradient
   #   (edge fade), a repeating gradient (hatch), and a zero-offset zero-blur
   #   box-shadow (focus ring, required by WCAG 2.4.7).
-  ADHERENCE_REF: 2b82a44979b8fd41c14c12b9e423999a1cfcbecd
+  # 8a11185 = 23 Oct 2026. Two rule changes. THE EMAIL EXEMPTION IS NARROWED to
+  #   a directory named `emails/` or `email-templates/`, or a `*.email.*`
+  #   suffix, and never under a segment named `app`. It had matched any path
+  #   segment, excusing 62 source files across 6 repos from EVERY rule since
+  #   the checker was written, so every count taken before this ref was taken
+  #   with those files excused. One genuine template (marketing) moved inside
+  #   the convention; the rest were already clean. And `raw-rgb` — the third
+  #   spelling of a raw colour, `rgba(251,191,36,.4)` beside `#dc2626` and
+  #   `bg-red-600` — IS A FREEZE RULE, not advisory: 33 lines across 11 repos,
+  #   all cleared the same afternoon before this bump. Every repo was verified
+  #   at 0 against this exact SHA before the wave, so this bump should change
+  #   no count — if yours is not zero, something landed between the sweep and
+  #   the merge.
+  ADHERENCE_REF: 8a11185f3b70a44dd50854adf38514bc32ea02d8
 
 jobs:
   adherence:

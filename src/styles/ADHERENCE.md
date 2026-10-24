@@ -449,9 +449,10 @@ cycle: changing a rule should not require cutting a package version, and a CI
 check should not be blocked on a release decision. The first pass used
 `v1.32.0` and every run failed on a 404 until it was repinned.
 
-Current ruleset: `97edff8` (2027 phase 1). Bump deliberately, and expect every
-app's count to move when you do. If the ref ever stops resolving, the fetch
-step fails loudly rather than passing silently.
+Current ruleset: `8a11185` (narrowed email exemption, `raw-rgb` enforced).
+Bump deliberately, and expect every app's count to move when you do. If the
+ref ever stops resolving, the fetch step fails loudly rather than passing
+silently.
 
 ## Changing a rule
 
