@@ -335,6 +335,57 @@ the working directory: keyed to cwd it looked right and silently never fired
 under the test harness, which runs the script from the package against a temp
 directory.
 
+### `Ledger.expand` — the row that opens, and the four things it is not
+
+Most surviving `rebuilt-table` findings are not ports somebody has not got to.
+They are tables `Ledger` could not hold, and the single commonest reason was a
+row that opens into detail — 7 of `scheduling`'s 9, the `courseapp` audit log,
+`cgsi-auth`'s AppsTable, and the two biggest tables in `marketing`. `expand`
+closes that, so **a disclosure arrow is no longer a reason to leave a table
+hand-built**. Re-read a table you classified as blocked on it.
+
+**What it is.** A dedicated 32px first column of toggles, and a row that opens
+into a DETAIL PANEL spanning the table — one `<tr>` immediately after its row,
+on `--color-surface-2` with a hairline each side so it reads as inset. The
+panel is free-form content and ⚖️ **sits outside the density rung**: the rung
+is the promise that DATA rows are one line, which is the only reason the number
+column scans, so the panel takes the panel padding from the density pair
+instead and the row above it is untouched.
+
+⛔ **It is not these, and reaching for it anyway is how the part forks:**
+
+| Not for | What it actually is |
+|---|---|
+| Child rows sharing the parent's columns | A different design, and not built. The panel is content, not a nested `<tbody>`; children that line up in the number columns want section rows and subtotals, which is the next gap |
+| A `<details>` inside ONE cell | In-cell disclosure. Separate gap, separate shape — this opens the whole row |
+| A per-row action menu | A popover, not a panel. Every body cell is `overflow-hidden`, and a menu that shoves the table open is not a menu |
+| Somewhere to put the fields that would not fit | ⚖️ If every row has one and the reader needs it to read the row, the columns are wrong. A panel is for detail that is genuinely secondary — a trend, a diff, a payload |
+
+⚖️ **Controlled only, and there is no uncontrolled variant coming.** Two
+reasons, and the first is not negotiable: internal open state needs a hook, and
+`Ledger` is one of the seven parts a server page renders directly — **v3.2.0
+put a `createContext` in `Kpi` and killed every server component that imported
+it**, through a CI that could never have caught it. The second is that the
+caller already owns this honestly: which rows are open survives a sort, belongs
+in the URL on a deep-linkable board, and "expand all" is then a line of the
+caller's code rather than an imperative handle on a ref.
+
+⚖️ **A row whose `render` returns `null` gets no toggle at all**, rather than a
+button that opens an empty panel. A control that lies about there being
+something behind it, once per row down a column of forty, is worse than no
+control.
+
+⚠️ **`wide` pins the toggle AND the row header, not just the first column.**
+The toggle column is first, and pinning only it would pin 32px of chevrons that
+identify nothing while the row's name scrolls away — the defect already on
+record for a 56px ordinal. Pinning only the name would scroll the control out
+from under its own row. Both pin: toggle at 0, name at 32.
+
+⛔ **An open row is not restyled.** `selected`, `marked` and `closed` are claims
+about the RECORD; "open" is a claim about the reader's screen. `aria-expanded`
+and the glyph say it twice already, and a third signal would spend the accent
+— or the one remaining weight — on nothing.
+
 ## Fixing a finding
 
 **Raw hex.** Use a token: `--color-bg`, `surface`, `surface-2`, `surface-3`,

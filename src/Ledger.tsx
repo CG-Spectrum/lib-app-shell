@@ -17,6 +17,27 @@ import type { ReactNode } from "react";
 // ⚖️ GREEN IS NOT DATA. Inline bars are grey. The accent marks the one row a
 // rule singles out, and which row that is must be written in the panel's spec
 // rather than decided per render — see `marked` below.
+//
+// 🔴 NO "use client", NO HOOK, NO createContext IN THIS FILE, EVER.
+//
+// `Ledger` is one of the seven parts a server page renders directly. v3.2.0
+// put a `createContext` in `Kpi` and every server component importing it died
+// at page-data collection with "(0 , f.createContext) is not a function" — and
+// it passed this package's CI, because a library never runs a Next build.
+// `ledger.test.ts` reads this file's source and asserts all three, the way
+// `kpi-definition-list.test.tsx` does, because no behavioural test can catch it.
+//
+// ⚖️ AN onClick IS NOT A CLIENT BOUNDARY, and it does not need its own file.
+// `sort`'s header button has had an inline `onClick={() => onSort(c.key)}` in
+// this server-safe file since the part shipped, and it is correct: a function
+// prop can only arrive here from a CLIENT caller, which means the module is
+// already in the client bundle by the time the handler exists. A server-rendered
+// `Ledger` with an `onSort` is impossible to construct in the first place — the
+// RSC serialisation boundary refuses the prop. `expand.onToggle` is the same
+// prop with a different name, so the toggle button follows the same pattern
+// rather than being split into a `"use client"` component of its own. Splitting
+// it would have put the package's two interactive affordances in two different
+// shapes for no gain, and a reader would have to learn both.
 
 export interface LedgerColumn<T> {
   key: string;
@@ -77,6 +98,52 @@ export interface LedgerRow {
 
 export type SortDirection = "asc" | "desc";
 
+/**
+ * Row expansion: a row OPENS INTO a detail panel spanning the table.
+ *
+ * ⚖️ WHAT IT IS FOR. One record whose detail does not fit on a line and does
+ * not belong in a column — a trend chart for the row, the diff behind an audit
+ * entry, the payload of a request. The panel is CONTENT, so it sits outside the
+ * density rung: data rows stay one line (the whole reason the table is a
+ * table), and the panel takes the panel padding from the density pair.
+ *
+ * ⛔ WHAT IT IS NOT FOR.
+ * - **Child rows sharing the columns.** A parent with children that line up in
+ *   the same number columns is a different design and does not exist yet; the
+ *   panel is free-form content, not a nested `<tbody>`.
+ * - **In-cell disclosure.** A `<details>` inside ONE cell is a separate gap.
+ * - **A per-row action menu.** A popover is not a panel; every body cell is
+ *   `overflow-hidden`, and a menu that pushes the table open is not a menu.
+ *
+ * ⚖️ CONTROLLED ONLY, and there is no uncontrolled variant coming. Internal
+ * open state would need a hook, and `Ledger` is one of the seven parts a server
+ * page renders directly — v3.2.0 shipped a `createContext` into one of them and
+ * broke every server component that imported it. It is also the honest shape:
+ * which rows are open is a property of the screen, not of the table. The caller
+ * already owns it — it survives a sort, it belongs in the URL, and "expand all"
+ * is a line of the caller's code rather than an imperative handle on a ref.
+ */
+export interface LedgerExpand<T> {
+  /** The row keys currently open. The caller owns this. */
+  expanded: ReadonlySet<string>;
+  onToggle: (key: string) => void;
+  /**
+   * The panel's contents. ⚖️ Returning `null` means THIS ROW HAS NOTHING TO
+   * OPEN: no toggle is drawn for it, rather than a button that opens an empty
+   * panel. Called once per row per render to decide that, so keep it cheap —
+   * build the data in the caller and read it here.
+   */
+  render: (row: T) => ReactNode;
+  /**
+   * The button's sr-only text. Defaults to "Show details for <the row's name>",
+   * taken from the row-header column's `titleOf`, else its cell when that cell
+   * is plain text, else the row key. ⚖️ It does not change when the row opens:
+   * `aria-expanded` carries the state, and a label that flips between "Show"
+   * and "Hide" says it twice.
+   */
+  label?: (row: T) => string;
+}
+
 export interface LedgerProps<T extends LedgerRow> {
   columns: LedgerColumn<T>[];
   rows: T[];
@@ -100,6 +167,8 @@ export interface LedgerProps<T extends LedgerRow> {
    * holding a dense board together at phone width.
    */
   wide?: boolean;
+  /** Row expansion. See LedgerExpand. Controlled only. */
+  expand?: LedgerExpand<T>;
   className?: string;
 }
 
@@ -108,6 +177,47 @@ const SORT_GLYPH: Record<SortDirection | "none", string> = {
   asc: "↑",
   desc: "↓",
 };
+
+// The disclosure pair, in the same vocabulary as the sort arrows: text glyphs
+// in the surrounding face. ⛔ No icon library, no rounded chevron in a circle.
+// The mark rotates between the two states and the two states are the only
+// states there are.
+const EXPAND_GLYPH = { closed: "▸", open: "▾" } as const;
+
+/**
+ * The toggle column's width. 32px from the spacing scale — wide enough for the
+ * glyph and its pointer target, narrow enough that it does not read as a
+ * column of data. It is NOT part of `columns`: not sortable, not in `total`,
+ * never the row header.
+ */
+export const EXPAND_COLUMN_WIDTH = 32;
+
+/**
+ * The id the panel row carries and the button points at with `aria-controls`.
+ * ⚠️ Derived from the row key, so two Ledgers on one page whose rows share keys
+ * would share ids. Give one of them distinct keys; this is the same constraint
+ * `key` already carries.
+ */
+export function detailPanelId(rowKey: string): string {
+  return `ledger-detail-${rowKey.replace(/[^A-Za-z0-9_-]/g, "-")}`;
+}
+
+/**
+ * The toggle's sr-only text when the caller supplies no `label`.
+ *
+ * ⚖️ A bare "Show details" repeated down a column of forty rows is forty
+ * identical buttons to anyone listing the controls on the page. The row's NAME
+ * is the thing that tells them apart, and the row-header column is where that
+ * name already lives.
+ */
+export function expandLabel<T extends LedgerRow>(columns: LedgerColumn<T>[], row: T): string {
+  const named = columns.find(isRowHeader);
+  const fromTitle = named?.titleOf?.(row);
+  if (fromTitle) return `Show details for ${fromTitle}`;
+  const cell = named?.cell(row);
+  if (typeof cell === "string" && cell) return `Show details for ${cell}`;
+  return `Show details for ${row.key}`;
+}
 
 export function Ledger<T extends LedgerRow>({
   columns,
@@ -120,10 +230,29 @@ export function Ledger<T extends LedgerRow>({
   loadingRows = 8,
   empty,
   wide = false,
+  expand,
   className = "",
 }: LedgerProps<T>) {
   const groups = headerGroups(columns);
   const showEmpty = !loading && rows.length === 0;
+  // The toggle column is not in `columns`, so every colSpan and every skeleton
+  // row has to count it separately. One name for it, used everywhere.
+  const allColumns = columns.length + (expand ? 1 : 0);
+
+  // 🔴 WHICH COLUMN `wide` PINS, once there is a toggle column.
+  //
+  // `wide` exists so the row's NAME stays beside the figures while the figures
+  // scroll. Pinning only the toggle would pin a 32px strip of chevrons that
+  // identify nothing and let the name scroll away — the defect already on
+  // record for a 56px ordinal column. Pinning only the first data column leaves
+  // the toggle scrolling out from under its own row, so a reader scrolled right
+  // cannot close the panel they opened.
+  //
+  // So BOTH pin: the toggle at 0 and the first data column immediately after
+  // it. The name stays visible, the control stays with the row, and the two
+  // together are 32px plus one column — still a minority of a wide table.
+  const stickyLeft = (dataColumn: boolean) =>
+    dataColumn && expand ? EXPAND_COLUMN_WIDTH : 0;
 
   return (
     <div className={wide ? "min-w-0 overflow-x-auto" : "min-w-0"}>
@@ -132,6 +261,13 @@ export function Ledger<T extends LedgerRow>({
         <thead>
           {groups && (
             <tr>
+              {expand && (
+                <th
+                  aria-hidden
+                  style={{ width: EXPAND_COLUMN_WIDTH }}
+                  className="border-b border-border"
+                />
+              )}
               {groups.map((g, i) =>
                 g.label ? (
                   <th
@@ -149,6 +285,25 @@ export function Ledger<T extends LedgerRow>({
             </tr>
           )}
           <tr>
+            {expand && (
+              <th
+                scope="col"
+                style={{
+                  width: EXPAND_COLUMN_WIDTH,
+                  ...(wide ? { left: stickyLeft(false) } : null),
+                }}
+                className={[
+                  "border-b border-border-strong py-3",
+                  wide ? "sticky z-10 bg-surface" : "",
+                ].join(" ")}
+              >
+                {/* An unnamed column full of buttons is announced as an
+                    unnamed column full of buttons. The cell stays in flow so
+                    the header hairline runs unbroken; only its text is
+                    sr-only. */}
+                <span className="sr-only">Details</span>
+              </th>
+            )}
             {columns.map((c, i) => {
               const active = sort?.key === c.key;
               const glyph = active ? SORT_GLYPH[sort.direction] : SORT_GLYPH.none;
@@ -158,12 +313,15 @@ export function Ledger<T extends LedgerRow>({
                   key={c.key}
                   scope="col"
                   aria-sort={active ? (sort.direction === "asc" ? "ascending" : "descending") : undefined}
-                  style={c.width ? { width: c.width } : undefined}
+                  style={{
+                    ...(c.width ? { width: c.width } : null),
+                    ...(sticky ? { left: stickyLeft(true) } : null),
+                  }}
                   className={[
                     "whitespace-nowrap border-b border-border-strong px-4 py-3 font-mono text-[10px] font-medium uppercase tracking-[0.14em]",
                     c.align === "right" ? "text-right" : "text-left",
                     active ? "text-text" : "text-text-3",
-                    sticky ? "sticky left-0 z-10 bg-surface" : "",
+                    sticky ? "sticky z-10 bg-surface" : "",
                   ].join(" ")}
                 >
                   {c.sortable && onSort ? (
@@ -188,6 +346,16 @@ export function Ledger<T extends LedgerRow>({
           {loading &&
             Array.from({ length: loadingRows }, (_, r) => (
               <tr key={`skeleton-${r}`} style={{ height: "var(--density-row)" }}>
+                {/* No skeleton bar in the toggle cell: a 32px chrome column is
+                    not data arriving, and a bar there would promise a control
+                    that may never be drawn (a row whose panel is null has no
+                    toggle). */}
+                {expand && (
+                  <td
+                    className="border-b border-border"
+                    style={{ width: EXPAND_COLUMN_WIDTH }}
+                  />
+                )}
                 {columns.map((c) => (
                   <td key={c.key} className="border-b border-border px-4">
                     {/* Same row height as a real row, so nothing jumps when
@@ -200,7 +368,7 @@ export function Ledger<T extends LedgerRow>({
 
           {showEmpty && (
             <tr>
-              <td colSpan={columns.length} className="px-4 py-6 text-left">
+              <td colSpan={allColumns} className="px-4 py-6 text-left">
                 <span className="block text-text-2">{empty?.what ?? "Nothing to show."}</span>
                 <span className="block text-[13px] text-text-3">
                   {empty?.fix ?? "Change the filters above."}
@@ -210,7 +378,21 @@ export function Ledger<T extends LedgerRow>({
           )}
 
           {!loading &&
-            rows.map((row) => (
+            rows.flatMap((row) => {
+              // `render` decides whether this row has anything to open, so it
+              // is called once and the result is reused by the panel. A row
+              // that returns null gets an empty cell, not a dead button.
+              const panel = expand ? expand.render(row) : null;
+              const hasPanel = panel !== null && panel !== undefined && panel !== false;
+              const open = Boolean(expand && expand.expanded.has(row.key));
+              const panelId = detailPanelId(row.key);
+
+              // ⛔ THE DATA ROW IS NOT RESTYLED WHEN IT OPENS. `selected`,
+              // `marked` and `closed` are claims about the RECORD; "open" is a
+              // claim about the reader's screen. Dressing the row would spend
+              // the accent — or the one remaining weight — on the one thing
+              // `aria-expanded` and the glyph already say twice.
+              const dataRow = (
               <tr
                 key={row.key}
                 aria-selected={row.selected || undefined}
@@ -236,6 +418,35 @@ export function Ledger<T extends LedgerRow>({
                     : "hover:bg-surface-2",
                 ].join(" ")}
               >
+                {expand && (
+                  <td
+                    style={{
+                      width: EXPAND_COLUMN_WIDTH,
+                      ...(wide ? { left: stickyLeft(false) } : null),
+                    }}
+                    className={[
+                      "border-b border-border p-0 text-center",
+                      wide ? "sticky z-10 bg-surface" : "",
+                    ].join(" ")}
+                  >
+                    {hasPanel && (
+                      <button
+                        type="button"
+                        aria-expanded={open}
+                        aria-controls={panelId}
+                        onClick={() => expand.onToggle(row.key)}
+                        className="inline-flex h-full w-full items-center justify-center text-text-3 hover:text-accent"
+                      >
+                        <span aria-hidden>
+                          {open ? EXPAND_GLYPH.open : EXPAND_GLYPH.closed}
+                        </span>
+                        <span className="sr-only">
+                          {expand.label ? expand.label(row) : expandLabel(columns, row)}
+                        </span>
+                      </button>
+                    )}
+                  </td>
+                )}
                 {columns.map((c, i) => {
                   const sticky = wide && i === 0;
                   // A row header is a <th>, not a styled <td>: same classes,
@@ -248,6 +459,7 @@ export function Ledger<T extends LedgerRow>({
                       key={c.key}
                       scope={asHeader ? "row" : undefined}
                       title={c.titleOf?.(row)}
+                      style={sticky ? { left: stickyLeft(true) } : undefined}
                       className={[
                         "overflow-hidden text-ellipsis whitespace-nowrap px-4 font-normal",
                         isMonoColumn(c)
@@ -255,7 +467,7 @@ export function Ledger<T extends LedgerRow>({
                           : "text-[length:var(--density-body)]",
                         c.align === "right" ? "text-right" : "text-left",
                         row.marked ? "text-text" : "text-text-2",
-                        sticky ? "sticky left-0 z-10 bg-surface" : "",
+                        sticky ? "sticky z-10 bg-surface" : "",
                       ].join(" ")}
                     >
                       {c.cell(row)}
@@ -263,15 +475,64 @@ export function Ledger<T extends LedgerRow>({
                   );
                 })}
               </tr>
-            ))}
+              );
+
+              if (!open || !hasPanel) return [dataRow];
+
+              // The panel is its own row, immediately after the row it belongs
+              // to, and rendered only when open — never hidden in the DOM,
+              // because a screen reader walking the table would otherwise read
+              // every closed panel in it.
+              //
+              // ⚖️ IT SITS OUTSIDE THE DENSITY RUNG. No --density-row height:
+              // the rung is the promise that DATA rows are one line, and this
+              // is not a data row. It takes the panel padding from the same
+              // density pair instead, which is what every other block of
+              // content in the app layer takes.
+              //
+              // --color-surface-2 as ground and a hairline each side, so it
+              // reads as inset under its row rather than as another record.
+              // ⛔ No zebra below it and no tint that says anything: the fill
+              // IS the information here — "this block belongs to the row above
+              // it" — which is the one thing a fill is allowed to carry.
+              return [
+                dataRow,
+                <tr key={`${row.key}-detail`}>
+                  <td
+                    id={panelId}
+                    colSpan={allColumns}
+                    style={{ padding: "var(--density-panel-pad)" }}
+                    className="border-b border-t border-border bg-surface-2 text-left text-[length:var(--density-body)] text-text-2"
+                  >
+                    {panel}
+                  </td>
+                </tr>,
+              ];
+            })}
         </tbody>
 
         {total && !loading && rows.length > 0 && (
           <tfoot>
             <tr style={{ height: "var(--density-row)" }}>
+              {/* The total is not a record, so it has no toggle — but it still
+                  needs the cell, or every figure in the foot shifts one column
+                  left of the column it totals. */}
+              {expand && (
+                <td
+                  style={{
+                    width: EXPAND_COLUMN_WIDTH,
+                    ...(wide ? { left: stickyLeft(false) } : null),
+                  }}
+                  className={[
+                    "border-t border-border-strong",
+                    wide ? "sticky z-10 bg-surface" : "",
+                  ].join(" ")}
+                />
+              )}
               {columns.map((c, i) => (
                 <td
                   key={c.key}
+                  style={wide && i === 0 ? { left: stickyLeft(true) } : undefined}
                   className={[
                     "whitespace-nowrap border-t border-border-strong px-4 font-medium text-text",
                     // The total row is the same data as the column above it,
@@ -280,7 +541,7 @@ export function Ledger<T extends LedgerRow>({
                       ? "font-mono text-[length:var(--density-data)]"
                       : "text-[length:var(--density-body)]",
                     c.align === "right" ? "text-right" : "text-left",
-                    wide && i === 0 ? "sticky left-0 z-10 bg-surface" : "",
+                    wide && i === 0 ? "sticky z-10 bg-surface" : "",
                   ].join(" ")}
                 >
                   {i === 0 ? (total.label ?? "Total") : total.cells[c.key]}

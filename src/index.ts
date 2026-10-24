@@ -28,8 +28,17 @@ export { Status, Notice, Delta } from "./Status";
 export type { StatusProps, NoticeProps, StatusTone } from "./Status";
 export { Kpi, KpiRow } from "./Kpi";
 export type { KpiProps, KpiState } from "./Kpi";
-export { Ledger, LedgerBar, headerGroups, isMonoColumn, isRowHeader } from "./Ledger";
-export type { LedgerProps, LedgerColumn, LedgerRow, SortDirection } from "./Ledger";
+export {
+  Ledger,
+  LedgerBar,
+  EXPAND_COLUMN_WIDTH,
+  detailPanelId,
+  expandLabel,
+  headerGroups,
+  isMonoColumn,
+  isRowHeader,
+} from "./Ledger";
+export type { LedgerProps, LedgerColumn, LedgerRow, LedgerExpand, SortDirection } from "./Ledger";
 export { Filters, Segmented } from "./Filters";
 export type { FiltersProps, FilterDimension, SegmentedProps } from "./Filters";
 export {
