@@ -259,6 +259,11 @@ test that decides each one:
   the line takes `cgsi-adherence-allow: accent-as-paint-class — boundary,
   <what>`. This package carries four: the Header's Admin button, the user
   menu's avatar and stepper, the selected filter chip.
+- **A fill with a label on it** — the one primary button a view may have —
+  keeps `bg-accent` for the reason the CSS rule gives: type sits on the paint,
+  and Ink Green is what clears on white. It takes the pragma. ⚠️ Its label is
+  `text-bg`, not `text-white`: on dark the accent is the bright mark and white
+  on it is ~1.9:1. Two apps ship `bg-accent text-white` today.
 
 Focus variants are excluded outright, as `outline` is in the CSS rule: a focus
 indicator is an accessibility requirement, and on white Ink Green is the one

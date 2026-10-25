@@ -493,6 +493,12 @@ const RULES = [
          3:1 as a UI component edge (WCAG 1.4.11), and the bright mark on
          white is 1.9:1. There Ink Green is the VISIBLE one and `border-accent`
          is correct; the line takes the pragma, naming it a boundary.
+       · A FILL WITH A LABEL ON IT — the one primary button a view may have —
+         wants Ink Green for the same reason the CSS rule gives: type sits on
+         the paint. It keeps `bg-accent` and takes the pragma. ⚠️ And its
+         label is not `text-white`: on dark the accent is the bright mark and
+         white on it is ~1.9:1. The label is `text-bg`, which is dark on the
+         mark and white on Ink Green.
 
        ⛔ `focus:` / `focus-visible:` / `focus-within:` variants are excluded
        outright, as `outline` is above: a focus indicator is an accessibility
@@ -505,7 +511,7 @@ const RULES = [
        copied from the package Header. Move to "error" when the count is
        near zero. */
     re: /(?<!focus(?:-visible|-within)?:)(?<![\w-])(?:bg|border(?:-[trblxyse])?|ring|divide|fill|stroke|from|to|via|decoration|shadow)-(?:accent(?![\w-])(?!\/)|\[var\(--color-accent\)\])/g,
-    msg: "Accent used as paint, Tailwind spelling. border-accent / bg-accent is var(--color-accent) — Ink Green on light. A DECORATION (underline, bar, dot, tick, progress fill) is the mark: border-accent-mark / bg-accent-mark. A BOUNDARY (the 1px edge of a chip, button or field) must clear 3:1 and Ink Green is the visible one — keep border-accent and add `cgsi-adherence-allow: accent-as-paint-class — boundary, <what>`. Focus variants are never flagged.",
+    msg: "Accent used as paint, Tailwind spelling. border-accent / bg-accent is var(--color-accent) — Ink Green on light. A DECORATION (underline, bar, dot, tick, progress fill) is the mark: border-accent-mark / bg-accent-mark. A BOUNDARY (the 1px edge of a chip, button or field) must clear 3:1 and Ink Green is the visible one — keep border-accent and add `cgsi-adherence-allow: accent-as-paint-class — boundary, <what>`. A FILL WITH A LABEL (the primary button) keeps bg-accent for the same reason and takes the pragma; its label is text-bg, never text-white. Focus variants are never flagged.",
   },
   {
     id: "rebuilt-table",
