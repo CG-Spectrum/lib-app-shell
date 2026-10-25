@@ -80,6 +80,7 @@ export function Header({
           {admin && (
             <a
               href={admin.url}
+              // cgsi-adherence-allow: accent-as-paint-class — boundary: the button's 1px edge on hover, framing accent ink; must clear 3:1 on white
               className="border border-border px-2 py-1 text-xs text-text-2 hover:border-accent hover:text-accent transition-colors"
             >
               Admin

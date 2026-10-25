@@ -17,7 +17,9 @@ import { badgeText } from "./notifications";
  * to land returning users on the section they were last in. Omit the prop
  * and SubNav behaves exactly as before.
  *
- * Active state: accent underline + accent text.
+ * Active state: accent-MARK underline + accent text. ⛔ The underline is a
+ * decoration, not a boundary: on white `border-accent` is Ink Green and makes
+ * a dull edge (the home defect `accent-as-paint` was written on, 23 Oct 2026).
  * Inactive state: muted text, hover → primary text.
  *
  * Visual reference: courseapp viewer-tab row (bg-surface, border-border,
@@ -127,7 +129,7 @@ export function tabClassName(active: boolean): string {
     "transition-colors duration-100",
     "border-b-2 -mb-px", // sits on the nav's bottom border
     active
-      ? "border-accent text-accent"
+      ? "border-accent-mark text-accent"
       : "border-transparent text-text hover:text-accent hover:border-border",
   ].join(" ");
 }

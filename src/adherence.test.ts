@@ -904,3 +904,124 @@ describe("raw-rgb — the third spelling of a raw colour", () => {
     expect(out).not.toContain("raw-rgb");
   });
 });
+
+describe("the fourth colour pass — 25 Oct 2026", () => {
+  // Three spellings of colour were frozen (hex, palette, rgba) and each case
+  // below still sat at "0 errors" in a live repo: a token at an alpha, a
+  // retired token spelled as a utility, and a token assembled at runtime.
+
+  test("🔴 bg-accent-soft is frozen — the class resolves to NOTHING", () => {
+    // --color-accent-soft is gone from brand.css (brand-tokens.test.ts pins
+    // it), so Tailwind emits the class and no rule matches it. cgsi-auth's
+    // grant chips had no fill through every sweep.
+    const { out, exit } = check({ "a.tsx": 'const c = "border border-accent bg-accent-soft text-text";' });
+    expect(out).toContain("deprecated-soft");
+    expect(exit).toBe(1);
+  });
+
+  test("bg-good-soft is frozen too: it resolves to the grey the flip left behind", () => {
+    const { out, exit } = check({ "a.tsx": 'const c = "bg-good-soft";' });
+    expect(out).toContain("deprecated-soft");
+    expect(exit).toBe(1);
+  });
+
+  test("bg-accent-tint is the one accent fill and passes", () => {
+    const { out, exit } = check({ "a.tsx": 'const c = "bg-accent-tint";' });
+    expect(out).not.toContain("deprecated-soft");
+    expect(exit).toBe(0);
+  });
+
+  test.each(["bg-accent/10", "hover:bg-accent/10", "border-warn/40", "text-bad/50", "bg-accent-mark/20"])(
+    "%s is a hand-mixed tint (token-alpha)",
+    (cls) => {
+      const { out, exit } = check({ "a.tsx": `const c = "${cls}";` });
+      expect(out).toContain("token-alpha");
+      expect(exit).toBe(1);
+    },
+  );
+
+  test("bg-surface/85 is a glass header, not a status tint", () => {
+    const { out, exit } = check({ "a.tsx": 'const c = "sticky bg-surface/85 backdrop-blur";' });
+    expect(out).not.toContain("token-alpha");
+    expect(exit).toBe(0);
+  });
+
+  test("🔴 var(--color-${bucket}) is a token nobody checked", () => {
+    // scheduling returned this with bucket ∈ animation | gamedesign |
+    // digitalart — frozen tokens — at 0 errors, and the dots inverted on
+    // screen when the flip set them to grey.
+    const { out, exit } = check({ "a.ts": "export const c = (b: string) => `var(--color-${b})`;" });
+    expect(out).toContain("concatenated-token");
+    expect(exit).toBe(1);
+  });
+
+  test.each([
+    ['"--color-" + tone', "a `+` that builds a token name"],
+    ["`bg-${tone}`", "a utility Tailwind v4 will never generate"],
+    ["`border-${side}-${tone}`", "a utility with the variable anywhere after the prefix"],
+  ])("%s is frozen: %s", (expr) => {
+    const { out, exit } = check({ "a.ts": `export const c = ${expr};` });
+    expect(out).toContain("concatenated-token");
+    expect(exit).toBe(1);
+  });
+
+  test("a literal token in a string passes", () => {
+    const { out, exit } = check({ "a.ts": 'export const c = { good: "var(--color-good)", bad: "var(--color-bad)" };' });
+    expect(out).not.toContain("concatenated-token");
+    expect(exit).toBe(0);
+  });
+
+  describe("accent-as-paint-class — the Tailwind spelling of accent-as-paint", () => {
+    test("border-accent is reported, and only in the advisory tier", () => {
+      const file = { "a.tsx": 'const c = "border-b-2 border-accent text-text";' };
+      const quiet = check(file);
+      expect(quiet.out).not.toContain("accent-as-paint-class");
+      expect(quiet.exit).toBe(0);
+      const loud = check(file, "--advisory");
+      expect(loud.out).toContain("accent-as-paint-class");
+      expect(loud.exit).toBe(0);
+    });
+
+    test("hover:border-accent IS reported — a hover is not a focus", () => {
+      const { out } = check({ "a.tsx": 'const c = "border-border hover:border-accent hover:text-accent";' }, "--advisory");
+      expect(out).toContain("accent-as-paint-class");
+    });
+
+    test("bg-[var(--color-accent)] is the arbitrary-value spelling and is reported", () => {
+      const { out } = check({ "a.tsx": 'const c = "h-2 bg-[var(--color-accent)]";' }, "--advisory");
+      expect(out).toContain("accent-as-paint-class");
+    });
+
+    test.each([
+      ["focus:border-accent", "a focus indicator"],
+      ["focus-visible:border-accent", "a focus indicator"],
+      ["focus-within:ring-accent", "a focus indicator"],
+      ["text-accent", "ink"],
+      ["border-accent-mark", "the mark, which is the fix"],
+      ["bg-accent-tint", "the one accent fill"],
+      ["border-accent-border", "the accent outline token"],
+    ])("%s is not flagged: %s", (cls) => {
+      const { out } = check({ "a.tsx": `const c = "${cls}";` }, "--advisory");
+      expect(out).not.toContain("accent-as-paint-class");
+    });
+
+    test("bg-accent/10 is reported once, as token-alpha, not twice", () => {
+      const { out } = check({ "a.tsx": 'const c = "bg-accent/10";' }, "--advisory");
+      expect(out).toContain("token-alpha");
+      expect(out).not.toContain("accent-as-paint-class");
+    });
+
+    test("a boundary pragma suppresses it", () => {
+      const { out } = check(
+        {
+          "a.tsx": [
+            "// cgsi-adherence-allow: accent-as-paint-class — boundary: the chip's 1px edge",
+            'const c = "border-accent text-text";',
+          ].join("\n"),
+        },
+        "--advisory",
+      );
+      expect(out).not.toContain("accent-as-paint-class");
+    });
+  });
+});
