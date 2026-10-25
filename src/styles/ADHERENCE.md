@@ -85,8 +85,8 @@ requires, check whether it is one of these before you change the code.
 | `raw-rgb` | freeze | A raw `rgba()` / `rgb()` / `hsl()` / `hsla()`. The third spelling. Not an alpha-0 stop, not a computed ramp, not inside `color-mix()` |
 | `token-alpha` | freeze | A brand token at an alpha: `bg-accent/10`, `border-warn/40`, `bg-[var(--color-accent)]/20`. The fourth spelling of a tint. Not a surface step (`bg-surface/85` is a glass header) |
 | `concatenated-token` | freeze | A token or utility built from a string: `var(--color-${x})`, `"--color-" + x`, `bg-${x}`. Invisible to every other rule; the utility form is never generated |
-| `accent-as-paint-class` | advisory | The Tailwind spelling of `accent-as-paint`: `border-accent`, `bg-accent`, `bg-[var(--color-accent)]`. Not `text-accent`, not a `focus:` variant, not `-mark` / `-tint` / `-border` |
-| `label-on-accent` | advisory | `text-white` on an accent fill. 1.9:1 on dark, the default theme. The fix is `Button variant="primary"`; `text-bg` is 4.28:1 on light |
+| `accent-as-paint-class` | freeze | The Tailwind spelling of `accent-as-paint`: `border-accent`, `bg-accent`, `bg-[var(--color-accent)]`. Not `text-accent`, not a `focus:` variant, not `-mark` / `-tint` / `-border`. Advisory 25 Oct, freeze the same day once `Button` shipped |
+| `label-on-accent` | freeze | `text-white` on an accent fill. 1.9:1 on dark, the default theme. The fix is `Button variant="primary"`; `text-bg` is 4.28:1 on light. Advisory 25 Oct, freeze the same day |
 | `rebuilt-table` | advisory | A raw `<table>` in an app. Import `Ledger`. An email template is exempt by the convention below |
 | `rebuilt-part` | advisory | A locally defined `Panel` / `Kpi` / `Status` / `Badge` / `Notice` / `FilterBar` / `RecordCard` / `Breadcrumb` |
 
@@ -346,9 +346,10 @@ It is better than the `text-white` it replaced (1.9:1 on dark) and it is not a
 fix; adopting `Button variant="primary"` is. Both messages now say so, and the
 website's primary button — which this is, unchanged — was the answer all along.
 
-**`rebuilt-button`** (advisory, package-exempt) reports the copied secondary
+**`rebuilt-button`** (freeze since 25 Oct 2026, package-exempt) reports the copied secondary
 register: a hover edge to the accent AND a hover label to the accent on one
-line, either order, either spelling. A pragma for `accent-as-paint-class` does
+line, either order, either spelling (the label's arbitrary spelling,
+`hover:text-[var(--color-accent)]`, was blind in the first regex and hid one copy). A pragma for `accent-as-paint-class` does
 not silence it, deliberately: the exceptions excused the copies, and the
 adoption count has to stay visible underneath them. A hover edge alone (a card,
 a calendar cell) is a boundary and is not reported. `Button`, `PrimaryButton`
@@ -359,6 +360,22 @@ fixes), bump the 17 pins, adopt largest-first (academicops, sales, people,
 marketing — whose 45 + 22 advisories are mostly this button), then flip
 `accent-as-paint-class`, `label-on-accent` and `rebuilt-button` to `error` and
 bump the ref.
+
+🟢 **Done the same day, 25 Oct 2026.** v3.5.0 released, 17 pins bumped,
+`Button` adopted in eleven apps (academicops, sales, people, marketing, auth,
+cms, audit, finance, launchpad-admin, partnerships, referrals; the other six
+had no copies), and the three rules flipped to freeze. Counted against the
+flipped checker before the ref bump: 24 unexcused lines in the whole estate,
+22 of them marketing's (six tab underlines and three spinners that wanted
+`-mark`, seven boundaries that wanted the pragma, three fills awaiting a
+danger variant) and two in auth (a chip state and an icon-only `+`), plus one
+icon-only in referrals the widened regex found. Every one cleared in the ref
+bump wave, so the flip changed no count. What the part still cannot do, for
+v3.6: a danger variant (about a dozen delete / reject / "publish anyway"
+sites stayed hand-built), icon-only, a pressed state for toggles, a ghost
+text button, a success state, a tentative edge; and two navigation gaps,
+query-param tab rows that `SubNav` cannot match and in-page sub-navs where
+its sticky full-width chrome does not fit.
 
 ## 🔴 The email exemption excused 62 files, and was for one
 
