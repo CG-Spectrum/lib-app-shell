@@ -76,7 +76,7 @@ requires, check whether it is one of these before you change the code.
 | `deprecated-soft` | freeze | Every `-soft` tint except `--color-accent-tint` — as a token AND as a utility. `bg-accent-soft` resolves to nothing |
 | `non-brand-font` | freeze | A `font-family` outside the three brand faces |
 | `quicksand` | freeze | Quicksand anywhere but the `brand.css` fallback |
-| `rounded-corners` | freeze | Any non-zero radius, including `rounded-full` |
+| `rounded-corners` | freeze | Any non-zero radius, including `rounded-full` and the arbitrary `rounded-[6px]` |
 | `drop-shadow` | freeze | Any outer `box-shadow`. Inset is allowed (it draws the selected row) and so is a zero-offset zero-blur ring, which is a focus indicator, not elevation |
 | `gradient-fill` | freeze | A gradient FILL. Not a `mask-image` gradient (that is an edge fade), not a `repeating-*-gradient` (that is a hatch), and the photographic text scrim is pragma'd |
 | `accent-as-paint` | freeze | `--color-accent` used as PAINT — a bar, tick, rule or dot. Marks take `--color-accent-mark`; every `color:` use of the accent is correct and untouched |

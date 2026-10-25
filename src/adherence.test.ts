@@ -1061,3 +1061,17 @@ describe("the fourth colour pass — what the first sweeps found", () => {
     expect(out).not.toContain("label-on-accent");
   });
 });
+
+describe("rounded-corners — the arbitrary spelling", () => {
+  test.each(["rounded-[6px]", "rounded-t-[10px]", "rounded-bl-[4px]", "rounded-[0.5rem]"])("%s is a radius", (cls) => {
+    const { out, exit } = check({ "a.tsx": `const c = "${cls}";` });
+    expect(out).toContain("rounded-corners");
+    expect(exit).toBe(1);
+  });
+
+  test("rounded-[0px] is square and passes", () => {
+    const { out, exit } = check({ "a.tsx": 'const c = "rounded-[0px] rounded-[0]";' });
+    expect(out).not.toContain("rounded-corners");
+    expect(exit).toBe(0);
+  });
+});
