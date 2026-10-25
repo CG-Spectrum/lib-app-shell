@@ -488,7 +488,7 @@ const RULES = [
   },
   {
     id: "accent-as-paint-class",
-    tier: "advisory",
+    tier: "error",
     /* ── The Tailwind spelling of accent-as-paint ──────────────────────────
        `border-accent` compiles to `border-color: var(--color-accent)`, which
        is exactly what the rule above flags in CSS, and the rule above never
@@ -528,13 +528,21 @@ const RULES = [
        155 lines, a great many of them the package Header's button register
        copied by hand — which is why the pragma cannot settle until the
        standard's button is a package part (gap 20). Move to "error" when
-       the count is near zero. */
+       the count is near zero.
+
+       🟢 ERROR since 25 Oct 2026, the same day, once `Button` shipped in
+       v3.5.0 and eleven apps adopted it: the count fell from 155 lines to
+       19 unexcused, all in marketing — six tab underlines and three
+       spinners (decoration → -mark), five filter-chip hover edges and two
+       emphasis panels (boundary → pragma), two destructive confirms and one
+       selected toggle (pragma, awaiting a danger variant). Cleared in the
+       same wave as the ref bump, so the flip changed no count. */
     re: /(?<!focus(?:-visible|-within)?:)(?<![\w-])(?:bg|border(?:-[trblxyse])?|ring|divide|fill|stroke|from|to|via|decoration|shadow)-(?:accent(?![\w-])(?!\/)|\[var\(--color-accent\)\](?!\/))/g,
     msg: "Accent used as paint, Tailwind spelling. border-accent / bg-accent is var(--color-accent) — Ink Green on light. A DECORATION (underline, bar, dot, tick, progress fill) is the mark: border-accent-mark / bg-accent-mark. A BOUNDARY (the 1px edge of a chip, button or field) must clear 3:1 and Ink Green is the visible one — keep border-accent and add `cgsi-adherence-allow: accent-as-paint-class — boundary, <what>`. A FILL WITH A LABEL is the primary button: import Button from @cgsi/app-shell with variant=\"primary\" (the mark as the fill, the ink as the label, 9.2:1 in both themes). ⚠️ bg-accent with text-bg is 4.28:1 on light, under AA at 11px, and is a stopgap, not a fix. Focus variants are never flagged.",
   },
   {
     id: "label-on-accent",
-    tier: "advisory",
+    tier: "error",
     /* 🔴 WHITE ON THE ACCENT IS 1.9:1 IN DARK, WHICH IS THE DEFAULT THEME.
        `bg-accent text-white` reads as the obvious primary button and is
        unreadable where most people run these apps: on dark the accent is
@@ -552,7 +560,12 @@ const RULES = [
 
        ⚠️ ADVISORY on arrival: a one-token swap in ten repos, which is a
        wave, not a line. `raw-palette` does not see `white` (it is not a
-       palette hue) and should not: `text-white` on a photograph is fine. */
+       palette hue) and should not: `text-white` on a photograph is fine.
+
+       🟢 ERROR since 25 Oct 2026: 57 lines → 3 after the Button adoption
+       wave, all in marketing, all awaiting a danger variant (two delete
+       confirms and one selected toggle). They carry the pragma and `text-bg`
+       until the part has the variant. */
     re: /(?:bg-accent(?![\w-])|bg-\[var\(--color-accent\)\])[^"'`\n]*\btext-white\b|\btext-white\b[^"'`\n]*(?:bg-accent(?![\w-])|bg-\[var\(--color-accent\)\])/g,
     msg: "A white label on the accent fill. On dark — the default theme — the accent is the bright mark and white on it is ~1.9:1, unreadable; it only passes on light because Ink Green is dark. The fix is the part: import Button from @cgsi/app-shell with variant=\"primary\" (bg-accent-mark text-accent-ink, 9.2:1 in both themes). ⚠️ text-bg on bg-accent is 4.28:1 on light, under AA for 11px type: better than white, not a fix.",
   },
@@ -572,7 +585,7 @@ const RULES = [
   },
   {
     id: "rebuilt-button",
-    tier: "advisory",
+    tier: "error",
     packageExempt: true,
     /* ── The Header's button, copied by hand ───────────────────────────────
        Until 25 Oct 2026 the standard's button existed only as the Header's
@@ -589,8 +602,19 @@ const RULES = [
        this button, and is not reported here. A pragma for another rule does
        not silence this one — that is the point: the adoption count has to
        stay visible under the exceptions. Advisory on arrival; it moves to
-       "error" when the estate has adopted the part. */
-    re: /\bhover:border-(?:accent(?![\w-])|\[var\(--color-accent\)\])[^"'`\n]*\bhover:text-accent\b|\bhover:text-accent\b[^"'`\n]*\bhover:border-(?:accent(?![\w-])|\[var\(--color-accent\)\])/g,
+       "error" when the estate has adopted the part.
+
+       🟢 ERROR since 25 Oct 2026, after eleven apps adopted `Button` the
+       same day. The hover LABEL now reads the arbitrary spelling too
+       (`hover:text-[var(--color-accent)]`): the first regex read it only for
+       the edge, and one copy in referrals (ChangeVanityForm) sat invisible.
+       What remains and is excused by name: a filter chip's unselected state
+       (auth People, the chip register, not a button), an icon-only dashed
+       "+" (auth People) and an icon-only vanity edit (referrals) — the part
+       has no icon-only register yet, a v3.6 gap. ⚠️ A `rebuilt-button`
+       pragma on a site the part CAN serve is a lie the checker cannot see;
+       name the gap in the reason. */
+    re: /\bhover:border-(?:accent(?![\w-])|\[var\(--color-accent\)\])[^"'`\n]*\bhover:text-(?:accent(?![\w-])|\[var\(--color-accent\)\])|\bhover:text-(?:accent(?![\w-])|\[var\(--color-accent\)\])[^"'`\n]*\bhover:border-(?:accent(?![\w-])|\[var\(--color-accent\)\])/g,
     msg: "The standard's button, copied by hand. Hard rule 2: import Button from @cgsi/app-shell (variant=\"secondary\" is this register; variant=\"primary\" is the one filled button a view may have). A copy misses every change made to the part and carries a pragma the part does not need.",
   },
   {

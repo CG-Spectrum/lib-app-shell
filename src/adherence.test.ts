@@ -623,10 +623,29 @@ describe("rebuilt parts — the gap that let the estate fork while the count rea
       expect(out).toContain("rebuilt-part");
     });
 
-    test("advisory, so it never fails a repo on its own", () => {
-      const { exit, out } = check({ "Toolbar.tsx": REGISTER }, "--advisory");
+    test("freeze since 25 Oct 2026: a copy fails the repo on its own", () => {
+      const { exit, out } = check({ "Toolbar.tsx": REGISTER });
+      expect(exit).toBe(1);
+      expect(out).toContain("ERROR  rebuilt-button");
+    });
+
+    test("the hover LABEL in the arbitrary spelling is the same copy (referrals ChangeVanityForm hid behind it)", () => {
+      const { out, exit } = check({
+        "a.tsx": 'const c = "border border-[var(--color-border)] p-1 hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]";',
+      });
+      expect(out).toContain("rebuilt-button");
+      expect(exit).toBe(1);
+    });
+
+    test("a rebuilt-button pragma excuses the copy by name — an icon-only the part cannot serve yet", () => {
+      const { out, exit } = check({
+        "a.tsx":
+          "// cgsi-adherence-allow: accent-as-paint-class, rebuilt-button — icon-only, the part has no icon register (v3.6 gap); boundary edge\n" +
+          REGISTER,
+      });
+      expect(out).not.toContain("rebuilt-button");
+      expect(out).not.toContain("accent-as-paint-class");
       expect(exit).toBe(0);
-      expect(out).toContain("0 errors");
     });
   });
 
@@ -1019,14 +1038,17 @@ describe("the fourth colour pass — 25 Oct 2026", () => {
   });
 
   describe("accent-as-paint-class — the Tailwind spelling of accent-as-paint", () => {
-    test("border-accent is reported, and only in the advisory tier", () => {
+    test("border-accent is reported as an error (advisory 25 Oct 2026, freeze the same day)", () => {
       const file = { "a.tsx": 'const c = "border-b-2 border-accent text-text";' };
-      const quiet = check(file);
-      expect(quiet.out).not.toContain("accent-as-paint-class");
-      expect(quiet.exit).toBe(0);
-      const loud = check(file, "--advisory");
-      expect(loud.out).toContain("accent-as-paint-class");
-      expect(loud.exit).toBe(0);
+      const { out, exit } = check(file);
+      expect(out).toContain("ERROR  accent-as-paint-class");
+      expect(exit).toBe(1);
+    });
+
+    test("border-accent-mark is the decoration and passes", () => {
+      const { out, exit } = check({ "a.tsx": 'const c = "border-b-2 border-accent-mark text-text";' });
+      expect(out).not.toContain("accent-as-paint-class");
+      expect(exit).toBe(0);
     });
 
     test("hover:border-accent IS reported — a hover is not a focus", () => {
@@ -1091,12 +1113,10 @@ describe("the fourth colour pass — what the first sweeps found", () => {
     'const c = "bg-accent text-white px-4";',
     'const c = "text-white bg-[var(--color-accent)]";',
     'const c = active ? "bg-accent text-white" : "bg-surface-2";',
-  ])("%s is label-on-accent, advisory", (src) => {
-    const quiet = check({ "a.tsx": src });
-    expect(quiet.out).not.toContain("label-on-accent");
-    expect(quiet.exit).toBe(0);
-    const loud = check({ "a.tsx": src }, "--advisory");
-    expect(loud.out).toContain("label-on-accent");
+  ])("%s is label-on-accent, an error since 25 Oct 2026", (src) => {
+    const { out, exit } = check({ "a.tsx": src });
+    expect(out).toContain("ERROR  label-on-accent");
+    expect(exit).toBe(1);
   });
 
   test.each([
