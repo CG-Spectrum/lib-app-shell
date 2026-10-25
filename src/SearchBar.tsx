@@ -143,7 +143,7 @@ export function SearchBar({ userApps }: { userApps: string[] }) {
                   aria-selected={false}
                   className={[
                     "flex flex-col px-3 py-2 text-sm text-text",
-                    "hover:bg-accent/10 focus:bg-accent/10 focus:outline-none",
+                    "hover:bg-surface-2 focus:bg-surface-2 focus:outline-none",
                     "transition-colors",
                   ].join(" ")}
                   onClick={() => setOpen(false)}

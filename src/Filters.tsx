@@ -163,6 +163,7 @@ function FilterChip({
         "inline-flex h-[30px] items-center gap-1 whitespace-nowrap border px-2 text-[length:var(--density-body)] transition-colors",
         "[html[data-density='compact']_&]:h-[26px]",
         selected
+          // cgsi-adherence-allow: accent-as-paint-class — boundary: the selected chip's 1px edge; the bright mark is 1.9:1 on white, Ink Green clears 3:1
           ? "border-accent bg-[var(--color-accent-tint)] text-text"
           : "border-border bg-surface-2 text-text-2 hover:border-border-strong",
         disabled ? "cursor-not-allowed opacity-40 hover:border-border" : "",

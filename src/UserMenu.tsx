@@ -171,11 +171,12 @@ export function UserMenu({
   }
 
   const itemClass =
-    "block w-full px-3 py-2 text-left text-sm text-text-2 hover:bg-accent/10 hover:text-accent transition-colors";
+    "block w-full px-3 py-2 text-left text-sm text-text-2 hover:bg-surface-2 hover:text-accent transition-colors";
 
   // Square, hairline, mono — the standard's button. Explicit pixel sizing for
   // the same reason as the avatar above: Tailwind's rem scale resolves
   // against the HOST app's root font-size, and people sets 14px.
+  // cgsi-adherence-allow: accent-as-paint-class — boundary: the stepper's 1px edge on hover, framing accent ink; must clear 3:1 on white
   const stepClass =
     "flex h-[26px] w-[26px] shrink-0 items-center justify-center border border-border font-mono text-[13px] leading-none text-text-2 transition-colors hover:border-accent hover:text-accent disabled:cursor-default disabled:border-border disabled:text-text-3 disabled:hover:border-border disabled:hover:text-text-3";
 
@@ -187,6 +188,7 @@ export function UserMenu({
         aria-expanded={open}
         aria-label={avatarAriaLabel(name, email, hasIncomplete)}
         onClick={() => setOpen((o) => !o)}
+        // cgsi-adherence-allow: accent-as-paint-class — boundary: the avatar button's 1px edge on hover, framing accent ink
         className="flex items-center gap-1.5 border border-border px-1.5 py-1 text-xs text-text-2 hover:border-accent hover:text-accent transition-colors"
       >
         {/* relative wrapper exists only to anchor the incomplete dot to

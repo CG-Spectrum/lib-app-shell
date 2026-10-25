@@ -73,7 +73,7 @@ requires, check whether it is one of these before you change the code.
 | `glued-alpha` | freeze | Hex alpha digits welded to a `var()`: `var(--color-bad)55` |
 | `deprecated-discipline` | freeze | `--color-animation` / `gamedesign` / `digitalart` / `disc-*` |
 | `deprecated-category` | freeze | `--color-cat-*` |
-| `deprecated-soft` | freeze | Every `-soft` tint except `--color-accent-tint` |
+| `deprecated-soft` | freeze | Every `-soft` tint except `--color-accent-tint` — as a token AND as a utility. `bg-accent-soft` resolves to nothing |
 | `non-brand-font` | freeze | A `font-family` outside the three brand faces |
 | `quicksand` | freeze | Quicksand anywhere but the `brand.css` fallback |
 | `rounded-corners` | freeze | Any non-zero radius, including `rounded-full` |
@@ -83,6 +83,9 @@ requires, check whether it is one of these before you change the code.
 | `off-scale-spacing` | freeze | Padding, margin or gap off the nine-step scale (2, 4, 6, 8, 12, 16, 24, 32, 40) |
 | `raw-palette` | freeze | A stock Tailwind palette class: `bg-green-100`, `dark:text-amber-400`, `bg-red-900/40`. The hole `raw-hex` left open |
 | `raw-rgb` | freeze | A raw `rgba()` / `rgb()` / `hsl()` / `hsla()`. The third spelling. Not an alpha-0 stop, not a computed ramp, not inside `color-mix()` |
+| `token-alpha` | freeze | A brand token at an alpha: `bg-accent/10`, `border-warn/40`. The fourth spelling of a tint. Not a surface step (`bg-surface/85` is a glass header) |
+| `concatenated-token` | freeze | A token or utility built from a string: `var(--color-${x})`, `"--color-" + x`, `bg-${x}`. Invisible to every other rule; the utility form is never generated |
+| `accent-as-paint-class` | advisory | The Tailwind spelling of `accent-as-paint`: `border-accent`, `bg-accent`, `bg-[var(--color-accent)]`. Not `text-accent`, not a `focus:` variant, not `-mark` / `-tint` / `-border` |
 | `rebuilt-table` | advisory | A raw `<table>` in an app. Import `Ledger`. An email template is exempt by the convention below |
 | `rebuilt-part` | advisory | A locally defined `Panel` / `Kpi` / `Status` / `Badge` / `Notice` / `FilterBar` / `RecordCard` / `Breadcrumb` |
 
@@ -200,6 +203,80 @@ scrim's job is to darken; derived from the near-white light ground it would
 veil the page instead of dimming it. Theme-independent on purpose, like
 `--panel-gap`, and pinned by a test — because the file's own "every colour also
 appears in the light block" rule points the wrong way here.
+
+## 🔴 The fourth colour pass — 25 Oct 2026
+
+Three spellings were frozen and the estate read 0 errors. Counted from the
+filesystem on 25 Oct, the lines none of them saw:
+
+| What | Where | Rule |
+|---|---|---|
+| `bg-accent-soft` on a chip | `cgsi-auth` ×2, `mediacms` ×1 | `deprecated-soft` (extended) |
+| `bg-accent/10`, `bg-accent/60` | `cgsi-auth` ×2, this package ×2 | `token-alpha` (new) |
+| `` var(--color-${bucket}) `` | `scheduling` ×1 | `concatenated-token` (new) |
+| `border-accent`, `bg-accent` | 30 across 8 repos, this package ×5 | `accent-as-paint-class` (new, advisory) |
+
+**`bg-accent-soft` resolves to nothing.** `--color-accent-soft` left
+`brand.css` at the phase 4 flip and a test pins its absence, so Tailwind v4 has
+no token to build the utility from: the class is in the markup, matches no
+rule, and cgsi-auth's grant chips have had a border and no fill since. The
+other `-soft` tokens are still declared — as the neutral grey the flip set them
+to — so `bg-good-soft` resolves, to a grey wash, which is the retired shape
+either way. The rule now reads the utility spelling as well as the token.
+
+**`bg-accent/10` is the fourth spelling of a tint.** Tailwind compiles it to
+`color-mix(in oklab, var(--color-accent) 10%, transparent)`: a hand-mixed tint
+of a token, which is what `raw-rgb` froze when it was spelled `rgba()`. On
+light it mixes from Ink Green and is neither the mark nor the tint. The two
+in this package were `hover:bg-accent/10` on the user menu and the search
+results — a hover ground, which is `--color-surface-2`, the fix `Ledger` took
+in v3.3.0. The accent and status hues only: `bg-surface/85` under a backdrop
+blur is a surface step with alpha and is not flagged.
+
+**`var(--color-${bucket})` is why the discipline dots inverted.** Every rule
+here matches a literal, and this one did not exist until runtime. `scheduling`
+assembled `--color-animation` / `gamedesign` / `digitalart` — frozen since
+September — at 0 errors, and when the flip set those tokens to grey the dots
+went with them and nothing reported it. In Tailwind the class form is worse
+than unchecked: the compiler scans for complete class names, so `bg-${tone}`
+is never generated. The fix is a static map, one literal per token; for a
+discipline the fix is no colour, because disciplines are named.
+
+### `accent-as-paint-class` — boundary or decoration
+
+`border-accent` compiles to `border-color: var(--color-accent)`, which is
+exactly what `accent-as-paint` flags in CSS and never saw in a class string.
+This package's own `SubNav` drew its active-tab underline with it — the home
+defect the CSS rule was written on, re-spelled. Reading the 42 sites gave the
+test that decides each one:
+
+- **A decoration** — an underline, a bar, a dot, a tick, a progress fill —
+  stands beside type and is the bright mark: `border-accent-mark`,
+  `bg-accent-mark`. On white, Ink Green makes a dull edge. `SubNav` moved.
+- **A boundary** — the 1px border of a chip, a button, a field — must clear
+  3:1 as a UI component edge (WCAG 1.4.11), and the bright mark on white is
+  1.9:1. There Ink Green is the visible one and `border-accent` is correct;
+  the line takes `cgsi-adherence-allow: accent-as-paint-class — boundary,
+  <what>`. This package carries four: the Header's Admin button, the user
+  menu's avatar and stepper, the selected filter chip.
+- **A fill with a label on it** — the one primary button a view may have —
+  keeps `bg-accent` for the reason the CSS rule gives: type sits on the paint,
+  and Ink Green is what clears on white. It takes the pragma. ⚠️ Its label is
+  `text-bg`, not `text-white`: on dark the accent is the bright mark and white
+  on it is ~1.9:1. Two apps ship `bg-accent text-white` today.
+
+Focus variants are excluded outright, as `outline` is in the CSS rule: a focus
+indicator is an accessibility requirement, and on white Ink Green is the one
+you can see. `text-accent` is ink. The alpha form reports once, as
+`token-alpha`.
+
+Advisory on arrival, for the reason every colour rule here started that way.
+Most of the 30 app sites are a hover border on a button that six repos copied
+from this package's Header — which is to say, a rebuilt part.
+
+⚠️ **The package's own `hover:bg-accent/10` and `SubNav` underline are fixed
+in source but not yet released.** They ride the next release rather than
+costing a 17-repo bump of their own.
 
 ## 🔴 The email exemption excused 62 files, and was for one
 
@@ -442,6 +519,14 @@ were retired in Sept 2026 because colour is the third signal and never the
 first: name the discipline in text. A status is a glyph plus a word, so a
 tinted status fill has nothing to replace it with. The one surviving accent fill
 is `--color-accent-tint`, for a selected row or chip.
+
+**A package part that looks wrong.** Fix it in the package, or report the API
+gap — never nudge it from the app. `components.css` is imported unlayered, so
+its declarations beat any Tailwind utility (which lives in `@layer utilities`)
+on the same element: a `className="bg-surface-3"` on `Ledger`, `Panel` or
+`Status` is dead CSS, and nothing in the build or the browser says so. Three
+ports in the Oct 2026 table sweep reached for exactly this before reading the
+cascade.
 
 **A font.** Three faces: Stack Sans Notch (display), Stack Sans Text (body,
 weight 400, not 300 — thin strokes break up at 13px on a dark ground), IBM Plex

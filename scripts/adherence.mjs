@@ -239,6 +239,51 @@ const RULES = [
     msg: "Hex alpha digits glued to a var(). `var(--color-bad)55` is not a colour — the declaration is invalid and the browser drops it, so the tint or border vanishes with no error. A codemod that replaced the 6-digit head of an 8-digit hex leaves exactly this. Tint a token with color-mix(in srgb, var(--token) NN%, transparent).",
   },
   {
+    id: "token-alpha",
+    tier: "error",
+    /* 🔴 THE FOURTH SPELLING OF A TINT. `#16a34a1a` is raw-hex, `bg-green-600/10`
+       is raw-palette, `rgba(22,163,74,.1)` is raw-rgb — and `bg-accent/10`,
+       which Tailwind v4 compiles to `color-mix(in oklab, var(--color-accent)
+       10%, transparent)`, passed all three. It is a hand-mixed tint of a brand
+       token: the retired shape (hard rule 5), spelled so that no rule saw it.
+       And because the base is `--color-accent`, in light mode it is Ink Green
+       at 10% — a grey-green wash that is neither the mark nor the tint.
+
+       The estate has tokens for every tint it is allowed: `--color-accent-tint`
+       (the selected row or chip), `--color-accent-border`, and the
+       `--color-*-border` family at the alphas the brand chose. A tint with no
+       token is a tint the brand does not have. Found 25 Oct 2026: 2 lines in
+       cgsi-auth and 2 in the package's own menus (`hover:bg-accent/10`, which
+       is a hover ground and wants `--color-surface-2`, as Ledger's did).
+
+       ⛔ Only the accent and status hues. `bg-surface/85` under a backdrop
+       blur is a glass header, a surface step with alpha, and not this. */
+    re: /\b(?:bg|text|border|ring|from|to|via|decoration|outline|divide|shadow|fill|stroke|caret|placeholder)-(?:accent|accent-mark|good|warn|bad|info|attention|success|warning|error)\/\d{1,3}\b/g,
+    msg: "A brand token at an alpha. bg-accent/10 is a hand-mixed tint — the retired tinted-fill shape in its fourth spelling — and on light it mixes from Ink Green, not the mark. A hover or selected ground is --color-surface-2 / --color-accent-tint; an accent or status outline is --color-accent-border / --color-<hue>-border. If no token carries the meaning, color-mix(in srgb, var(--token) NN%, transparent) in CSS with a comment saying why.",
+  },
+  {
+    id: "concatenated-token",
+    tier: "error",
+    /* 🔴 A TOKEN THE CHECKER CANNOT READ IS A TOKEN NOBODY CHECKED.
+       scheduling's `bucketColor()` returned `var(--color-${bucket})` with
+       bucket ∈ animation | gamedesign | digitalart — three tokens
+       `deprecated-discipline` has frozen since September — and reported 0
+       errors throughout, because the literal the rule matches on was
+       assembled at runtime. The flip then set those tokens to neutral grey
+       and the dots inverted on screen with no finding anywhere.
+
+       Every rule in this file matches a literal. A template literal or a `+`
+       that builds a token name or a utility class defeats all of them at
+       once, and in Tailwind v4 the class form is worse than unchecked: the
+       compiler scans source for COMPLETE class names, so `bg-${tone}` is
+       never generated and resolves to nothing. The fix is a static map
+       (`{ good: "var(--color-good)", ... }`) so each token is a literal the
+       checker, the compiler and the reader can all see — or, for
+       disciplines, no colour at all: they are named, not coloured. */
+    re: /--color-[\w-]*\$\{|["'`]--color-["'`]\s*\+|\b(?:bg|text|border|ring|fill|stroke|divide|outline|from|to|via)-(?:[\w-]*-)?\$\{/g,
+    msg: "A colour token or utility built from a string. var(--color-${x}) and bg-${x} are invisible to every rule here (the literal does not exist until runtime), and Tailwind v4 never generates a class it cannot read, so the utility form resolves to nothing. Spell each token out in a static map; if the variable is a discipline, there is no colour — disciplines are named.",
+  },
+  {
     id: "deprecated-discipline",
     tier: "error",
     re: /--color-(?:animation|gamedesign|digitalart|disc-(?:anim|game|art))(?:-soft|-border)?\b/g,
@@ -253,8 +298,17 @@ const RULES = [
   {
     id: "deprecated-soft",
     tier: "error",
-    re: /--color-(?:accent|good|warn|bad|success|warning|error|attention)-soft\b|--color-surface-(?:success|warning|error)-soft\b/g,
-    msg: "DEPRECATED (2027): tinted fills are retired. A status is a glyph plus a word; a notice is a hairline in the status hue. The only surviving accent fill is var(--color-accent-tint), for a selected row or chip.",
+    /* 🔴 THE TAILWIND SPELLING RESOLVES TO NOTHING. `bg-accent-soft` is the
+       utility Tailwind v4 would generate from `--color-accent-soft` — and that
+       token is gone from brand.css (the phase 4 flip retired it; a test pins
+       its absence), so the class is emitted into the markup and matched by no
+       rule. cgsi-auth's grant chips and estate badges wore it through every
+       sweep at "0 errors": a border with no fill, and nothing anywhere said
+       so. The other `-soft` tokens are still declared (as the neutral grey the
+       flip set them to) so THEIR utilities resolve — to a grey wash — and are
+       the same retired shape. Found 25 Oct 2026: 3 lines in 2 repos. */
+    re: /--color-(?:accent|good|warn|bad|success|warning|error|attention)-soft\b|--color-surface-(?:success|warning|error)-soft\b|\b(?:bg|text|border|ring|from|to|via|decoration|outline|divide|shadow|fill|stroke|caret|placeholder)-(?:accent|good|warn|bad|success|warning|error|attention|surface-success|surface-warning|surface-error)-soft\b/g,
+    msg: "DEPRECATED (2027): tinted fills are retired. A status is a glyph plus a word; a notice is a hairline in the status hue. The only surviving accent fill is var(--color-accent-tint) / bg-accent-tint, for a selected row or chip. ⛔ As a Tailwind class, bg-accent-soft resolves to NOTHING — the token no longer exists — so the element has silently had no fill since the phase 4 flip.",
   },
   {
     id: "non-brand-font",
@@ -409,12 +463,55 @@ const RULES = [
        handful across the estate. They take the pragma. Widening the runner to
        blocks for one rule's false positive is the worse trade.
 
-       ⚠️ ADVISORY, like the rebuilt parts below and for the same reason: the
-       estate has hundreds of accent uses and erroring takes 17 repos red for
-       debt they did not create this week. Move it to "error" once the count
-       is near zero. */
+       ⚠️ Arrived advisory for the usual reason (hundreds of accent uses, 17
+       repos red) and went to error in 8d75016, 23 Oct 2026, once the sweep
+       was done. ⛔ It reads CSS DECLARATIONS only. The Tailwind spelling of
+       the same thing — `border-accent` on the package's own SubNav underline,
+       the exact defect this rule was written on — is `accent-as-paint-class`
+       below, and started advisory for the same reason this did. */
     re: /(?<!\boutline\b[^{}]*)(?:background(?:-color)?|border(?:-(?:top|right|bottom|left))?(?:-color)?|fill|stroke)\s*:[^;}]*var\(\s*--color-accent\s*\)/g,
     msg: "Accent used as paint. In light mode --color-accent is Ink Green #1e7d10 (a TEXT value) while --color-accent-mark stays #44d62c, so a bar, rule, tick or dot written with --color-accent goes dull in light and nobody sees it on dark. Use --color-accent-mark. If type sits ON this paint, --color-accent is correct and the line needs `cgsi-adherence-allow: accent-as-paint — <why>`.",
+  },
+  {
+    id: "accent-as-paint-class",
+    tier: "advisory",
+    /* ── The Tailwind spelling of accent-as-paint ──────────────────────────
+       `border-accent` compiles to `border-color: var(--color-accent)`, which
+       is exactly what the rule above flags in CSS, and the rule above never
+       saw it. The package's own SubNav drew its active-tab underline with it
+       — the defect `accent-as-paint` was written on, in home, re-spelled —
+       and so did five of the apps. 42 sites on 25 Oct 2026: 30 across 8
+       repos, 12 in the package.
+
+       ⚖️ BOUNDARY OR DECORATION. Reading those 42 gave the test that decides
+       each one, and it is not "is it paint":
+
+       · A DECORATION — an underline, a bar, a dot, a tick, a progress fill —
+         stands beside type and is the bright mark: `border-accent-mark`,
+         `bg-accent-mark`. On white, Ink Green makes a dull edge (home, 23 Oct).
+       · A BOUNDARY — the 1px border of a chip, a button, a field — must clear
+         3:1 as a UI component edge (WCAG 1.4.11), and the bright mark on
+         white is 1.9:1. There Ink Green is the VISIBLE one and `border-accent`
+         is correct; the line takes the pragma, naming it a boundary.
+       · A FILL WITH A LABEL ON IT — the one primary button a view may have —
+         wants Ink Green for the same reason the CSS rule gives: type sits on
+         the paint. It keeps `bg-accent` and takes the pragma. ⚠️ And its
+         label is not `text-white`: on dark the accent is the bright mark and
+         white on it is ~1.9:1. The label is `text-bg`, which is dark on the
+         mark and white on Ink Green.
+
+       ⛔ `focus:` / `focus-visible:` / `focus-within:` variants are excluded
+       outright, as `outline` is above: a focus indicator is an accessibility
+       requirement, not a brand mark, and Ink Green is the one you can see.
+       `text-accent` is ink and never matches. The alpha form (`bg-accent/10`)
+       is `token-alpha`, an error, and is not reported twice.
+
+       ⚠️ ADVISORY, for the reason every colour rule here started that way:
+       42 sites, most of them a hover border on a button that six repos
+       copied from the package Header. Move to "error" when the count is
+       near zero. */
+    re: /(?<!focus(?:-visible|-within)?:)(?<![\w-])(?:bg|border(?:-[trblxyse])?|ring|divide|fill|stroke|from|to|via|decoration|shadow)-(?:accent(?![\w-])(?!\/)|\[var\(--color-accent\)\])/g,
+    msg: "Accent used as paint, Tailwind spelling. border-accent / bg-accent is var(--color-accent) — Ink Green on light. A DECORATION (underline, bar, dot, tick, progress fill) is the mark: border-accent-mark / bg-accent-mark. A BOUNDARY (the 1px edge of a chip, button or field) must clear 3:1 and Ink Green is the visible one — keep border-accent and add `cgsi-adherence-allow: accent-as-paint-class — boundary, <what>`. A FILL WITH A LABEL (the primary button) keeps bg-accent for the same reason and takes the pragma; its label is text-bg, never text-white. Focus variants are never flagged.",
   },
   {
     id: "rebuilt-table",

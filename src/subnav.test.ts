@@ -126,8 +126,11 @@ describe("tabClassName", () => {
     expect(c).toContain("tracking-[0.14em]");
   });
 
-  it("marks the active tab with the accent rule and accent ink", () => {
-    expect(tabClassName(true)).toContain("border-accent");
+  it("marks the active tab with the accent MARK and accent ink", () => {
+    // The underline is a decoration beside the type, so it is the mark: on
+    // white, --color-accent is Ink Green and a 2px rule in it goes dull.
+    expect(tabClassName(true)).toContain("border-accent-mark");
+    expect(tabClassName(true)).not.toMatch(/border-accent(?![\w-])/);
     expect(tabClassName(true)).toContain("text-accent");
   });
 
