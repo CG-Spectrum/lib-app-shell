@@ -583,6 +583,53 @@ describe("rebuilt parts — the gap that let the estate fork while the count rea
     expect(out).toContain("rebuilt-part");
   });
 
+  // 🔴 Gap 20, closed 25 Oct 2026. The standard's button was the Header's
+  // admin link and nothing else, so ten apps copied its class string by hand.
+  // A pragma for accent-as-paint-class excused each copy; nothing counted them.
+  describe("the Header's button, copied by hand", () => {
+    const REGISTER = 'const c = "border border-border px-2 py-1 text-xs text-text-2 hover:border-accent hover:text-accent transition-colors";';
+
+    test("the copied register is reported, and the message names the part", () => {
+      const { out } = check({ "Toolbar.tsx": REGISTER }, "--advisory");
+      expect(out).toContain("rebuilt-button");
+      expect(out).toContain("Button");
+    });
+
+    test("in the arbitrary spelling too, in either order", () => {
+      const { out } = check(
+        { "a.tsx": 'const c = "hover:text-accent hover:border-[var(--color-accent)] border border-border";' },
+        "--advisory",
+      );
+      expect(out).toContain("rebuilt-button");
+    });
+
+    test("a pragma for accent-as-paint-class does NOT silence it — the adoption count stays visible", () => {
+      const { out } = check(
+        { "a.tsx": "// cgsi-adherence-allow: accent-as-paint-class — boundary: the edge\n" + REGISTER },
+        "--advisory",
+      );
+      expect(out).not.toContain("accent-as-paint-class");
+      expect(out).toContain("rebuilt-button");
+    });
+
+    test("a hover edge ALONE is a boundary, not this button", () => {
+      // A card or a calendar cell that hovers only its edge.
+      const { out } = check({ "Card.tsx": 'const c = "border border-border hover:border-accent";' }, "--advisory");
+      expect(out).not.toContain("rebuilt-button");
+    });
+
+    test("a local Button is a rebuilt part", () => {
+      const { out } = check({ "ui.tsx": "export function Button() { return null; }" }, "--advisory");
+      expect(out).toContain("rebuilt-part");
+    });
+
+    test("advisory, so it never fails a repo on its own", () => {
+      const { exit, out } = check({ "Toolbar.tsx": REGISTER }, "--advisory");
+      expect(exit).toBe(0);
+      expect(out).toContain("0 errors");
+    });
+  });
+
   test("both are advisory, so they never fail a repo on their own", () => {
     const { out, exit } = check(
       { "Dash.tsx": "export const D = () => <table />;\nexport function Panel() { return null; }\n" },

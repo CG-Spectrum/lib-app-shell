@@ -122,6 +122,15 @@
      whole programme — so the split lands now, before anything depends on it. */
   --color-accent-mark: var(--color-accent);
 
+  /* The primary button, and only it (surface-app-layer.md "Buttons", 25 Oct
+     2026). The fill is the bright mark in BOTH themes, the label is this ink,
+     and the hover lightens the fill: the website's primary button, unchanged.
+     ⛔ Not --color-bg on --color-accent: in light that is 4.28:1, under AA for
+     the 11px rung. The ink is a constant, not a theme value, because the fill
+     it sits on is the same hue in both themes. */
+  --color-accent-ink: #131919;
+  --color-accent-hover: #7ce86a;
+
   /* ── Status ────────────────────────────────────────────────────────────── */
   /* The 2027 set was chosen by protan / deutan / tritan simulation and every
      value clears 4.5:1 as text on both grounds. Do not substitute hues at the
@@ -475,6 +484,9 @@ html[data-theme="light"] {
      turns Ink Green, and the light theme loses its only bright element — the
      silent regression this split was created to prevent. */
   --color-accent-mark: #44d62c;
+  /* Same in both themes: the primary fill is the mark, which does not move. */
+  --color-accent-ink: #131919;
+  --color-accent-hover: #7ce86a;
 
   --color-good: #2f6b3a;
   --color-warn: #9a5b00;
@@ -563,6 +575,9 @@ html[data-theme="light"] {
      turns Ink Green, and the light theme loses its only bright element — the
      silent regression this split was created to prevent. */
   --color-accent-mark: #44d62c;
+  /* Same in both themes: the primary fill is the mark, which does not move. */
+  --color-accent-ink: #131919;
+  --color-accent-hover: #7ce86a;
 
   --color-good: #2f6b3a;
   --color-warn: #9a5b00;
