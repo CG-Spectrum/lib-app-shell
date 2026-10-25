@@ -107,7 +107,28 @@ env:
   #   at 0 against this exact SHA before the wave, so this bump should change
   #   no count — if yours is not zero, something landed between the sweep and
   #   the merge.
-  ADHERENCE_REF: 8a11185f3b70a44dd50854adf38514bc32ea02d8
+  # 0cf340f = 25 Oct 2026, the fourth colour pass. Three FREEZE rules and two
+  #   advisories, every one a line that sat at "0 errors" in a live repo.
+  #   `deprecated-soft` now reads the Tailwind spelling: `bg-accent-soft`
+  #   resolves to NOTHING (the token left brand.css at the flip), so the chip
+  #   wearing it has had no fill since. `token-alpha`: `bg-accent/10` and its
+  #   arbitrary twin `bg-[var(--color-accent)]/20` are the fourth spelling of
+  #   a hand-mixed tint, and on light they mix from Ink Green; the bracket
+  #   form outnumbers the short one ten to one and the first survey missed
+  #   it. `concatenated-token`: `var(--color-${x})` is a token no rule can
+  #   read — scheduling built three frozen discipline tokens that way and the
+  #   dots inverted at the flip with no finding. ADVISORY, not gating:
+  #   `accent-as-paint-class` (`border-[var(--color-accent)]`, the Tailwind
+  #   spelling of accent-as-paint; 155 lines across 14 repos — decoration →
+  #   -mark, boundary or labelled fill → pragma) and `label-on-accent`
+  #   (`text-white` on the accent fill, 1.9:1 on dark; the label is text-bg).
+  #   And `rounded-corners` now reads `rounded-[6px]`, the arbitrary spelling
+  #   a freeze rule at 0 estate-wide had never seen (20 lines, 3 repos).
+  #   Every freeze finding (7 repos) was cleared before this bump, so it
+  #   should change no error count — if yours is not zero, something landed
+  #   between the sweep and the merge. The two advisory counts WILL appear in
+  #   the run summary for the first time.
+  ADHERENCE_REF: 0cf340f021bb6764fab7ab0ca9b126f484bbeb9f
 
 jobs:
   adherence:
