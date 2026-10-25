@@ -292,6 +292,21 @@ Advisory on arrival, for the reason every colour rule here started that way.
 Most of the 30 app sites are a hover border on a button that six repos copied
 from this package's Header — which is to say, a rebuilt part.
 
+**What the first three sweeps found (cgsi-auth, mediacms, scheduling, 25 Oct).**
+Every app site was a boundary or a labelled fill; not one hue changed under
+the advisory, and the pragma was written thirteen times. Five of cgsi-auth's
+eight boundaries and mediacms's new Add button are the Header's button
+register (`border border-border text-text-2 hover:border-accent
+hover:text-accent`) hand-copied — ⚠️ **so the fix the freeze rules prescribe
+writes a new advisory site every time it is applied.** That is the
+`--color-scrim` argument again: the standard's button wants to be a package
+part, and until it is, the advisory count settles at one pragma per copy.
+Logged as gap 20. Separately, the labelled fills were worse than the message
+allows for: two shipped `text-white` (1.9:1 on the mark in dark) and one set
+**no** text colour at all, inheriting `--color-text` — wrong in both themes
+and invisible in the class string because there was nothing to read. The
+decidable half became `label-on-accent` the same afternoon.
+
 ⚠️ **The package's own `hover:bg-accent/10` and `SubNav` underline are fixed
 in source but not yet released.** They ride the next release rather than
 costing a 17-repo bump of their own.
@@ -646,7 +661,10 @@ cycle: changing a rule should not require cutting a package version, and a CI
 check should not be blocked on a release decision. The first pass used
 `v1.32.0` and every run failed on a 404 until it was repinned.
 
-Current ruleset: `8a11185` (narrowed email exemption, `raw-rgb` enforced).
+Current ruleset: `0cf340f` (the fourth colour pass: `token-alpha` and
+`concatenated-token` enforced, `deprecated-soft` and `rounded-corners` read
+the utility and arbitrary spellings, `accent-as-paint-class` and
+`label-on-accent` advisory).
 Bump deliberately, and expect every app's count to move when you do. If the
 ref ever stops resolving, the fetch step fails loudly rather than passing
 silently.
