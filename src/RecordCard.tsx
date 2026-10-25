@@ -1,3 +1,4 @@
+/** @jsxRuntime automatic */
 import type { ReactNode } from "react";
 import { Status, type StatusTone } from "./Status";
 import { DEFAULT_K, gradeFilter, isSuspectK } from "./portrait-grade";

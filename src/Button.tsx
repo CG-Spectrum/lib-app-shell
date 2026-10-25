@@ -1,3 +1,4 @@
+/** @jsxRuntime automatic */
 import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ElementType, ReactNode } from "react";
 import { buttonClassName, type ButtonSize, type ButtonVariant } from "./button-logic";
 

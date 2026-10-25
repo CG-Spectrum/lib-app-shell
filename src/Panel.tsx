@@ -1,3 +1,4 @@
+/** @jsxRuntime automatic */
 import type { ReactNode } from "react";
 
 // The container every data surface sits in. Surface tone, square corners, no

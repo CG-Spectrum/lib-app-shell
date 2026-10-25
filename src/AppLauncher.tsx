@@ -1,3 +1,4 @@
+/** @jsxRuntime automatic */
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { visibleApps, type AppEntry } from "./apps";

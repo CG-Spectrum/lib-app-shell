@@ -1,3 +1,4 @@
+/** @jsxRuntime automatic */
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { visibleResults, groupByApp } from "./searchbar-logic";

@@ -1,3 +1,4 @@
+/** @jsxRuntime automatic */
 "use client";
 import type { ReactNode } from "react";
 import {
