@@ -5,6 +5,7 @@ import { AppLauncher } from "./AppLauncher";
 import { UserMenu } from "./UserMenu";
 import type { ProfileLink } from "./usermenu-logic";
 import { SearchBar } from "./SearchBar";
+import { Button } from "./Button";
 
 // Canonical CGSI app header. Presentational: identity facts arrive as props the
 // consuming app extracts from its own auth() session. Shared via @cgsi/app-shell
@@ -77,14 +78,13 @@ export function Header({
         <div className="ml-auto flex items-center gap-3">
           <SearchBar userApps={user.apps} />
           {children}
+          {/* The standard's button, as the part it now is. This link was the
+              register ten apps copied by hand; the pragma for its hover edge
+              lives in button-logic.ts, once. */}
           {admin && (
-            <a
-              href={admin.url}
-              // cgsi-adherence-allow: accent-as-paint-class — boundary: the button's 1px edge on hover, framing accent ink; must clear 3:1 on white
-              className="border border-border px-2 py-1 text-xs text-text-2 hover:border-accent hover:text-accent transition-colors"
-            >
+            <Button variant="secondary" size="sm" href={admin.url}>
               Admin
-            </a>
+            </Button>
           )}
           <UserMenu
             email={user.email}

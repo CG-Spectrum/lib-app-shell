@@ -530,7 +530,7 @@ const RULES = [
        standard's button is a package part (gap 20). Move to "error" when
        the count is near zero. */
     re: /(?<!focus(?:-visible|-within)?:)(?<![\w-])(?:bg|border(?:-[trblxyse])?|ring|divide|fill|stroke|from|to|via|decoration|shadow)-(?:accent(?![\w-])(?!\/)|\[var\(--color-accent\)\](?!\/))/g,
-    msg: "Accent used as paint, Tailwind spelling. border-accent / bg-accent is var(--color-accent) — Ink Green on light. A DECORATION (underline, bar, dot, tick, progress fill) is the mark: border-accent-mark / bg-accent-mark. A BOUNDARY (the 1px edge of a chip, button or field) must clear 3:1 and Ink Green is the visible one — keep border-accent and add `cgsi-adherence-allow: accent-as-paint-class — boundary, <what>`. A FILL WITH A LABEL (the primary button) keeps bg-accent for the same reason and takes the pragma; its label is text-bg, never text-white and never unset. Focus variants are never flagged.",
+    msg: "Accent used as paint, Tailwind spelling. border-accent / bg-accent is var(--color-accent) — Ink Green on light. A DECORATION (underline, bar, dot, tick, progress fill) is the mark: border-accent-mark / bg-accent-mark. A BOUNDARY (the 1px edge of a chip, button or field) must clear 3:1 and Ink Green is the visible one — keep border-accent and add `cgsi-adherence-allow: accent-as-paint-class — boundary, <what>`. A FILL WITH A LABEL is the primary button: import Button from @cgsi/app-shell with variant=\"primary\" (the mark as the fill, the ink as the label, 9.2:1 in both themes). ⚠️ bg-accent with text-bg is 4.28:1 on light, under AA at 11px, and is a stopgap, not a fix. Focus variants are never flagged.",
   },
   {
     id: "label-on-accent",
@@ -554,7 +554,7 @@ const RULES = [
        wave, not a line. `raw-palette` does not see `white` (it is not a
        palette hue) and should not: `text-white` on a photograph is fine. */
     re: /(?:bg-accent(?![\w-])|bg-\[var\(--color-accent\)\])[^"'`\n]*\btext-white\b|\btext-white\b[^"'`\n]*(?:bg-accent(?![\w-])|bg-\[var\(--color-accent\)\])/g,
-    msg: "A white label on the accent fill. On dark — the default theme — the accent is the bright mark and white on it is ~1.9:1, unreadable; it only passes on light because Ink Green is dark. The label on an accent fill is text-bg, which is dark on the mark and white on Ink Green.",
+    msg: "A white label on the accent fill. On dark — the default theme — the accent is the bright mark and white on it is ~1.9:1, unreadable; it only passes on light because Ink Green is dark. The fix is the part: import Button from @cgsi/app-shell with variant=\"primary\" (bg-accent-mark text-accent-ink, 9.2:1 in both themes). ⚠️ text-bg on bg-accent is 4.28:1 on light, under AA for 11px type: better than white, not a fix.",
   },
   {
     id: "rebuilt-table",
@@ -567,8 +567,31 @@ const RULES = [
     id: "rebuilt-part",
     tier: "advisory",
     packageExempt: true,
-    re: /\b(?:function|const)\s+(?:Ledger|Panel|Kpi|KPI|Status|StatusBadge|Badge|Notice|FilterBar|SegmentedControl|Segmented|RecordCard|Breadcrumb)\b/g,
+    re: /\b(?:function|const)\s+(?:Ledger|Panel|Kpi|KPI|Status|StatusBadge|Badge|Notice|FilterBar|SegmentedControl|Segmented|RecordCard|Breadcrumb|Button|PrimaryButton|SecondaryButton)\b/g,
     msg: "Rebuilt part. Hard rule 2: import it from @cgsi/app-shell rather than redefining it locally. A local Badge is usually also a shape the brand does not have — status is a glyph plus a word, never a pill and never a filled badge.",
+  },
+  {
+    id: "rebuilt-button",
+    tier: "advisory",
+    packageExempt: true,
+    /* ── The Header's button, copied by hand ───────────────────────────────
+       Until 25 Oct 2026 the standard's button existed only as the Header's
+       admin link, and its class string — `border border-border text-text-2
+       hover:border-accent hover:text-accent` — was copied into ten apps,
+       sixty-odd times, each copy carrying its own boundary pragma for the
+       hover edge. The pragma excuses `accent-as-paint-class`; it does not
+       make a copy a part, and a copy misses every change made to the part.
+       `Button` is now exported from the package, and the copied register is
+       reported as what it is.
+       ⚖️ Matched by the PAIR on one line: a hover edge to the accent AND a
+       hover label to the accent, in either order and either spelling. A
+       card or a calendar cell that hovers only its edge is a boundary, not
+       this button, and is not reported here. A pragma for another rule does
+       not silence this one — that is the point: the adoption count has to
+       stay visible under the exceptions. Advisory on arrival; it moves to
+       "error" when the estate has adopted the part. */
+    re: /\bhover:border-(?:accent(?![\w-])|\[var\(--color-accent\)\])[^"'`\n]*\bhover:text-accent\b|\bhover:text-accent\b[^"'`\n]*\bhover:border-(?:accent(?![\w-])|\[var\(--color-accent\)\])/g,
+    msg: "The standard's button, copied by hand. Hard rule 2: import Button from @cgsi/app-shell (variant=\"secondary\" is this register; variant=\"primary\" is the one filled button a view may have). A copy misses every change made to the part and carries a pragma the part does not need.",
   },
   {
     id: "off-scale-spacing",

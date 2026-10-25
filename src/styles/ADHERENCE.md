@@ -86,7 +86,7 @@ requires, check whether it is one of these before you change the code.
 | `token-alpha` | freeze | A brand token at an alpha: `bg-accent/10`, `border-warn/40`, `bg-[var(--color-accent)]/20`. The fourth spelling of a tint. Not a surface step (`bg-surface/85` is a glass header) |
 | `concatenated-token` | freeze | A token or utility built from a string: `var(--color-${x})`, `"--color-" + x`, `bg-${x}`. Invisible to every other rule; the utility form is never generated |
 | `accent-as-paint-class` | advisory | The Tailwind spelling of `accent-as-paint`: `border-accent`, `bg-accent`, `bg-[var(--color-accent)]`. Not `text-accent`, not a `focus:` variant, not `-mark` / `-tint` / `-border` |
-| `label-on-accent` | advisory | `text-white` on an accent fill. 1.9:1 on dark, the default theme. The label is `text-bg` |
+| `label-on-accent` | advisory | `text-white` on an accent fill. 1.9:1 on dark, the default theme. The fix is `Button variant="primary"`; `text-bg` is 4.28:1 on light |
 | `rebuilt-table` | advisory | A raw `<table>` in an app. Import `Ledger`. An email template is exempt by the convention below |
 | `rebuilt-part` | advisory | A locally defined `Panel` / `Kpi` / `Status` / `Badge` / `Notice` / `FilterBar` / `RecordCard` / `Breadcrumb` |
 
@@ -270,10 +270,12 @@ that decides each one:
   <what>`. This package carries four: the Header's Admin button, the user
   menu's avatar and stepper, the selected filter chip.
 - **A fill with a label on it** — the one primary button a view may have —
-  keeps `bg-accent` for the reason the CSS rule gives: type sits on the paint,
-  and Ink Green is what clears on white. It takes the pragma. ⚠️ Its label is
-  `text-bg`, not `text-white`: on dark the accent is the bright mark and white
-  on it is ~1.9:1. Two apps ship `bg-accent text-white` today.
+  is `Button variant="primary"` from this package since 25 Oct 2026: the
+  bright mark as the fill, `--color-accent-ink` as the label, 9.2:1 in both
+  themes. ⚠️ The earlier reading — keep `bg-accent`, pragma, label `text-bg` —
+  is 4.28:1 on light and is retired; see "The button is a part" below. Its
+  one true half stands: the label is never `text-white`, which is ~1.9:1 on
+  dark where the accent is the bright mark.
 
 Focus variants are excluded outright, as `outline` is in the CSS rule: a focus
 indicator is an accessibility requirement, and on white Ink Green is the one
@@ -310,6 +312,53 @@ decidable half became `label-on-accent` the same afternoon.
 ⚠️ **The package's own `hover:bg-accent/10` and `SubNav` underline are fixed
 in source but not yet released.** They ride the next release rather than
 costing a 17-repo bump of their own.
+
+## The button is a part — 25 Oct 2026 (gap 20)
+
+Steps 1 and 2 of the colour programme were done in 16 of 17 apps, and getting
+there wrote a boundary pragma on almost every button in the estate, because the
+standard's button existed only as the Header's admin link and ten apps had
+copied its class string by hand. Counted on every app's `main` on 25 Oct: ~64
+copies of the secondary register across 10 repos (academicops 25, sales 14,
+marketing 8) and ~61 labelled accent fills across 11 (marketing 22, people 16).
+`deprecated-soft`'s own prescribed fix wrote a new copy each time it was applied.
+
+**`Button` is now exported from the package** (`Button.tsx`, the register in
+`button-logic.ts`), implementing surface-app-layer.md "Buttons", which was
+amended first. Two variants in the tab-and-button rung, Mono 500 · 11 · .14em ·
+caps, 30px (26 compact; `sm` is 26 always, for chrome).
+
+- `secondary`: 1px `--color-border` edge, `--color-text-2` label, no fill;
+  hover to the accent on both. **Hover keeps the accent** is Jeremy's 21 Oct
+  ruling and is not reopened here. The edge is a boundary, so the package
+  carries the one `accent-as-paint-class` pragma for it, in `button-logic.ts`.
+- `primary`: the ONE filled button a view may have. `bg-accent-mark
+  text-accent-ink hover:bg-accent-hover` — the bright mark as the fill in both
+  themes, #131919 as the label (9.2:1), #7ce86a on hover (11.5:1). Two tokens
+  were added for it, `--color-accent-ink` and `--color-accent-hover`, the same
+  value in both themes because the fill they sit on does not move.
+
+🔴 **The labelled-fill rule above was wrong on light, and the sweeps applied
+it.** "Keep `bg-accent`, label `text-bg`" measures **4.28:1** on light
+(`#e7e8e7` on Ink Green `#1e7d10`), under AA for the 11px rung. Seven sites
+took it on 25 Oct (gca-dashboard, leadership ×2, partnerships ×2, audit ×2).
+It is better than the `text-white` it replaced (1.9:1 on dark) and it is not a
+fix; adopting `Button variant="primary"` is. Both messages now say so, and the
+website's primary button — which this is, unchanged — was the answer all along.
+
+**`rebuilt-button`** (advisory, package-exempt) reports the copied secondary
+register: a hover edge to the accent AND a hover label to the accent on one
+line, either order, either spelling. A pragma for `accent-as-paint-class` does
+not silence it, deliberately: the exceptions excused the copies, and the
+adoption count has to stay visible underneath them. A hover edge alone (a card,
+a calendar cell) is a boundary and is not reported. `Button`, `PrimaryButton`
+and `SecondaryButton` join the `rebuilt-part` names.
+
+Rollout: release (v3.5.0, with the unreleased UserMenu, SearchBar and SubNav
+fixes), bump the 17 pins, adopt largest-first (academicops, sales, people,
+marketing — whose 45 + 22 advisories are mostly this button), then flip
+`accent-as-paint-class`, `label-on-accent` and `rebuilt-button` to `error` and
+bump the ref.
 
 ## 🔴 The email exemption excused 62 files, and was for one
 
