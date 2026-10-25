@@ -1,3 +1,4 @@
+/** @jsxRuntime automatic */
 import { Children, cloneElement, isValidElement, type ReactNode } from "react";
 import { Status } from "./Status";
 

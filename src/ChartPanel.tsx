@@ -1,3 +1,4 @@
+/** @jsxRuntime automatic */
 "use client";
 import { useState } from "react";
 import { Panel } from "./Panel";

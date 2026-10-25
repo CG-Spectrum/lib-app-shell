@@ -1,3 +1,4 @@
+/** @jsxRuntime automatic */
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { applyTheme, type Theme } from "./theme";

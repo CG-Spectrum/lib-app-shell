@@ -1,3 +1,4 @@
+/** @jsxRuntime automatic */
 import type { ReactNode } from "react";
 
 // Status and Notice. The two ways the app layer says something is wrong.

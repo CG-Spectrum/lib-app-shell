@@ -1,3 +1,4 @@
+/** @jsxRuntime automatic */
 import {
   DAY_END_MIN,
   DAY_START_MIN,

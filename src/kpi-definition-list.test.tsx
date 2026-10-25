@@ -1,3 +1,4 @@
+/** @jsxRuntime automatic */
 /**
  * KpiRow as a definition list.
  *

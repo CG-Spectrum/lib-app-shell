@@ -1,3 +1,4 @@
+/** @jsxRuntime automatic */
 import type { ReactNode } from "react";
 
 // The estate's table. Replaces 22 hand-built ones.

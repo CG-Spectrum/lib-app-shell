@@ -1,3 +1,4 @@
+/** @jsxRuntime automatic */
 "use client";
 
 import { Fragment } from "react";
