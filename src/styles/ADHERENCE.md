@@ -83,9 +83,10 @@ requires, check whether it is one of these before you change the code.
 | `off-scale-spacing` | freeze | Padding, margin or gap off the nine-step scale (2, 4, 6, 8, 12, 16, 24, 32, 40) |
 | `raw-palette` | freeze | A stock Tailwind palette class: `bg-green-100`, `dark:text-amber-400`, `bg-red-900/40`. The hole `raw-hex` left open |
 | `raw-rgb` | freeze | A raw `rgba()` / `rgb()` / `hsl()` / `hsla()`. The third spelling. Not an alpha-0 stop, not a computed ramp, not inside `color-mix()` |
-| `token-alpha` | freeze | A brand token at an alpha: `bg-accent/10`, `border-warn/40`. The fourth spelling of a tint. Not a surface step (`bg-surface/85` is a glass header) |
+| `token-alpha` | freeze | A brand token at an alpha: `bg-accent/10`, `border-warn/40`, `bg-[var(--color-accent)]/20`. The fourth spelling of a tint. Not a surface step (`bg-surface/85` is a glass header) |
 | `concatenated-token` | freeze | A token or utility built from a string: `var(--color-${x})`, `"--color-" + x`, `bg-${x}`. Invisible to every other rule; the utility form is never generated |
 | `accent-as-paint-class` | advisory | The Tailwind spelling of `accent-as-paint`: `border-accent`, `bg-accent`, `bg-[var(--color-accent)]`. Not `text-accent`, not a `focus:` variant, not `-mark` / `-tint` / `-border` |
+| `label-on-accent` | advisory | `text-white` on an accent fill. 1.9:1 on dark, the default theme. The label is `text-bg` |
 | `rebuilt-table` | advisory | A raw `<table>` in an app. Import `Ledger`. An email template is exempt by the convention below |
 | `rebuilt-part` | advisory | A locally defined `Panel` / `Kpi` / `Status` / `Badge` / `Notice` / `FilterBar` / `RecordCard` / `Breadcrumb` |
 
@@ -212,9 +213,10 @@ filesystem on 25 Oct, the lines none of them saw:
 | What | Where | Rule |
 |---|---|---|
 | `bg-accent-soft` on a chip | `cgsi-auth` ×2, `mediacms` ×1 | `deprecated-soft` (extended) |
-| `bg-accent/10`, `bg-accent/60` | `cgsi-auth` ×2, this package ×2 | `token-alpha` (new) |
+| `bg-accent/10`, `hover:bg-[var(--color-accent)]/20` | `cgsi-auth` ×2, this package ×2; the bracket form 43 across 4 repos | `token-alpha` (new) |
 | `` var(--color-${bucket}) `` | `scheduling` ×1 | `concatenated-token` (new) |
-| `border-accent`, `bg-accent` | 30 across 8 repos, this package ×5 | `accent-as-paint-class` (new, advisory) |
+| `border-accent`, `border-[var(--color-accent)]` | 155 lines across 14 repos, this package ×5 | `accent-as-paint-class` (new, advisory) |
+| `bg-accent text-white` | 57 lines across 10 repos | `label-on-accent` (new, advisory) |
 
 **`bg-accent-soft` resolves to nothing.** `--color-accent-soft` left
 `brand.css` at the phase 4 flip and a test pins its absence, so Tailwind v4 has
@@ -231,7 +233,12 @@ light it mixes from Ink Green and is neither the mark nor the tint. The two
 in this package were `hover:bg-accent/10` on the user menu and the search
 results — a hover ground, which is `--color-surface-2`, the fix `Ledger` took
 in v3.3.0. The accent and status hues only: `bg-surface/85` under a backdrop
-blur is a surface step with alpha and is not flagged.
+blur is a surface step with alpha and is not flagged. 🔴 **The first version
+did not read the arbitrary spelling**, `hover:bg-[var(--color-accent)]/20`,
+which compiles to the same thing and outnumbers the short form ten to one:
+43 across people, salesapp, scheduling and finance. Fixed the same day,
+before the ref moved — and the scheduling sweep found it independently,
+where four of them had arrived as advisory findings instead of errors.
 
 **`var(--color-${bucket})` is why the discipline dots inverted.** Every rule
 here matches a literal, and this one did not exist until runtime. `scheduling`
@@ -247,8 +254,11 @@ discipline the fix is no colour, because disciplines are named.
 `border-accent` compiles to `border-color: var(--color-accent)`, which is
 exactly what `accent-as-paint` flags in CSS and never saw in a class string.
 This package's own `SubNav` drew its active-tab underline with it — the home
-defect the CSS rule was written on, re-spelled. Reading the 42 sites gave the
-test that decides each one:
+defect the CSS rule was written on, re-spelled. ⚠️ The first survey said 30
+sites across 8 repos; the rule's own count is **155 lines across 14 repos**
+(221 literals), because the survey grepped `-accent\b` and the estate writes
+`border-[var(--color-accent)]` four times to one. Reading them gave the test
+that decides each one:
 
 - **A decoration** — an underline, a bar, a dot, a tick, a progress fill —
   stands beside type and is the bright mark: `border-accent-mark`,
@@ -269,6 +279,14 @@ Focus variants are excluded outright, as `outline` is in the CSS rule: a focus
 indicator is an accessibility requirement, and on white Ink Green is the one
 you can see. `text-accent` is ink. The alpha form reports once, as
 `token-alpha`.
+
+**`label-on-accent`** is the decidable half of what the first sweeps found on
+every labelled fill: `text-white` on the accent, ~1.9:1 on dark, the default
+theme. 57 lines across 10 repos, marketing 22 and people 16; a one-token swap
+to `text-bg` in each, so advisory until the wave has run. The undecidable
+half — a fill that sets no text colour at all and inherits `--color-text`,
+wrong in both themes — has nothing on the line to read, and is why the
+standard's button wants to be a package part.
 
 Advisory on arrival, for the reason every colour rule here started that way.
 Most of the 30 app sites are a hover border on a button that six repos copied
