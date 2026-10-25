@@ -727,10 +727,9 @@ cycle: changing a rule should not require cutting a package version, and a CI
 check should not be blocked on a release decision. The first pass used
 `v1.32.0` and every run failed on a 404 until it was repinned.
 
-Current ruleset: `0cf340f` (the fourth colour pass: `token-alpha` and
-`concatenated-token` enforced, `deprecated-soft` and `rounded-corners` read
-the utility and arbitrary spellings, `accent-as-paint-class` and
-`label-on-accent` advisory).
+Current ruleset: `98ebddb` (the button is a part: `accent-as-paint-class`,
+`label-on-accent` and `rebuilt-button` enforced, the last reading the hover
+label's arbitrary spelling; before it, `0cf340f`, the fourth colour pass).
 Bump deliberately, and expect every app's count to move when you do. If the
 ref ever stops resolving, the fetch step fails loudly rather than passing
 silently.
