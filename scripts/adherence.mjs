@@ -359,7 +359,13 @@ const RULES = [
        check did — and a blind codemod acting on that flag renamed the variable
        and broke the build. `rounded-lg` and friends are distinctive enough to
        match anywhere; plain `rounded` is an ordinary English word. */
-    re: /border-radius\s*:(?!\s*(?:0\b|0px|0%))[^;}\n]+|\brounded-(?:sm|md|lg|xl|2xl|3xl|full)\b|(?:class|className)\s*=[^>]*?\brounded\b(?!-)/g,
+    /* 🔴 THE ARBITRARY SPELLING, AGAIN. `rounded-[6px]` is a radius the
+       named-size arm never saw, found by the people sweep of 25 Oct 2026
+       two hours after `token-alpha` was corrected for the identical miss:
+       20 lines across people (14), scheduling (5) and marketing (1), in a
+       freeze rule that had read 0 estate-wide since the phase 4 flip. A
+       zero value (`rounded-[0px]`) is square and passes. */
+    re: /border-radius\s*:(?!\s*(?:0\b|0px|0%))[^;}\n]+|\brounded-(?:sm|md|lg|xl|2xl|3xl|full)\b|\brounded(?:-[trblse]{1,2})?-\[(?!0(?:px|%|rem|em)?\])[^\]]+\]|(?:class|className)\s*=[^>]*?\brounded\b(?!-)/g,
     msg: "Square corners. The 2027 brand is radius 0 on everything: buttons, fields, cards, images, radios. A pill or a circular avatar is a 2025 shape and survives a token swap, which is why this is checked separately from colour.",
   },
   {
