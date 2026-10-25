@@ -128,7 +128,20 @@ env:
   #   should change no error count — if yours is not zero, something landed
   #   between the sweep and the merge. The two advisory counts WILL appear in
   #   the run summary for the first time.
-  ADHERENCE_REF: 0cf340f021bb6764fab7ab0ca9b126f484bbeb9f
+  # 98ebddb = 25 Oct 2026, the button is a part. Three rules move from
+  #   advisory to FREEZE the same day they arrived, once `Button` shipped in
+  #   @cgsi/app-shell v3.5.0 and eleven apps adopted it: `accent-as-paint-class`
+  #   (border-[var(--color-accent)] as decoration wants -mark; a boundary or a
+  #   labelled fill the part cannot serve takes the pragma by name),
+  #   `label-on-accent` (text-white on the accent fill, 1.9:1 on dark) and
+  #   `rebuilt-button` (the Header's secondary register copied by hand; now
+  #   also reads the hover label's arbitrary spelling, which hid one copy).
+  #   Counted against this exact sha before the bump: 25 lines in the estate
+  #   (marketing 22, auth 2, referrals 1), every one cleared in the same PR
+  #   as this pin, so the bump should change no count — if yours is not
+  #   zero, something landed between the sweep and the merge. The three
+  #   advisory counts leave the run summary; they are errors now.
+  ADHERENCE_REF: 98ebddb4c5c9c4ebb3540175b984bb056fee73ee
 
 jobs:
   adherence:
