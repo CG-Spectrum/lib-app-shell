@@ -257,8 +257,16 @@ const RULES = [
        is a hover ground and wants `--color-surface-2`, as Ledger's did).
 
        ⛔ Only the accent and status hues. `bg-surface/85` under a backdrop
-       blur is a glass header, a surface step with alpha, and not this. */
-    re: /\b(?:bg|text|border|ring|from|to|via|decoration|outline|divide|shadow|fill|stroke|caret|placeholder)-(?:accent|accent-mark|good|warn|bad|info|attention|success|warning|error)\/\d{1,3}\b/g,
+       blur is a glass header, a surface step with alpha, and not this.
+
+       🔴 THE ARBITRARY-VALUE FORM IS THE SAME TINT AND IS FOUR TIMES AS
+       COMMON. `hover:bg-[var(--color-accent)]/20` compiles to the same
+       color-mix as `bg-accent/20`, and the first version of this rule did
+       not read it: the survey behind it grepped `-accent/` and found 4,
+       while the estate carries 43 of the bracket form across 4 repos
+       (people 30, salesapp 6, scheduling 6, finance 1), nearly all a chip
+       or row hover ground. ⛔ A count of one spelling is not a count. */
+    re: /\b(?:bg|text|border|ring|from|to|via|decoration|outline|divide|shadow|fill|stroke|caret|placeholder)-(?:accent|accent-mark|good|warn|bad|info|attention|success|warning|error)\/\d{1,3}\b|\[var\(--color-(?:accent|accent-mark|good|warn|bad|info|attention|success|warning|error)\)\]\/\d{1,3}\b/g,
     msg: "A brand token at an alpha. bg-accent/10 is a hand-mixed tint — the retired tinted-fill shape in its fourth spelling — and on light it mixes from Ink Green, not the mark. A hover or selected ground is --color-surface-2 / --color-accent-tint; an accent or status outline is --color-accent-border / --color-<hue>-border. If no token carries the meaning, color-mix(in srgb, var(--token) NN%, transparent) in CSS with a comment saying why.",
   },
   {
@@ -480,8 +488,12 @@ const RULES = [
        is exactly what the rule above flags in CSS, and the rule above never
        saw it. The package's own SubNav drew its active-tab underline with it
        — the defect `accent-as-paint` was written on, in home, re-spelled —
-       and so did five of the apps. 42 sites on 25 Oct 2026: 30 across 8
-       repos, 12 in the package.
+       and so did the apps. 🔴 The first survey said 30 sites across 8 repos
+       and was off by five times: it grepped `-accent\b` and never saw the
+       arbitrary-value spelling, `border-[var(--color-accent)]`, which the
+       estate uses four to one. Counted by the rule itself, 25 Oct 2026:
+       155 LINES across 14 of 17 repos (221 literals; marketing 45, people
+       36, salesapp 29), plus 5 in the package.
 
        ⚖️ BOUNDARY OR DECORATION. Reading those 42 gave the test that decides
        each one, and it is not "is it paint":
@@ -507,11 +519,36 @@ const RULES = [
        is `token-alpha`, an error, and is not reported twice.
 
        ⚠️ ADVISORY, for the reason every colour rule here started that way:
-       42 sites, most of them a hover border on a button that six repos
-       copied from the package Header. Move to "error" when the count is
-       near zero. */
-    re: /(?<!focus(?:-visible|-within)?:)(?<![\w-])(?:bg|border(?:-[trblxyse])?|ring|divide|fill|stroke|from|to|via|decoration|shadow)-(?:accent(?![\w-])(?!\/)|\[var\(--color-accent\)\])/g,
-    msg: "Accent used as paint, Tailwind spelling. border-accent / bg-accent is var(--color-accent) — Ink Green on light. A DECORATION (underline, bar, dot, tick, progress fill) is the mark: border-accent-mark / bg-accent-mark. A BOUNDARY (the 1px edge of a chip, button or field) must clear 3:1 and Ink Green is the visible one — keep border-accent and add `cgsi-adherence-allow: accent-as-paint-class — boundary, <what>`. A FILL WITH A LABEL (the primary button) keeps bg-accent for the same reason and takes the pragma; its label is text-bg, never text-white. Focus variants are never flagged.",
+       155 lines, a great many of them the package Header's button register
+       copied by hand — which is why the pragma cannot settle until the
+       standard's button is a package part (gap 20). Move to "error" when
+       the count is near zero. */
+    re: /(?<!focus(?:-visible|-within)?:)(?<![\w-])(?:bg|border(?:-[trblxyse])?|ring|divide|fill|stroke|from|to|via|decoration|shadow)-(?:accent(?![\w-])(?!\/)|\[var\(--color-accent\)\](?!\/))/g,
+    msg: "Accent used as paint, Tailwind spelling. border-accent / bg-accent is var(--color-accent) — Ink Green on light. A DECORATION (underline, bar, dot, tick, progress fill) is the mark: border-accent-mark / bg-accent-mark. A BOUNDARY (the 1px edge of a chip, button or field) must clear 3:1 and Ink Green is the visible one — keep border-accent and add `cgsi-adherence-allow: accent-as-paint-class — boundary, <what>`. A FILL WITH A LABEL (the primary button) keeps bg-accent for the same reason and takes the pragma; its label is text-bg, never text-white and never unset. Focus variants are never flagged.",
+  },
+  {
+    id: "label-on-accent",
+    tier: "advisory",
+    /* 🔴 WHITE ON THE ACCENT IS 1.9:1 IN DARK, WHICH IS THE DEFAULT THEME.
+       `bg-accent text-white` reads as the obvious primary button and is
+       unreadable where most people run these apps: on dark the accent is
+       the bright mark #44d62c, and white on it fails AA by a factor of two.
+       It passes on light only because Ink Green happens to be dark. The
+       label is `text-bg` — near-black on the mark, white on Ink Green —
+       and it is right in both themes for the same reason the token is.
+
+       Found by the first three sweeps of accent-as-paint-class, where every
+       labelled fill was wrong and one was worse: mediacms's Search button
+       set NO text colour and inherited --color-text, failing in both
+       themes with nothing in the class string to read. That case is
+       undecidable on a line, so it is not here; this one is. 57 lines
+       across 10 repos on 25 Oct 2026, marketing 22 and people 16.
+
+       ⚠️ ADVISORY on arrival: a one-token swap in ten repos, which is a
+       wave, not a line. `raw-palette` does not see `white` (it is not a
+       palette hue) and should not: `text-white` on a photograph is fine. */
+    re: /(?:bg-accent(?![\w-])|bg-\[var\(--color-accent\)\])[^"'`\n]*\btext-white\b|\btext-white\b[^"'`\n]*(?:bg-accent(?![\w-])|bg-\[var\(--color-accent\)\])/g,
+    msg: "A white label on the accent fill. On dark — the default theme — the accent is the bright mark and white on it is ~1.9:1, unreadable; it only passes on light because Ink Green is dark. The label on an accent fill is text-bg, which is dark on the mark and white on Ink Green.",
   },
   {
     id: "rebuilt-table",

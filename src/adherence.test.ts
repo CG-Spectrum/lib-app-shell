@@ -1025,3 +1025,39 @@ describe("the fourth colour pass — 25 Oct 2026", () => {
     });
   });
 });
+
+describe("the fourth colour pass — what the first sweeps found", () => {
+  test("🔴 hover:bg-[var(--color-accent)]/20 is token-alpha — the arbitrary spelling, four times as common", () => {
+    const { out, exit } = check({ "a.tsx": 'const c = "chip hover:bg-[var(--color-accent)]/20";' }, "--advisory");
+    expect(out).toContain("token-alpha");
+    expect(out).not.toContain("accent-as-paint-class");
+    expect(exit).toBe(1);
+  });
+
+  test("border-[var(--color-good)]/40 is token-alpha too", () => {
+    const { out, exit } = check({ "a.tsx": 'const c = "border border-[var(--color-good)]/40";' });
+    expect(out).toContain("token-alpha");
+    expect(exit).toBe(1);
+  });
+
+  test.each([
+    'const c = "bg-accent text-white px-4";',
+    'const c = "text-white bg-[var(--color-accent)]";',
+    'const c = active ? "bg-accent text-white" : "bg-surface-2";',
+  ])("%s is label-on-accent, advisory", (src) => {
+    const quiet = check({ "a.tsx": src });
+    expect(quiet.out).not.toContain("label-on-accent");
+    expect(quiet.exit).toBe(0);
+    const loud = check({ "a.tsx": src }, "--advisory");
+    expect(loud.out).toContain("label-on-accent");
+  });
+
+  test.each([
+    ['const c = "bg-accent text-bg";', "text-bg is the label"],
+    ['const c = "text-white";', "white alone is not a label on anything"],
+    ['const c = "bg-surface-3 text-white";', "white on a surface is not this rule"],
+  ])("%s is not flagged: %s", (src) => {
+    const { out } = check({ "a.tsx": src }, "--advisory");
+    expect(out).not.toContain("label-on-accent");
+  });
+});
