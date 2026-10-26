@@ -3,6 +3,7 @@ import {
   isActiveTab,
   startsNewGroup,
   tabClassName,
+  inlineTabClassName,
   type SubNavTab,
 } from "./SubNav";
 
@@ -141,5 +142,25 @@ describe("tabClassName", () => {
     const c = tabClassName(false);
     expect(c).toContain("text-text");
     expect(c).not.toContain("text-text-2");
+  });
+});
+
+describe("inlineTabClassName — v3.7, the tab row inside a panel", () => {
+  it("is the button box in the rung, hairline, wraps (no -mb-px underline)", () => {
+    const c = inlineTabClassName(false);
+    expect(c).toContain("h-[30px]");
+    expect(c).toContain("[html[data-density='compact']_&]:h-[26px]");
+    expect(c).toContain("font-mono text-[11px]");
+    expect(c).toContain("border-border");
+    expect(c).not.toContain("border-b-2");
+    expect(c).not.toContain("-mb-px");
+  });
+
+  it("selected is the selection register: accent hairline + tint, never the mark as a fill", () => {
+    const c = inlineTabClassName(true);
+    expect(c).toContain("border-accent ");
+    expect(c).toContain("bg-accent-tint");
+    expect(c).not.toContain("bg-accent-mark");
+    expect(c).not.toContain("border-accent-mark");
   });
 });
