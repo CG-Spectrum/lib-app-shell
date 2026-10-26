@@ -377,6 +377,24 @@ text button, a success state, a tentative edge; and two navigation gaps,
 query-param tab rows that `SubNav` cannot match and in-page sub-navs where
 its sticky full-width chrome does not fit.
 
+**v3.6 — 26 Oct 2026, decisions 1 and 2 of six** (the visual:
+https://claude.ai/artifact/BmgnHnbeykWDPcESjjiYZK; the rest in
+`Memory/projects/home-app/briefs/BUTTON-V3.6-SCOPE.md`).
+- `variant="danger"` is **edge-only**: the secondary shape, edge and label in
+  `--color-bad`, hover fills to the new `--color-bad-tint`. 5.4:1 dark, 5.9:1
+  light. Not a red primary: the brand has no filled status register and a
+  filled bad label would have to flip colour per theme to stay readable, the
+  `label-on-accent` trap in another hue. **One danger per view**, as primary.
+  ⛔ Hue is never the only channel: the label's verb and the confirm step stay.
+- `size="icon"` / `"icon-sm"`: a square (30 / 26) for a glyph with no label,
+  any variant, **`aria-label` required by the type**. A square with a glyph
+  and no name is the defect this closes, not a style.
+- `rebuilt-part` now also names `DangerButton`, `IconButton`, `GhostButton`.
+- Deferred to v3.7 (decisions 3–6): `pressed` on Button for action toggles
+  (chips stay Filters), `variant="ghost"` beside a primary with inline
+  actions inside content ruled links, `SubNav inline`, and tab rows moving
+  to route segments in academicops and marketing (no `match` prop).
+
 ## 🔴 The email exemption excused 62 files, and was for one
 
 Email clients do not support CSS variables, so an HTML email template must

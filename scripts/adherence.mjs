@@ -580,7 +580,7 @@ const RULES = [
     id: "rebuilt-part",
     tier: "advisory",
     packageExempt: true,
-    re: /\b(?:function|const)\s+(?:Ledger|Panel|Kpi|KPI|Status|StatusBadge|Badge|Notice|FilterBar|SegmentedControl|Segmented|RecordCard|Breadcrumb|Button|PrimaryButton|SecondaryButton)\b/g,
+    re: /\b(?:function|const)\s+(?:Ledger|Panel|Kpi|KPI|Status|StatusBadge|Badge|Notice|FilterBar|SegmentedControl|Segmented|RecordCard|Breadcrumb|Button|PrimaryButton|SecondaryButton|DangerButton|IconButton|GhostButton)\b/g,
     msg: "Rebuilt part. Hard rule 2: import it from @cgsi/app-shell rather than redefining it locally. A local Badge is usually also a shape the brand does not have — status is a glyph plus a word, never a pill and never a filled badge.",
   },
   {

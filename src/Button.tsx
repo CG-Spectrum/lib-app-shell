@@ -12,7 +12,7 @@ import { buttonClassName, type ButtonSize, type ButtonVariant } from "./button-l
 // dark) and a fill with NO label colour came from. Apps import this and never
 // restyle it; `className` is for layout (a margin, a width), not for colour.
 //
-// ⚖️ TWO VARIANTS, NOT A PALETTE. `secondary` is most buttons. `primary` is the
+// ⚖️ THREE VARIANTS, NOT A PALETTE. `danger` (v3.6) is edge-only, one per view. `secondary` is most buttons. `primary` is the
 // ONE filled button a view may have (rule 4): the bright mark as the fill in
 // both themes, the ink as the label. A second filled button on a screen is a
 // design error, not a prop this part should make easy.
@@ -20,9 +20,18 @@ import { buttonClassName, type ButtonSize, type ButtonVariant } from "./button-l
 // Hover keeps the accent on the secondary edge; that is settled (Jeremy,
 // 21 Oct 2026) and the pragma lives in button-logic.ts, once, for the estate.
 
-type Common = {
+// v3.6: an icon button is a square with a glyph and no visible label, so its
+// name has to come from somewhere — `aria-label` is REQUIRED by the type for
+// `size="icon"` / `"icon-sm"` and the part will not compile without it. For
+// the text sizes it stays optional as on any button.
+type IconSized = { size: "icon" | "icon-sm"; "aria-label": string };
+type TextSized = { size?: "md" | "sm" };
+
+type Common = (IconSized | TextSized) & {
+  /** `secondary` (default), `primary` (the one fill a view may have) or
+   *  `danger` (edge-only, the bad token; one per view, for delete / revoke /
+   *  reject — the label verb and the confirm step still carry the meaning). */
   variant?: ButtonVariant;
-  size?: ButtonSize;
   /** Layout only — a margin or a width. Never a colour; the part owns those. */
   className?: string;
   children: ReactNode;
