@@ -2,7 +2,11 @@
 // without rendering. See Button.tsx for what each variant is for, and
 // surface-app-layer.md "Buttons" for the standard this implements.
 
-export type ButtonVariant = "primary" | "secondary" | "danger";
+// `ghost` (v3.7, 26 Oct 2026, decision 4): the rung with no edge, for a
+// control that sits BESIDE a primary (Cancel in a form footer). An action
+// INSIDE content (Edit in a table row) is a link in the link register, not a
+// ghost button; the standard says so.
+export type ButtonVariant = "primary" | "secondary" | "danger" | "ghost";
 // `icon` and `icon-sm` are the square boxes (30 / 26) for a glyph with no
 // label. They pair with any variant; Button.tsx makes aria-label mandatory
 // for them at the type level, because a square with a glyph has no name.
@@ -46,23 +50,46 @@ const VARIANT: Record<ButtonVariant, string> = {
   // step carry the meaning; this variant is the third signal, not the first.
   danger:
     "border border-bad bg-transparent text-bad hover:bg-bad-tint disabled:border-border disabled:text-text-3 disabled:hover:bg-transparent",
+  // The edge is kept at 1px and transparent so a ghost sits level with the
+  // secondary beside it; only the label moves on hover.
+  ghost:
+    "border border-transparent bg-transparent text-text-2 hover:text-accent disabled:text-text-3 disabled:hover:text-text-3",
 };
+
+// v3.7 (decision 3): the PRESSED state of an action toggle (pin, resolve,
+// show/hide). It is the selection register — accent hairline + tint — the
+// same reading as a selected filter chip, because green means "selected" in
+// the apps and nothing else. It REPLACES the variant's string rather than
+// stacking on it (two border colours in one class list is a cascade coin
+// toss). Only secondary and ghost can be pressed; primary and danger ignore
+// it. A filter chip is NOT this: chips change the data and belong to Filters.
+// cgsi-adherence-allow: accent-as-paint-class — boundary: the pressed toggle's 1px edge, Ink Green on light so it clears 3:1; the fill is the tint
+const PRESSED =
+  "border border-accent bg-accent-tint text-text hover:border-accent hover:text-text disabled:border-border disabled:text-text-3 disabled:bg-transparent";
+
+export function pressedClassName(): string {
+  return PRESSED;
+}
 
 export function buttonClassName({
   variant = "secondary",
   size = "md",
+  pressed = false,
   className = "",
 }: {
   variant?: ButtonVariant;
   size?: ButtonSize;
+  pressed?: boolean;
   className?: string;
 }): string {
+  const register =
+    pressed && (variant === "secondary" || variant === "ghost") ? PRESSED : VARIANT[variant];
   return [
     "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap",
     "transition-colors disabled:cursor-default aria-disabled:cursor-default",
     RUNG,
     BOX[size],
-    VARIANT[variant],
+    register,
     className,
   ]
     .filter(Boolean)

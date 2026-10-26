@@ -94,3 +94,36 @@ describe("v3.6 — danger is edge-only, icon is a named square (26 Oct 2026)", (
     expect(buttonClassName({ size: "icon-sm" })).toContain("border border-border");
   });
 });
+
+describe("v3.7 — ghost beside a primary, pressed is the selection register (26 Oct 2026)", () => {
+  test("ghost keeps a transparent 1px edge so it sits level with a secondary, and only the label moves", () => {
+    const c = buttonClassName({ variant: "ghost" });
+    expect(c).toContain("border border-transparent");
+    expect(c).toContain("bg-transparent");
+    expect(c).toContain("text-text-2");
+    expect(c).toContain("hover:text-accent");
+    expect(c).not.toContain("hover:border-accent");
+  });
+
+  test("pressed REPLACES the variant: accent hairline + tint + text, never stacked on border-border", () => {
+    const c = buttonClassName({ pressed: true });
+    expect(c).toContain("border border-accent");
+    expect(c).toContain("bg-accent-tint");
+    expect(c).toContain("text-text");
+    // the neutral edge and the secondary label only survive behind disabled:
+    expect(c).not.toMatch(/(^|\s)border-border(\s|$)/);
+    expect(c).not.toMatch(/(^|\s)text-text-2(\s|$)/);
+    // never the bright mark as a fill: that is the primary, and green is selection not status
+    expect(c).not.toContain("bg-accent-mark");
+  });
+
+  test("pressed works on ghost and is ignored on primary and danger", () => {
+    expect(buttonClassName({ variant: "ghost", pressed: true })).toContain("bg-accent-tint");
+    expect(buttonClassName({ variant: "primary", pressed: true })).toContain("bg-accent-mark");
+    expect(buttonClassName({ variant: "danger", pressed: true })).toContain("border-bad");
+  });
+
+  test("pressed:false is the plain variant", () => {
+    expect(buttonClassName({ pressed: false })).toBe(buttonClassName({}));
+  });
+});

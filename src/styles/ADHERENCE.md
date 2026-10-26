@@ -390,10 +390,21 @@ https://claude.ai/artifact/BmgnHnbeykWDPcESjjiYZK; the rest in
   any variant, **`aria-label` required by the type**. A square with a glyph
   and no name is the defect this closes, not a style.
 - `rebuilt-part` now also names `DangerButton`, `IconButton`, `GhostButton`.
-- Deferred to v3.7 (decisions 3–6): `pressed` on Button for action toggles
-  (chips stay Filters), `variant="ghost"` beside a primary with inline
-  actions inside content ruled links, `SubNav inline`, and tab rows moving
-  to route segments in academicops and marketing (no `match` prop).
+- v3.7 (decisions 3–6, approved 26 Oct): **`pressed`** on Button for an
+  action toggle (pin, resolve, show/hide): the selection register, accent
+  hairline + tint, REPLACING the variant string (two edge colours in one
+  class list is a cascade coin toss); the part sets `aria-pressed` in both
+  states; only `secondary` and `ghost` take it; a link cannot be pressed
+  (type-enforced). Filter chips are NOT this: they change the data and stay
+  the Filters part. **`variant="ghost"`**: the rung with a transparent 1px
+  edge (so it sits level with a secondary) and only the label moving on
+  hover, for a control BESIDE a primary (Cancel in a form footer). ⚖️ An
+  action INSIDE content (Edit in a table row, Remove on a line item) is a
+  LINK in the link register, not a ghost button. **`SubNav inline`**: the
+  same tab row drawn inside a panel, hairline chips in the button box,
+  selected = accent hairline + tint, wraps, not sticky (academicops'
+  scheduling / feedback / audit rows). **Tab rows on a query param**
+  (`?term=`, `?tab=`) move to route segments; `SubNav` gets no `match` prop.
 
 ## 🔴 The email exemption excused 62 files, and was for one
 

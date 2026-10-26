@@ -12,3 +12,9 @@ export const text = <Button>Save</Button>;
 export const unnamed = <Button size="icon">×</Button>; // keep: proves the contract
 // @ts-expect-error — the link form is held to the same contract
 export const unnamedLink = <Button size="icon" href="/x">×</Button>;
+
+// v3.7: pressed is a toggle on a BUTTON; a link cannot be pressed.
+export const toggled = <Button pressed>Pinned</Button>;
+export const untoggled = <Button pressed={false} variant="ghost">Pinned</Button>;
+// @ts-expect-error — a link styled as a button has no pressed state
+export const pressedLink = <Button href="/x" pressed>Pinned</Button>;

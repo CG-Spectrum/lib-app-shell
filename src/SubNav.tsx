@@ -135,17 +135,77 @@ export function tabClassName(active: boolean): string {
   ].join(" ");
 }
 
+/**
+ * v3.7 (26 Oct 2026): the INLINE register, for a tab row that lives inside a
+ * panel rather than under the Header. The sticky full-width bar does not fit
+ * there (academicops' scheduling / feedback / audit sub-navs, six hand-built
+ * chip rows). Same job — it switches sections of a view — drawn as hairline
+ * chips in the button box (30, 26 compact), selected = accent hairline + tint,
+ * the selection register. It wraps, because a row inside a panel has no
+ * bottom border for an underline to detach from.
+ */
+export function inlineTabClassName(active: boolean): string {
+  return [
+    "inline-flex h-[30px] shrink-0 items-center whitespace-nowrap border px-3",
+    "[html[data-density='compact']_&]:h-[26px]",
+    "font-mono text-[11px] font-medium uppercase tracking-[0.14em] transition-colors duration-100",
+    active
+      // cgsi-adherence-allow: accent-as-paint-class — boundary: the selected inline tab's 1px edge; the bright mark is 1.9:1 on white, Ink Green clears 3:1
+      ? "border-accent bg-accent-tint text-text"
+      : "border-border text-text-2 hover:border-border-strong hover:text-text",
+  ].join(" ");
+}
+
 export function SubNav({
   tabs,
   currentPath,
   rememberSection,
+  inline = false,
 }: {
   tabs: SubNavTab[];
   currentPath: string;
   /** Estate last-tab key (usually the app key). When set, tab clicks are
    *  remembered in the cgsi-last-tab cookie for the app root to resolve. */
   rememberSection?: string;
+  /** Draw the row inside a panel: not sticky, no bottom border, hairline
+   *  chips that wrap. For a tab row under the Header leave this off. */
+  inline?: boolean;
 }) {
+  if (inline) {
+    return (
+      <nav className="w-full" aria-label="Section navigation">
+        <div className="flex flex-wrap items-center gap-1.5">
+          {tabs.map((tab, i) => {
+            const active = isActiveTab(tab.href, currentPath, tab.exact);
+            const badge = badgeText(tab.badge);
+            return (
+              <Fragment key={tab.href}>
+                {startsNewGroup(tabs, i) && (
+                  <span aria-hidden="true" className="mx-1 h-4 w-px shrink-0 bg-border" />
+                )}
+                <a
+                  href={tab.href}
+                  onClick={rememberSection ? () => rememberTab(rememberSection, tab.href) : undefined}
+                  aria-current={active ? "page" : undefined}
+                  className={inlineTabClassName(active)}
+                >
+                  {tab.label}
+                  {badge && (
+                    <span
+                      className="ml-1.5 inline-flex h-[18px] min-w-[18px] items-center justify-center bg-[var(--color-attention)] px-[5px] text-[10px] font-bold leading-none text-[var(--color-bg)]"
+                      aria-label={`${tab.badge} awaiting action`}
+                    >
+                      {badge}
+                    </span>
+                  )}
+                </a>
+              </Fragment>
+            );
+          })}
+        </div>
+      </nav>
+    );
+  }
   return (
     <nav
       // Pinned beneath the sticky Header (its content row is 56px + 2px accent

@@ -1,6 +1,6 @@
 /** @jsxRuntime automatic */
 import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ElementType, ReactNode } from "react";
-import { buttonClassName, type ButtonSize, type ButtonVariant } from "./button-logic";
+import { buttonClassName, type ButtonVariant } from "./button-logic";
 
 // The standard's button, as a part. surface-app-layer.md "Buttons".
 //
@@ -12,7 +12,8 @@ import { buttonClassName, type ButtonSize, type ButtonVariant } from "./button-l
 // dark) and a fill with NO label colour came from. Apps import this and never
 // restyle it; `className` is for layout (a margin, a width), not for colour.
 //
-// ⚖️ THREE VARIANTS, NOT A PALETTE. `danger` (v3.6) is edge-only, one per view. `secondary` is most buttons. `primary` is the
+// ⚖️ FOUR VARIANTS, NOT A PALETTE. `danger` (v3.6) is edge-only, one per view;
+// `ghost` (v3.7) has no edge and sits beside a primary. `secondary` is most buttons. `primary` is the
 // ONE filled button a view may have (rule 4): the bright mark as the fill in
 // both themes, the ink as the label. A second filled button on a screen is a
 // design error, not a prop this part should make easy.
@@ -28,9 +29,11 @@ type IconSized = { size: "icon" | "icon-sm"; "aria-label": string };
 type TextSized = { size?: "md" | "sm" };
 
 type Common = (IconSized | TextSized) & {
-  /** `secondary` (default), `primary` (the one fill a view may have) or
+  /** `secondary` (default), `primary` (the one fill a view may have),
    *  `danger` (edge-only, the bad token; one per view, for delete / revoke /
-   *  reject — the label verb and the confirm step still carry the meaning). */
+   *  reject — the label verb and the confirm step still carry the meaning) or
+   *  `ghost` (no edge; for a control BESIDE a primary, such as Cancel in a
+   *  form footer; an action inside content is a link, not a ghost). */
   variant?: ButtonVariant;
   /** Layout only — a margin or a width. Never a colour; the part owns those. */
   className?: string;
@@ -38,9 +41,14 @@ type Common = (IconSized | TextSized) & {
 };
 
 type AsButton = Common &
-  Omit<ButtonHTMLAttributes<HTMLButtonElement>, "className" | "children"> & {
+  Omit<ButtonHTMLAttributes<HTMLButtonElement>, "className" | "children" | "aria-pressed"> & {
     href?: undefined;
     as?: undefined;
+    /** An action TOGGLE (pin, resolve, show/hide): true draws the selection
+     *  register (accent hairline + tint) and the part sets `aria-pressed`
+     *  itself, in both states. Only on `secondary` and `ghost`. A filter chip
+     *  is not this; chips belong to the Filters part. */
+    pressed?: boolean;
   };
 
 type AsLink = Common &
@@ -57,7 +65,8 @@ export type ButtonProps = AsButton | AsLink;
 
 export function Button(props: ButtonProps) {
   const { variant, size, className, children } = props;
-  const cls = buttonClassName({ variant, size, className });
+  const pressed = props.href === undefined ? props.pressed : undefined;
+  const cls = buttonClassName({ variant, size, pressed, className });
 
   if (props.href !== undefined) {
     const { href, as, disabled, variant: _v, size: _s, className: _c, children: _ch, ...rest } = props;
@@ -77,11 +86,11 @@ export function Button(props: ButtonProps) {
     );
   }
 
-  const { type = "button", variant: _v, size: _s, className: _c, children: _ch, ...rest } = props;
+  const { type = "button", pressed: _p, variant: _v, size: _s, className: _c, children: _ch, ...rest } = props;
   // `type="button"` by default: a button inside a form must not submit the
   // form by accident. Submission is explicit.
   return (
-    <button {...rest} type={type} className={cls}>
+    <button {...rest} type={type} aria-pressed={pressed} className={cls}>
       {children}
     </button>
   );
