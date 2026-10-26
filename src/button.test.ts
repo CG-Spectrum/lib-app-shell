@@ -57,3 +57,40 @@ describe("the button register", () => {
     expect(buttonClassName({ className: "ml-auto" })).toMatch(/ ml-auto$/);
   });
 });
+
+describe("v3.6 — danger is edge-only, icon is a named square (26 Oct 2026)", () => {
+  test("danger is the secondary shape in the bad token: edge + label, no fill at rest", () => {
+    const c = buttonClassName({ variant: "danger" });
+    expect(c).toContain("border border-bad");
+    expect(c).toContain("bg-transparent");
+    expect(c).toContain("text-bad");
+    expect(c).toContain("hover:bg-bad-tint");
+    // Not a red primary, and not the accent anywhere.
+    expect(c).not.toMatch(/(^|\s)bg-bad(\s|$)/);
+    expect(c).not.toContain("accent");
+    // ⛔ not an alpha on the token: token-alpha is a freeze rule.
+    expect(c).not.toMatch(/\/\d+/);
+  });
+
+  test("danger disabled goes to the neutral edge and faint text, and the hover fill is gone", () => {
+    const c = buttonClassName({ variant: "danger" });
+    expect(c).toContain("disabled:border-border");
+    expect(c).toContain("disabled:text-text-3");
+    expect(c).toContain("disabled:hover:bg-transparent");
+  });
+
+  test("icon is a 30px square that follows density; icon-sm is 26 and does not", () => {
+    const icon = buttonClassName({ size: "icon" });
+    expect(icon).toContain("h-[30px] w-[30px] p-0");
+    expect(icon).toContain("[html[data-density='compact']_&]:w-[26px]");
+    const sm = buttonClassName({ size: "icon-sm" });
+    expect(sm).toContain("h-[26px] w-[26px] p-0");
+    expect(sm).not.toContain("data-density");
+  });
+
+  test("the icon sizes take every variant", () => {
+    expect(buttonClassName({ size: "icon", variant: "primary" })).toContain("bg-accent-mark");
+    expect(buttonClassName({ size: "icon", variant: "danger" })).toContain("border-bad");
+    expect(buttonClassName({ size: "icon-sm" })).toContain("border border-border");
+  });
+});
