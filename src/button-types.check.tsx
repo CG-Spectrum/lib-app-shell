@@ -1,13 +1,14 @@
 /** @jsxRuntime automatic */
-// Type-level contract, checked by `tsc --noEmit` (vitest does not type-check):
+// Type-level contract, checked by `tsc --noEmit` only. Named .check.tsx, not
+// .test.tsx: vitest would open it, find no suite and fail the run.
 // an icon button cannot be written without a name.
 import { Button } from "./Button";
 
-export const named = <Button size="icon" aria-label="Close">×</Button>;
+export const named = <Button size="icon" aria-label="Close">×</Button>; // ts should FAIL if this line is ever un-named
 export const namedLink = <Button size="icon-sm" aria-label="Edit" href="/edit">✎</Button>;
 export const text = <Button>Save</Button>;
 
 // @ts-expect-error — size="icon" without aria-label must not compile
-export const unnamed = <Button size="icon">×</Button>;
+export const unnamed = <Button size="icon">×</Button>; // keep: proves the contract
 // @ts-expect-error — the link form is held to the same contract
 export const unnamedLink = <Button size="icon" href="/x">×</Button>;
