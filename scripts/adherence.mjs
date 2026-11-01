@@ -578,7 +578,7 @@ const RULES = [
   },
   {
     id: "ledger-off-panel",
-    tier: "advisory",
+    tier: "error",
     packageExempt: true,
     /* ── A table on the floor ─────────────────────────────────────────────
        surface-app-layer.md, "Panel": every data surface sits on a Panel, the
@@ -591,14 +591,15 @@ const RULES = [
        round Panel counts when its name ends in Panel (`ChartPanel`,
        `ReportPanel`), which is the convention this rule sets. A component
        whose PARENT puts it on a Panel takes the pragma and names the parent.
-       Advisory on arrival: it moves to "error" when the estate reads zero. */
+       Advisory on arrival; "error" from v3.11.0 (1 Nov 2026), when 12 of 13
+       apps read zero and the 13th's one site sat on a branch in review. */
     re: /<Ledger\b/g,
     unlessFile: /<\w*Panel\b/,
     msg: "A Ledger with no Panel under it. Tables sit on a Panel from @cgsi/app-shell (the surface tone on the near-black field), never on the floor and never in a grey box drawn by hand: wrap it in <Panel flush> or <Panel title=...>. A wrapper round Panel counts if its name ends in Panel. If a parent component supplies the Panel, add the pragma and name the parent.",
   },
   {
     id: "hand-drawn-surface",
-    tier: "advisory",
+    tier: "error",
     packageExempt: true,
     /* ── A grey box drawn by hand ─────────────────────────────────────────
        The second half of the surface pass (1 Nov 2026). `ledger-off-panel`
@@ -620,7 +621,9 @@ const RULES = [
        a toolbar with a hairline on one edge was reported as a card, and
        academicops#58 carried 11 pragmas for bars and rails that were not
        cards. Fixed in 3.9.1; a single edge is a divider, not a box.
-       Advisory on arrival. */
+       Advisory on arrival; "error" from v3.11.0 (1 Nov 2026), when 12 of 13
+       apps read zero and the 13th (marketing's pacing page) was converted in
+       the same pass. */
     re: /^(?!.*<(?:input|select|textarea|button)\b).*?(["'`])(?=[^"'`\n]*(?<![\w:-])border(?![\w-]))(?=[^"'`\n]*(?<![:\w-])bg-(?:surface(?![\w-])|\[var\(--color-surface\)\]))(?=[^"'`\n]*\bp[xy]?-(?:[3-9]|1\d|\[))(?![^"'`\n]*(?:\b(?:absolute|fixed|sticky)\b|\b(?:focus|placeholder):))[^"'`\n]*\1/g,
     msg: "A grey box drawn by hand (border + surface tone + padding). Use the part: a content card is a Panel from @cgsi/app-shell (no outer border, --panel-gap between panels); a warning or info callout is a Notice; a metric tile is a Kpi in a KpiRow. A hand-drawn box misses the panel head, the density padding and the air between panels, and every app draws it differently.",
   },
@@ -856,10 +859,29 @@ function inPackage(start) {
 const GENERATED = /^(?:.*\n){0,5}?.*(?:\b(?:GENERATED FILE|DO NOT EDIT|auto-generated)\b|@generated\b)/i;
 const generated = [];
 
+/* 🔴 A FILE ARGUMENT WAS SCANNED AS AN EMPTY DIRECTORY. Until v3.11.0 every
+   root went to walk(), which readdirSync's it, fails on a file, and returns
+   nothing — so `cgsi-adherence src/app/page.tsx` printed "0 errors" for a file
+   it never opened. Found on 1 Nov 2026 while checking which pragmas the 3.9.1
+   rule fix had made redundant: one app's removals were "verified" against
+   clean single-file runs that had read nothing, and had to be put back. A file is now scanned as itself,
+   and a path that does not exist is an error rather than a clean result. */
+function sources(root) {
+  let s;
+  try {
+    s = statSync(root);
+  } catch {
+    console.error(`cgsi-adherence: ${root}: no such file or directory`);
+    process.exit(2);
+  }
+  if (s.isDirectory()) return walk(root);
+  return SOURCE_EXT.test(root) ? [root] : [];
+}
+
 const findings = [];
 for (const root of targets) {
   const rootInPackage = inPackage(root);
-  for (const path of walk(root)) {
+  for (const path of sources(root)) {
     if (EXEMPT(path)) continue;
     /* Comments are stripped before matching, blanked rather than removed so
        line numbers and columns still line up. Without this the checker flags
