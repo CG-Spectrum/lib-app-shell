@@ -578,6 +578,43 @@ describe("rebuilt parts — the gap that let the estate fork while the count rea
     expect(out).toContain("Ledger");
   });
 
+  // Tables are a surface (1 Nov 2026): a Ledger sits on a Panel, never on the
+  // floor. File-level, so a wrapper round Panel counts by its name.
+  describe("a Ledger off a Panel", () => {
+    test("a Ledger with no Panel in its file is reported", () => {
+      const { out } = check({ "page.tsx": "export const P = () => <main><Ledger rows={[]} columns={[]} /></main>;" }, "--advisory");
+      expect(out).toContain("ledger-off-panel");
+    });
+
+    test("a Ledger on a Panel is not", () => {
+      const { out } = check({ "page.tsx": "export const P = () => <Panel flush><Ledger rows={[]} columns={[]} /></Panel>;" }, "--advisory");
+      expect(out).not.toContain("ledger-off-panel");
+    });
+
+    test("a wrapper named *Panel counts as the Panel", () => {
+      const { out } = check({ "page.tsx": "export const P = () => <ReportPanel title=\"x\"><Ledger rows={[]} columns={[]} /></ReportPanel>;" }, "--advisory");
+      expect(out).not.toContain("ledger-off-panel");
+    });
+
+    test("a Panel named only in a comment does not count", () => {
+      const { out } = check({ "page.tsx": "// <Panel> one day\nexport const P = () => <Ledger rows={[]} columns={[]} />;" }, "--advisory");
+      expect(out).toContain("ledger-off-panel");
+    });
+
+    test("a parent-supplied Panel is excused by the pragma", () => {
+      const { out } = check(
+        { "Table.tsx": "export const T = () => (\n  // cgsi-adherence-allow: ledger-off-panel — rendered inside ReportPanel by page.tsx\n  <Ledger rows={[]} columns={[]} />\n);" },
+        "--advisory",
+      );
+      expect(out).not.toContain("ledger-off-panel");
+    });
+
+    test("it stays advisory", () => {
+      const { out } = check({ "page.tsx": "export const P = () => <Ledger rows={[]} columns={[]} />;" });
+      expect(out).not.toContain("ledger-off-panel");
+    });
+  });
+
   test("a locally redefined part is flagged", () => {
     const { out } = check({ "Badge.tsx": "export function StatusBadge() { return null; }" }, "--advisory");
     expect(out).toContain("rebuilt-part");
