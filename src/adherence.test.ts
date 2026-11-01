@@ -219,6 +219,37 @@ describe("tiers", () => {
   });
 });
 
+describe("what the checker is pointed at", () => {
+  function scan(target: string) {
+    try {
+      const out = execFileSync("node", [SCRIPT, target], { encoding: "utf8", stdio: "pipe" });
+      return { out, exit: 0 };
+    } catch (e) {
+      const err = e as { stdout?: string; stderr?: string; status?: number };
+      return { out: `${err.stdout ?? ""}${err.stderr ?? ""}`, exit: err.status ?? -1 };
+    }
+  }
+
+  // 🔴 Until 3.11.0 a file argument went to the directory walk, which read
+  // nothing and reported clean.
+  test("a single file is scanned, not skipped", () => {
+    const dir = mkdtempSync(join(tmpdir(), "adherence-"));
+    dirs.push(dir);
+    const file = join(dir, "a.css");
+    writeFileSync(file, ".x { color: #EA27C2; }");
+    const { out, exit } = scan(file);
+    expect(out).toContain("raw-hex");
+    expect(exit).toBe(1);
+  });
+
+  test("a path that does not exist is an error, not a clean result", () => {
+    const { out, exit } = scan(join(tmpdir(), "adherence-no-such-path-xyz"));
+    expect(out).toContain("no such file or directory");
+    expect(exit).toBe(2);
+  });
+
+});
+
 describe("suppression pragmas", () => {
   test("a pragma with a reason suppresses its rule", () => {
     const { out, exit } = check({
@@ -609,9 +640,11 @@ describe("rebuilt parts — the gap that let the estate fork while the count rea
       expect(out).not.toContain("ledger-off-panel");
     });
 
-    test("it stays advisory", () => {
-      const { out } = check({ "page.tsx": "export const P = () => <Ledger rows={[]} columns={[]} />;" });
-      expect(out).not.toContain("ledger-off-panel");
+    // Rewritten, not deleted: this asserted "advisory" until 3.11.0.
+    test("it fails the build without --advisory, as of 3.11.0", () => {
+      const { out, exit } = check({ "page.tsx": "export const P = () => <Ledger rows={[]} columns={[]} />;" });
+      expect(out).toContain("ledger-off-panel");
+      expect(exit).toBe(1);
     });
   });
 
@@ -660,9 +693,11 @@ describe("rebuilt parts — the gap that let the estate fork while the count rea
       expect(run('const C = () => <div className="border border-border bg-surface" />;')).not.toContain("hand-drawn-surface");
     });
 
-    test("it stays advisory", () => {
-      const { out } = check({ "page.tsx": 'const C = () => <div className="border bg-surface p-4" />;' });
-      expect(out).not.toContain("hand-drawn-surface");
+    // Rewritten, not deleted: this asserted "advisory" until 3.11.0.
+    test("it fails the build without --advisory, as of 3.11.0", () => {
+      const { out, exit } = check({ "page.tsx": 'const C = () => <div className="border bg-surface p-4" />;' });
+      expect(out).toContain("hand-drawn-surface");
+      expect(exit).toBe(1);
     });
   });
 
