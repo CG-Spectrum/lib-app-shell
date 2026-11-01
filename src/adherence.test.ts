@@ -647,6 +647,15 @@ describe("rebuilt parts — the gap that let the estate fork while the count rea
       expect(run('const c = "border border-border bg-surface-2 px-3 py-2 hover:bg-[var(--color-surface)]";')).not.toContain("hand-drawn-surface");
     });
 
+    test("a single edge is a divider, not a box", () => {
+      expect(run('const C = () => <div className="shrink-0 border-b border-[var(--color-border)] bg-[var(--color-surface)] p-3" />;')).not.toContain("hand-drawn-surface");
+      expect(run('const C = () => <div className="border-t border-border bg-surface px-4 py-3" />;')).not.toContain("hand-drawn-surface");
+    });
+
+    test("a hover edge is a state, not a box", () => {
+      expect(run('const C = () => <div className="hover:border border-border bg-surface p-4" />;')).not.toContain("hand-drawn-surface");
+    });
+
     test("no padding, no card", () => {
       expect(run('const C = () => <div className="border border-border bg-surface" />;')).not.toContain("hand-drawn-surface");
     });
