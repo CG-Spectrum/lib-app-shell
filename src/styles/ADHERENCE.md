@@ -90,6 +90,7 @@ requires, check whether it is one of these before you change the code.
 | `rebuilt-table` | advisory | A raw `<table>` in an app. Import `Ledger`; a prose column the reader must read in full (a note, a quote, a before/after value) takes `wrap` rather than staying hand-built. An email template is exempt by the convention below |
 | `ledger-off-panel` | freeze | A `Ledger` in a file that renders no `Panel`. Tables are a surface: they sit on a `Panel`, never on the floor or in a grey box drawn by hand. A wrapper round `Panel` counts when its name ends in `Panel`; a parent-supplied panel takes the pragma naming the parent |
 | `hand-drawn-surface` | freeze | One class string with a full `border`, the surface tone and 12px+ padding: a card drawn by hand. Content card → `Panel`, hued callout → `Notice`, metric tile → `Kpi`. Positioned elements (overlays, drawers, sticky bars) and form controls are left alone |
+| `status-colour-map` | advisory | A map, ternary or lookup whose name says colour (`STATUS_COLOR`, `scoreColor`, `BAND_FILL`) pointing two or more states at the status hues. Map the state to a `Status` tone and render the word. Read by name words and the declaration body; chart series, deltas and trends are skipped. Advisory because it cannot tell a hue that duplicates a visible word from a hue that replaces one: read each hit |
 | `rebuilt-part` | advisory | A locally defined `Panel` / `Kpi` / `Status` / `Badge` / `Notice` / `FilterBar` / `RecordCard` / `Breadcrumb` |
 
 `brand.css` is exempt: it is where the tokens are defined. Test and spec files

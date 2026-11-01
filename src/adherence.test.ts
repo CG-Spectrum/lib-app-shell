@@ -219,6 +219,57 @@ describe("tiers", () => {
   });
 });
 
+describe("status-colour-map", () => {
+  const run = (src: string) => check({ "a.tsx": src }, "--advisory").out;
+
+  test("a map pointing states at two status hues is reported", () => {
+    const out = run('const STATUS_COLOR = {\n  ok: "var(--color-good)",\n  late: "var(--color-bad)",\n};');
+    expect(out).toContain("status-colour-map");
+  });
+
+  test("a ternary on a colour-named const counts, and Tailwind spellings do too", () => {
+    const out = run('const scoreColor = s > 2 ? "text-good" : s > 1 ? "text-warn" : "text-bad";');
+    expect(out).toContain("status-colour-map");
+  });
+
+  // Reported on the line the declaration starts, so the pragma above it works.
+  test("a pragma above the declaration silences it", () => {
+    const out = run('// cgsi-adherence-allow: status-colour-map — chart segments, legend printed beside\nconst SEGMENT_COLOR = {\n  paid: "var(--color-good)",\n  held: "var(--color-warn)",\n};');
+    expect(out).not.toContain("status-colour-map");
+  });
+
+  test("one hue is not a state map", () => {
+    expect(run('const warnClass = "text-[var(--color-warn)]";')).not.toContain("status-colour-map");
+  });
+
+  // 🔴 `currentIntake` holds the letters "tint". Names are read by their words.
+  test("a name is read by its words, not as a substring", () => {
+    const out = run('const currentIntake = pick(["var(--color-good)", "var(--color-bad)"]);');
+    expect(out).not.toContain("status-colour-map");
+  });
+
+  test("a signed delta is a sign, not a state", () => {
+    const out = run('const cls = d.dir === "up" ? "text-[var(--color-good)]" : d.dir === "down" ? "text-[var(--color-bad)]" : "";');
+    expect(out).not.toContain("status-colour-map");
+  });
+
+  test("a chart series map is skipped by name", () => {
+    const out = run('const SERIES_COLOR = { a: "var(--color-good)", b: "var(--color-bad)" };');
+    expect(out).not.toContain("status-colour-map");
+  });
+
+  test("two maps in a row are judged apart", () => {
+    const out = run('const aColor = { x: "var(--color-good)" };\nconst bColor = { y: "var(--color-bad)" };');
+    expect(out).not.toContain("status-colour-map");
+  });
+
+  test("it stays advisory", () => {
+    const { out, exit } = check({ "a.tsx": 'const STATUS_COLOR = { ok: "var(--color-good)", late: "var(--color-bad)" };' });
+    expect(out).not.toContain("status-colour-map");
+    expect(exit).toBe(0);
+  });
+});
+
 describe("what the checker is pointed at", () => {
   function scan(target: string) {
     try {
