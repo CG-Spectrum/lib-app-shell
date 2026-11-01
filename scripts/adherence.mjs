@@ -628,6 +628,27 @@ const RULES = [
     msg: "A grey box drawn by hand (border + surface tone + padding). Use the part: a content card is a Panel from @cgsi/app-shell (no outer border, --panel-gap between panels); a warning or info callout is a Notice; a metric tile is a Kpi in a KpiRow. A hand-drawn box misses the panel head, the density padding and the air between panels, and every app draws it differently.",
   },
   {
+    id: "status-colour-map",
+    tier: "advisory",
+    packageExempt: true,
+    /* ── A state painted by a lookup table ────────────────────────────────
+       surface-app-layer.md, "Status": a state is a glyph plus a word, the
+       hue a third channel. The 1 Nov 2026 estate audit found the commonest
+       way back to hue-only status was not a pill but a MAP: STATUS_COLOR,
+       SEV_DOT_COLOR, STATUS_CLS, MARGIN_TONE, BAND_FILL, each pointing two
+       or more states at --color-good / -warn / -bad and painting a dot, a
+       number or a bar with no word. One reader is colour blind.
+       ⚖️ MULTI-LINE, SO NOT A LINE REGEX. A map spans lines; the rule reads
+       the declaration and its body (up to the next declaration) and fires
+       when the name says colour (colour, cls, class, tone, fill, hue, style,
+       tint) and the body names two or more of the three status hues.
+       A chart series, delta or trend map is skipped by name: those hues are
+       series colours and signs, not states. Anything else that is genuinely
+       not a state takes the pragma. */
+    scanFile: statusColourMaps,
+    msg: "A map from states to status hues (--color-good / -warn / -bad). Status is a glyph plus a word from the one-word-per-state table: render <Status tone=...>word</Status> from @cgsi/app-shell and map the state to a TONE, not a colour. A hue map paints a dot, number or bar that a colour-blind reader cannot read. If this is a chart series, not a state, add the pragma.",
+  },
+  {
     id: "rebuilt-part",
     tier: "advisory",
     packageExempt: true,
@@ -756,6 +777,40 @@ const PRAGMA = /cgsi-adherence-allow:\s*([a-z*,\s-]+?)\s*(?:—|--)\s*\S/i;
    line and everything down to the next `}` or blank line, capped at 12, so one
    comment above a CSS rule covers that rule's declarations and stops at its
    closing brace instead of leaking into the next selector. */
+/* status-colour-map's matcher. Returns the offset of each declaration whose
+   name says colour and whose body names two or more status hues. The body
+   runs to the next top-level declaration, so two small maps in a row are
+   judged apart rather than as one. */
+const DECLARATION = /\b(?:const|let|var|function)\s+([A-Za-z_$][\w$]*)/g;
+/* Read the name by its WORDS, not as a substring: `currentIntake` holds
+   "tint" and is an intake. */
+const COLOUR_WORD = /^(?:colou?rs?|cls|class(?:es|name)?|tones?|fills?|hues?|styles?|tints?)$/i;
+const NOT_A_STATE_WORD = /^(?:chart|series|delta|deltas|trend|palette)$/i;
+const nameWords = (name) =>
+  name.replace(/([a-z0-9])([A-Z])/g, "$1 $2").split(/[\s_$]+/).filter(Boolean);
+/* A signed delta ("up" good, "down" bad) is a sign, not a state. */
+const DELTA_BODY = /["'`]up["'`][\s\S]*["'`]down["'`]|["'`]down["'`][\s\S]*["'`]up["'`]/;
+const STATUS_HUE = /(?:--color-|\b(?:text|bg|border|fill|stroke|decoration|outline)-)(good|warn|bad)\b/g;
+const NEXT_DECLARATION = /\n(?:export\s+)?(?:const|let|var|function)\s/g;
+
+function statusColourMaps(text) {
+  const hits = [];
+  DECLARATION.lastIndex = 0;
+  for (let m; (m = DECLARATION.exec(text)); ) {
+    const words = nameWords(m[1]);
+    if (!words.some((w) => COLOUR_WORD.test(w))) continue;
+    if (words.some((w) => NOT_A_STATE_WORD.test(w))) continue;
+    NEXT_DECLARATION.lastIndex = m.index + m[0].length;
+    const next = NEXT_DECLARATION.exec(text);
+    const body = text.slice(m.index, next ? next.index : m.index + 1200);
+    const hues = new Set();
+    STATUS_HUE.lastIndex = 0;
+    for (let h; (h = STATUS_HUE.exec(body)); ) hues.add(h[1]);
+    if (hues.size >= 2 && !DELTA_BODY.test(body)) hits.push({ index: m.index, match: m[0] });
+  }
+  return hits;
+}
+
 function buildAllowMap(rawLines) {
   const map = rawLines.map(() => null);
   rawLines.forEach((line, i) => {
@@ -897,9 +952,28 @@ for (const root of targets) {
        a recorded decision rather than a way to make the check quiet. */
     const allowMap = buildAllowMap(rawLines);
     const stripped = lines.join("\n");
+    /* File-level rules read the whole stripped text and report each hit on
+       the line it starts, so a pragma above the declaration still works. */
+    for (const rule of RULES) {
+      if (!rule.scanFile) continue;
+      if (rule.tier === "advisory" && !advisory) continue;
+      if (rule.packageExempt && rootInPackage) continue;
+      for (const hit of rule.scanFile(stripped)) {
+        const i = stripped.slice(0, hit.index).split("\n").length - 1;
+        const allowed = allowMap[i] ?? new Set();
+        if (allowed.has(rule.id) || allowed.has("*")) continue;
+        (isGenerated ? generated : findings).push({
+          path: relative(process.cwd(), path),
+          line: i + 1,
+          rule,
+          match: hit.match.trim().slice(0, 60),
+        });
+      }
+    }
     lines.forEach((line, i) => {
       const allowed = allowMap[i] ?? new Set();
       for (const rule of RULES) {
+        if (rule.scanFile) continue;
         if (rule.tier === "advisory" && !advisory) continue;
         if (rule.packageExempt && rootInPackage) continue;
         if (rule.unlessFile && rule.unlessFile.test(stripped)) continue;
