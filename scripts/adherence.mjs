@@ -597,6 +597,29 @@ const RULES = [
     msg: "A Ledger with no Panel under it. Tables sit on a Panel from @cgsi/app-shell (the surface tone on the near-black field), never on the floor and never in a grey box drawn by hand: wrap it in <Panel flush> or <Panel title=...>. A wrapper round Panel counts if its name ends in Panel. If a parent component supplies the Panel, add the pragma and name the parent.",
   },
   {
+    id: "hand-drawn-surface",
+    tier: "advisory",
+    packageExempt: true,
+    /* ── A grey box drawn by hand ─────────────────────────────────────────
+       The second half of the surface pass (1 Nov 2026). `ledger-off-panel`
+       put every table on a Panel; what was left is the card each app draws
+       itself out of `border` + `bg-surface` + padding: about 230 across 11
+       apps, each with its own border, padding and margin, which is why
+       "grey" looked different from app to app. Three parts already cover
+       them: a content card is a Panel, a callout with a hued edge is a
+       Notice, a metric tile is a Kpi.
+       ⚖️ Matched inside ONE class string: a full `border`, the surface tone
+       (not surface-2 or -3, which are steps inside a panel) and padding of
+       12px or more. A positioned element (absolute, fixed, sticky) is an
+       overlay, a drawer or a sticky bar, not a card, and is left alone; so
+       is a form control (a line that opens one, or a class string carrying
+       `focus:` or `placeholder:`), whose box is the input register. A
+       background behind a variant (`hover:bg-surface`) is a state, not a card.
+       Advisory on arrival. */
+    re: /^(?!.*<(?:input|select|textarea|button)\b).*?(["'`])(?=[^"'`\n]*\bborder\b)(?=[^"'`\n]*(?<![:\w-])bg-(?:surface(?![\w-])|\[var\(--color-surface\)\]))(?=[^"'`\n]*\bp[xy]?-(?:[3-9]|1\d|\[))(?![^"'`\n]*(?:\b(?:absolute|fixed|sticky)\b|\b(?:focus|placeholder):))[^"'`\n]*\1/g,
+    msg: "A grey box drawn by hand (border + surface tone + padding). Use the part: a content card is a Panel from @cgsi/app-shell (no outer border, --panel-gap between panels); a warning or info callout is a Notice; a metric tile is a Kpi in a KpiRow. A hand-drawn box misses the panel head, the density padding and the air between panels, and every app draws it differently.",
+  },
+  {
     id: "rebuilt-part",
     tier: "advisory",
     packageExempt: true,

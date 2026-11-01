@@ -89,6 +89,7 @@ requires, check whether it is one of these before you change the code.
 | `label-on-accent` | freeze | `text-white` on an accent fill. 1.9:1 on dark, the default theme. The fix is `Button variant="primary"`; `text-bg` is 4.28:1 on light. Advisory 25 Oct, freeze the same day |
 | `rebuilt-table` | advisory | A raw `<table>` in an app. Import `Ledger`. An email template is exempt by the convention below |
 | `ledger-off-panel` | advisory | A `Ledger` in a file that renders no `Panel`. Tables are a surface: they sit on a `Panel`, never on the floor or in a grey box drawn by hand. A wrapper round `Panel` counts when its name ends in `Panel`; a parent-supplied panel takes the pragma naming the parent |
+| `hand-drawn-surface` | advisory | One class string with a full `border`, the surface tone and 12px+ padding: a card drawn by hand. Content card → `Panel`, hued callout → `Notice`, metric tile → `Kpi`. Positioned elements (overlays, drawers, sticky bars) and form controls are left alone |
 | `rebuilt-part` | advisory | A locally defined `Panel` / `Kpi` / `Status` / `Badge` / `Notice` / `FilterBar` / `RecordCard` / `Breadcrumb` |
 
 `brand.css` is exempt: it is where the tokens are defined. Test and spec files

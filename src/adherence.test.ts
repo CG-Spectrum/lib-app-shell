@@ -615,6 +615,48 @@ describe("rebuilt parts — the gap that let the estate fork while the count rea
     });
   });
 
+  // The cards left after the tables moved onto Panels (1 Nov 2026).
+  describe("a grey box drawn by hand", () => {
+    const run = (line: string) => check({ "page.tsx": line }, "--advisory").out;
+
+    test("border + surface + padding in one class string is reported", () => {
+      expect(run('const C = () => <div className="border border-[var(--color-border)] bg-[var(--color-surface)] p-4" />;')).toContain("hand-drawn-surface");
+    });
+
+    test("the short token spelling is reported too", () => {
+      expect(run('const CARD = "border border-border bg-surface px-4 py-3";')).toContain("hand-drawn-surface");
+    });
+
+    test("a step inside a panel (surface-2) is not", () => {
+      expect(run('const C = () => <div className="border border-border bg-surface-2 p-4" />;')).not.toContain("hand-drawn-surface");
+    });
+
+    test("an overlay is not", () => {
+      expect(run('const C = () => <div className="fixed inset-0 border bg-surface p-4" />;')).not.toContain("hand-drawn-surface");
+    });
+
+    test("a form control is not", () => {
+      expect(run('const C = () => <select className="border border-border bg-surface px-3 py-2" />;')).not.toContain("hand-drawn-surface");
+    });
+
+    test("an input whose class string sits on its own line is not", () => {
+      expect(run('const c = "w-full bg-surface border border-border px-3 py-2 focus:outline-none focus:border-accent";')).not.toContain("hand-drawn-surface");
+    });
+
+    test("a hover background is a state, not a card", () => {
+      expect(run('const c = "border border-border bg-surface-2 px-3 py-2 hover:bg-[var(--color-surface)]";')).not.toContain("hand-drawn-surface");
+    });
+
+    test("no padding, no card", () => {
+      expect(run('const C = () => <div className="border border-border bg-surface" />;')).not.toContain("hand-drawn-surface");
+    });
+
+    test("it stays advisory", () => {
+      const { out } = check({ "page.tsx": 'const C = () => <div className="border bg-surface p-4" />;' });
+      expect(out).not.toContain("hand-drawn-surface");
+    });
+  });
+
   test("a locally redefined part is flagged", () => {
     const { out } = check({ "Badge.tsx": "export function StatusBadge() { return null; }" }, "--advisory");
     expect(out).toContain("rebuilt-part");
