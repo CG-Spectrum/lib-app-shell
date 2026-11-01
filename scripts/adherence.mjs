@@ -615,8 +615,13 @@ const RULES = [
        is a form control (a line that opens one, or a class string carrying
        `focus:` or `placeholder:`), whose box is the input register. A
        background behind a variant (`hover:bg-surface`) is a state, not a card.
+       🔴 "A full `border`" means the bare token. v3.9.0 read it with `\bborder\b`,
+       which also matches `border-t`, `border-b` and the `border-[...]` colour:
+       a toolbar with a hairline on one edge was reported as a card, and
+       academicops#58 carried 11 pragmas for bars and rails that were not
+       cards. Fixed in 3.9.1; a single edge is a divider, not a box.
        Advisory on arrival. */
-    re: /^(?!.*<(?:input|select|textarea|button)\b).*?(["'`])(?=[^"'`\n]*\bborder\b)(?=[^"'`\n]*(?<![:\w-])bg-(?:surface(?![\w-])|\[var\(--color-surface\)\]))(?=[^"'`\n]*\bp[xy]?-(?:[3-9]|1\d|\[))(?![^"'`\n]*(?:\b(?:absolute|fixed|sticky)\b|\b(?:focus|placeholder):))[^"'`\n]*\1/g,
+    re: /^(?!.*<(?:input|select|textarea|button)\b).*?(["'`])(?=[^"'`\n]*(?<![\w:-])border(?![\w-]))(?=[^"'`\n]*(?<![:\w-])bg-(?:surface(?![\w-])|\[var\(--color-surface\)\]))(?=[^"'`\n]*\bp[xy]?-(?:[3-9]|1\d|\[))(?![^"'`\n]*(?:\b(?:absolute|fixed|sticky)\b|\b(?:focus|placeholder):))[^"'`\n]*\1/g,
     msg: "A grey box drawn by hand (border + surface tone + padding). Use the part: a content card is a Panel from @cgsi/app-shell (no outer border, --panel-gap between panels); a warning or info callout is a Notice; a metric tile is a Kpi in a KpiRow. A hand-drawn box misses the panel head, the density padding and the air between panels, and every app draws it differently.",
   },
   {
