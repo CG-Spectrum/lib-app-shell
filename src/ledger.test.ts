@@ -10,6 +10,7 @@ import {
   headerGroups,
   isMonoColumn,
   isRowHeader,
+  isWrapColumn,
   type LedgerColumn,
   type LedgerExpand,
   type LedgerProps,
@@ -108,6 +109,26 @@ describe("isMonoColumn", () => {
   // 🔴 "2026-T3" is data that happens to read left.
   test("a left-reading code opts in with mono", () => {
     expect(isMonoColumn(c({ align: "left", mono: true }))).toBe(true);
+  });
+});
+
+describe("isWrapColumn", () => {
+  const c = (over: Partial<LedgerColumn<Row>>): LedgerColumn<Row> =>
+    ({ key: "k", header: "K", cell: () => null, ...over });
+
+  test("a prose column opts in", () => {
+    expect(isWrapColumn(c({ wrap: true }))).toBe(true);
+    expect(isWrapColumn(c({ wrap: true, align: "left" }))).toBe(true);
+  });
+
+  test("a column that does not ask stays one line", () => {
+    expect(isWrapColumn(c({}))).toBe(false);
+  });
+
+  // ⛔ The rule the opt-in must not break: numbers are read by scanning down.
+  test("a numeric or mono column is refused even when it asks", () => {
+    expect(isWrapColumn(c({ wrap: true, align: "right" }))).toBe(false);
+    expect(isWrapColumn(c({ wrap: true, mono: true }))).toBe(false);
   });
 });
 
@@ -591,6 +612,53 @@ describe("expandLabel", () => {
 describe("detailPanelId", () => {
   it("is safe to put in an id attribute", () => {
     expect(detailPanelId("a/b c")).toBe("ledger-detail-a-b-c");
+  });
+});
+
+// ── Wrapping prose columns ─────────────────────────────────────────────────
+
+type Note = { key: string; who: string; note: string; hours: number };
+
+const NOTES: Note[] = [{ key: "a", who: "Ana", note: "A long note the reviewer reads", hours: 3 }];
+
+function notes(columns: LedgerColumn<Note>[]) {
+  return renderToStaticMarkup(h(Ledger<Note>, { columns, rows: NOTES }));
+}
+
+const WHO: LedgerColumn<Note> = { key: "who", header: "Who", cell: (r) => r.who, rowHeader: true };
+const HOURS: LedgerColumn<Note> = { key: "hours", header: "Hours", align: "right", cell: (r) => r.hours };
+
+describe("a wrap column", () => {
+  it("wraps and clamps at three lines instead of truncating", () => {
+    const html = notes([WHO, { key: "note", header: "Note", cell: (r) => r.note, wrap: true }, HOURS]);
+    expect(html).toMatch(/<td[^>]*whitespace-normal[^>]*><div class="line-clamp-3">A long note/);
+  });
+
+  it("leaves every other column one line", () => {
+    const html = notes([WHO, { key: "note", header: "Note", cell: (r) => r.note, wrap: true }, HOURS]);
+    expect(html.match(/overflow-hidden text-ellipsis whitespace-nowrap/g)).toHaveLength(2);
+  });
+
+  it("top-aligns the row, padded so one line still sits in the rung", () => {
+    const html = notes([WHO, { key: "note", header: "Note", cell: (r) => r.note, wrap: true }, HOURS]);
+    const body = html.slice(html.indexOf("<tbody>"));
+    expect(body.match(/align-top/g)).toHaveLength(3);
+    expect(body).toContain("padding-block:calc((var(--density-row) - 1lh) / 2)");
+  });
+
+  it("is ignored on a number", () => {
+    const html = notes([WHO, { ...HOURS, wrap: true }]);
+    expect(html).not.toContain("line-clamp-3");
+    expect(html).not.toContain("align-top");
+  });
+});
+
+describe("a table with no wrap column is unchanged", () => {
+  it("draws no clamp, no top alignment and no padding", () => {
+    const html = notes([WHO, { key: "note", header: "Note", cell: (r) => r.note }, HOURS]);
+    expect(html).not.toContain("line-clamp-3");
+    expect(html).not.toContain("align-top");
+    expect(html).not.toContain("padding-block");
   });
 });
 

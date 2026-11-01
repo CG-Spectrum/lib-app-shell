@@ -41,6 +41,7 @@ export {
   headerGroups,
   isMonoColumn,
   isRowHeader,
+  isWrapColumn,
 } from "./Ledger";
 export type { LedgerProps, LedgerColumn, LedgerRow, LedgerExpand, SortDirection } from "./Ledger";
 export { Filters, Segmented } from "./Filters";

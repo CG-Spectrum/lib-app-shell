@@ -8,10 +8,19 @@ import type { ReactNode } from "react";
 // vertical lines: both add ink that carries no information, and on a dense
 // board they compete with the one row a panel is actually about.
 //
-// 🔴 ROWS NEVER WRAP. Fixed height from the density setting. A long value
+// 🔴 NUMBERS NEVER WRAP. Fixed height from the density setting. A long value
 // truncates with its full text in the title attribute. A wrapping row breaks
 // the scan down the number column, which is the only reason the table is a
 // table.
+//
+// ⚖️ A PROSE COLUMN MAY OPT IN TO WRAP (v3.10), CAPPED AT THREE LINES. Until
+// then every row was one line, and most of the tables the v3.9 pass left
+// hand-built stayed that way rather than truncate a note, a quote or a
+// before/after value the reader is there to read — so they missed every
+// change to this part. `wrap`
+// is refused on a numeric or mono column (see `isWrapColumn`), so the number
+// scan the rule protects is untouched; a table that declares no `wrap` column
+// renders exactly as before.
 //
 // ⚖️ UNITS LIVE IN THE HEADER. "Revenue (AUD)", not "$1,200" in forty cells.
 //
@@ -75,6 +84,21 @@ export interface LedgerColumn<T, K extends string = string> {
   sortable?: boolean;
   /** Plain text for the title attribute when the cell may truncate. */
   titleOf?: (row: T) => string | undefined;
+  /**
+   * Let this column's text wrap, up to three lines, instead of truncating to
+   * one. For prose the reader is there to read: a note, a quote, a brief, a
+   * before/after value under review. Past three lines it clamps, so give it a
+   * `titleOf` for the rest.
+   *
+   * ⛔ NOT ON A NUMBER. Ignored on a right-aligned or `mono` column: those are
+   * the columns read by scanning down, and the scan is why rows were one line.
+   *
+   * ⚖️ ONE WRAP COLUMN TURNS THE WHOLE TABLE TO TOP ALIGNMENT, so a row's
+   * figures sit on its first line rather than floating in a tall row. A
+   * one-line row still reads as before: the padding centres a single line in
+   * the density rung.
+   */
+  wrap?: boolean;
   /**
    * Render this column's cell as `<th scope="row">` rather than `<td>`.
    *
@@ -319,6 +343,10 @@ export function Ledger<T extends LedgerRow, K extends string = string>({
   const stickyLeft = (dataColumn: boolean) =>
     dataColumn && expand ? EXPAND_COLUMN_WIDTH : 0;
 
+  // A table with a wrap column top-aligns every body cell, padded so a single
+  // line still sits centred in the rung. Without one, nothing here applies.
+  const wraps = columns.some(isWrapColumn);
+
   return (
     <div className={wide ? "min-w-0 overflow-x-auto" : "min-w-0"}>
       <table className={`w-full border-collapse tabular-nums ${className}`}>
@@ -519,14 +547,22 @@ export function Ledger<T extends LedgerRow, K extends string = string>({
                   // in the row for anyone not reading by eye.
                   const asHeader = isRowHeader(c);
                   const Cell = asHeader ? "th" : "td";
+                  const wrapCell = isWrapColumn(c);
+                  const style = {
+                    ...(sticky ? { left: stickyLeft(true) } : null),
+                    ...(wraps ? WRAP_ROW_PADDING : null),
+                  };
                   return (
                     <Cell
                       key={c.key}
                       scope={asHeader ? "row" : undefined}
                       title={c.titleOf?.(row)}
-                      style={sticky ? { left: stickyLeft(true) } : undefined}
+                      style={sticky || wraps ? style : undefined}
                       className={[
-                        "overflow-hidden text-ellipsis whitespace-nowrap px-4 font-normal",
+                        wrapCell
+                          ? "whitespace-normal break-words px-4 font-normal"
+                          : "overflow-hidden text-ellipsis whitespace-nowrap px-4 font-normal",
+                        wraps ? "align-top" : "",
                         isMonoColumn(c)
                           ? "font-mono text-[length:var(--density-data)] font-medium"
                           : "text-[length:var(--density-body)]",
@@ -535,7 +571,11 @@ export function Ledger<T extends LedgerRow, K extends string = string>({
                         sticky ? "sticky z-10 bg-surface" : "",
                       ].join(" ")}
                     >
-                      {c.cell(row)}
+                      {wrapCell ? (
+                        <div className="line-clamp-3">{c.cell(row)}</div>
+                      ) : (
+                        c.cell(row)
+                      )}
                     </Cell>
                   );
                 })}
@@ -663,6 +703,18 @@ export function isRowHeader<T, K extends string = string>(c: LedgerColumn<T, K>)
 export function isMonoColumn<T, K extends string = string>(column: LedgerColumn<T, K>): boolean {
   return column.align === "right" || column.mono === true;
 }
+
+// A wrap request is honoured only on a prose column. A number or a code is
+// read by scanning down, so it stays one line even when it asks.
+export function isWrapColumn<T, K extends string = string>(column: LedgerColumn<T, K>): boolean {
+  return column.wrap === true && !isMonoColumn(column);
+}
+
+// Half the rung less half a line, above and below: a single line lands where
+// it would in a fixed-height row, and a second line grows the row downward.
+const WRAP_ROW_PADDING = {
+  paddingBlock: "calc((var(--density-row) - 1lh) / 2)",
+} as const;
 
 // Collapse adjacent columns sharing a `group` into header spans. Returns null
 // when no column declares one, so the grouped header row is not rendered at
