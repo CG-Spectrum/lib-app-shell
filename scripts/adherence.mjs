@@ -577,6 +577,26 @@ const RULES = [
     msg: "Rebuilt table. Hard rule 2: never rebuild a panel, KPI tile, table, filter bar, status, notice, tabs or segmented control in an app — import Ledger from @cgsi/app-shell. A hand-rolled table misses every package change: the mono data treatment, the density rungs, the sort affordance, the sticky first column and the empty and loading states. If Ledger cannot do the job, extend Ledger.",
   },
   {
+    id: "ledger-off-panel",
+    tier: "advisory",
+    packageExempt: true,
+    /* ── A table on the floor ─────────────────────────────────────────────
+       surface-app-layer.md, "Panel": every data surface sits on a Panel, the
+       surface tone in --panel-gap of air on the near-black field. Counted on
+       1 Nov 2026 across 13 apps: of 106 Ledgers, none sat on a Panel, 32 sat
+       in a grey box each app drew by hand and 74 sat straight on the floor.
+       Sebastian: "the tables are considered a surface".
+       ⚖️ FILE-LEVEL, BY CONVENTION. A line regex cannot see a parent, so a
+       Ledger is reported when its file renders no Panel. An app's own wrapper
+       round Panel counts when its name ends in Panel (`ChartPanel`,
+       `ReportPanel`), which is the convention this rule sets. A component
+       whose PARENT puts it on a Panel takes the pragma and names the parent.
+       Advisory on arrival: it moves to "error" when the estate reads zero. */
+    re: /<Ledger\b/g,
+    unlessFile: /<\w*Panel\b/,
+    msg: "A Ledger with no Panel under it. Tables sit on a Panel from @cgsi/app-shell (the surface tone on the near-black field), never on the floor and never in a grey box drawn by hand: wrap it in <Panel flush> or <Panel title=...>. A wrapper round Panel counts if its name ends in Panel. If a parent component supplies the Panel, add the pragma and name the parent.",
+  },
+  {
     id: "rebuilt-part",
     tier: "advisory",
     packageExempt: true,
@@ -826,11 +846,13 @@ for (const root of targets) {
        comment-stripped copy. A pragma must carry a reason, so a suppression is
        a recorded decision rather than a way to make the check quiet. */
     const allowMap = buildAllowMap(rawLines);
+    const stripped = lines.join("\n");
     lines.forEach((line, i) => {
       const allowed = allowMap[i] ?? new Set();
       for (const rule of RULES) {
         if (rule.tier === "advisory" && !advisory) continue;
         if (rule.packageExempt && rootInPackage) continue;
+        if (rule.unlessFile && rule.unlessFile.test(stripped)) continue;
               if (allowed.has(rule.id) || allowed.has("*")) continue;
         rule.re.lastIndex = 0;
         const hit = rule.re.exec(line);
