@@ -802,7 +802,11 @@ function statusColourMaps(text) {
     if (words.some((w) => NOT_A_STATE_WORD.test(w))) continue;
     NEXT_DECLARATION.lastIndex = m.index + m[0].length;
     const next = NEXT_DECLARATION.exec(text);
-    const body = text.slice(m.index, next ? next.index : m.index + 1200);
+    /* The cap holds even when a next declaration exists: NEXT_DECLARATION
+       only sees one at the start of a line, so an indented declaration (a
+       const inside a component) would otherwise run on to the next top-level
+       one and collect hues from the rest of the file. */
+    const body = text.slice(m.index, Math.min(next ? next.index : Infinity, m.index + 1200));
     const hues = new Set();
     STATUS_HUE.lastIndex = 0;
     for (let h; (h = STATUS_HUE.exec(body)); ) hues.add(h[1]);
