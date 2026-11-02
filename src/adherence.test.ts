@@ -238,6 +238,17 @@ describe("status-colour-map", () => {
     expect(out).not.toContain("status-colour-map");
   });
 
+  // 🔴 governance RrfDashboard: an indented const ran on to the next
+  // top-level declaration and picked up hues from far down the component.
+  test("an indented declaration does not borrow hues from the rest of the file", () => {
+    const out = run(
+      'export function Card() {\n  const scoreColor = "var(--color-text)";\n' +
+        "  return null;\n".repeat(120) +
+        '  // "var(--color-good)" "var(--color-bad)"\n}\nconst x = 1;',
+    );
+    expect(out).not.toContain("status-colour-map");
+  });
+
   test("one hue is not a state map", () => {
     expect(run('const warnClass = "text-[var(--color-warn)]";')).not.toContain("status-colour-map");
   });
