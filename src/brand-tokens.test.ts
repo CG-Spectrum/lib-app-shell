@@ -277,3 +277,26 @@ describe("the 2027 palette", () => {
     expect(scrim).not.toMatch(/--color-bg|--color-surface/);
   });
 });
+
+/* The heat ramp is four steps of --color-text at an alpha, so it flips with
+   the theme by itself. A literal grey here would be dark-only, and a light-block
+   override would be a second ramp that can drift from the first. */
+describe("the heat ramp", () => {
+  const steps = [...brandCss.matchAll(/^\s*--color-heat-(\d):\s*([^;]+);/gm)];
+
+  test("four steps, declared once", () => {
+    expect(steps.map(([, n]) => n)).toEqual(["1", "2", "3", "4"]);
+  });
+
+  test.each(steps.map(([, n, v]) => [n, v] as const))(
+    "step %s is --color-text at an alpha, not a literal and not the accent",
+    (_n, value) => {
+      expect(value).toMatch(/^color-mix\(in srgb, var\(--color-text\) \d+%, transparent\)$/);
+    },
+  );
+
+  test("each step is darker than the last", () => {
+    const pct = steps.map(([, , v]) => Number(/(\d+)%/.exec(v)?.[1]));
+    for (let i = 1; i < pct.length; i++) expect(pct[i]).toBeGreaterThan(pct[i - 1]);
+  });
+});

@@ -8,6 +8,7 @@ import {
   detailPanelId,
   expandLabel,
   headerGroups,
+  heatStep,
   isMonoColumn,
   isRowHeader,
   isWrapColumn,
@@ -659,6 +660,85 @@ describe("a table with no wrap column is unchanged", () => {
     expect(html).not.toContain("line-clamp-3");
     expect(html).not.toContain("align-top");
     expect(html).not.toContain("padding-block");
+  });
+});
+
+describe("heatStep", () => {
+  test("nothing to shade is step 0", () => {
+    for (const v of [null, undefined, Number.NaN, 0, -0.4]) expect(heatStep(v)).toBe(0);
+  });
+
+  test("quartiles, the top one closed", () => {
+    expect(heatStep(0.01)).toBe(1);
+    expect(heatStep(0.25)).toBe(1);
+    expect(heatStep(0.26)).toBe(2);
+    expect(heatStep(0.5)).toBe(2);
+    expect(heatStep(0.75)).toBe(3);
+    expect(heatStep(0.76)).toBe(4);
+    expect(heatStep(1)).toBe(4);
+  });
+
+  test("past the top clamps to the darkest step", () => {
+    // A deal triangle can run past one deal per lead.
+    expect(heatStep(3.2)).toBe(4);
+  });
+});
+
+describe("a heat column", () => {
+  type Cell = { key: string; who: string; n: number | null };
+  const CELLS: Cell[] = [
+    { key: "a", who: "Ana", n: 8 },
+    { key: "b", who: "Ben", n: 2 },
+    { key: "c", who: "Cy", n: null },
+  ];
+  const max = 8;
+  const columns: LedgerColumn<Cell>[] = [
+    { key: "who", header: "Who", cell: (r) => r.who, rowHeader: true, heat: () => 1 },
+    {
+      key: "n",
+      header: "Meetings",
+      align: "right",
+      cell: (r) => r.n ?? "",
+      heat: (r) => (r.n == null ? null : r.n / max),
+    },
+  ];
+  const html = renderToStaticMarkup(
+    h(Ledger<Cell>, { columns, rows: CELLS, total: { cells: { n: 10 } } }),
+  );
+  const body = html.slice(html.indexOf("<tbody>"), html.indexOf("</tbody>"));
+
+  it("fills each cell from the shared grey tokens, by its own share", () => {
+    expect(body).toMatch(/data-heat="4"[^>]*background-color:var\(--color-heat-4\)/);
+    expect(body).toMatch(/data-heat="1"[^>]*background-color:var\(--color-heat-1\)/);
+  });
+
+  it("leaves a cell with no value unshaded", () => {
+    expect(body.match(/data-heat=/g)).toHaveLength(2);
+  });
+
+  it("never shades the row header, whatever it asks", () => {
+    expect(body).not.toMatch(/<th[^>]*data-heat/);
+  });
+
+  it("sets a heated figure in full ink", () => {
+    expect(body).toMatch(/<td[^>]*data-heat="4"[^>]*class="[^"]*text-text(?!-)/);
+  });
+
+  it("leaves the total row on no scale", () => {
+    const foot = html.slice(html.indexOf("<tfoot>"));
+    expect(foot).not.toContain("--color-heat");
+  });
+
+  it("names no colour of its own, only the tokens", () => {
+    expect(html).not.toMatch(/rgba?\(|color-mix|#[0-9a-f]{3,6}\b/i);
+  });
+});
+
+describe("a table with no heat column is unchanged", () => {
+  it("draws no fill and no data-heat", () => {
+    const html = notes([WHO, HOURS]);
+    expect(html).not.toContain("data-heat");
+    expect(html).not.toContain("--color-heat");
   });
 });
 

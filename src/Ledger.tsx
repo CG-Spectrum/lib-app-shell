@@ -24,9 +24,15 @@ import type { ReactNode } from "react";
 //
 // ⚖️ UNITS LIVE IN THE HEADER. "Revenue (AUD)", not "$1,200" in forty cells.
 //
-// ⚖️ GREEN IS NOT DATA. Inline bars are grey. The accent marks the one row a
-// rule singles out, and which row that is must be written in the panel's spec
-// rather than decided per render — see `marked` below.
+// ⚖️ GREEN IS NOT DATA. Inline bars are grey, and so is heat (v3.13). The
+// accent marks the one row a rule singles out, and which row that is must be
+// written in the panel's spec rather than decided per render — see `marked`
+// below.
+//
+// ⚖️ HEAT IS THE ONE FILL A DATA CELL TAKES. "No ink that carries no
+// information" was written against zebra striping; a sequential fill keyed to
+// the cell's own value is the opposite case. Four heatmaps stayed hand-built
+// until v3.13 for want of it. See `LedgerColumn.heat`.
 //
 // 🔴 NO "use client", NO HOOK, NO createContext IN THIS FILE, EVER.
 //
@@ -120,6 +126,25 @@ export interface LedgerColumn<T, K extends string = string> {
    * the row header rather than reaching for a second pin.
    */
   rowHeader?: boolean;
+  /**
+   * Shade this cell by its value: return the value's SHARE OF THE SCALE,
+   * 0 to 1, and the cell takes one of four grey fills (`--color-heat-*`).
+   * `null` or `0` leaves it unshaded. For a heatmap — a cohort triangle, an
+   * owner-by-week matrix — where the shading is why the table exists.
+   *
+   * ⚖️ THE CALLER OWNS THE SCALE, the part owns the colour. What "the top" is
+   * differs per table (the busiest cell, a row's own min and max, the grid's
+   * best rate) and only the caller knows it; which grey that becomes is the
+   * same everywhere, so four apps cannot drift into four ramps again.
+   *
+   * 🔴 THE CELL MUST PRINT ITS VALUE. The fill is a scan aid over figures
+   * already there, never the only carrier — four greys are not four
+   * distinguishable values on their own (see the heat tokens in brand.css).
+   *
+   * ⛔ Ignored on the row-header column, and never applied to the total row:
+   * a name has no magnitude, and a total is not on the cells' scale.
+   */
+  heat?: (row: T) => number | null | undefined;
 }
 
 export interface LedgerRow {
@@ -548,16 +573,19 @@ export function Ledger<T extends LedgerRow, K extends string = string>({
                   const asHeader = isRowHeader(c);
                   const Cell = asHeader ? "th" : "td";
                   const wrapCell = isWrapColumn(c);
+                  const step = asHeader || !c.heat ? 0 : heatStep(c.heat(row));
                   const style = {
                     ...(sticky ? { left: stickyLeft(true) } : null),
                     ...(wraps ? WRAP_ROW_PADDING : null),
+                    ...(step ? { backgroundColor: HEAT_FILL[step] } : null),
                   };
                   return (
                     <Cell
                       key={c.key}
                       scope={asHeader ? "row" : undefined}
                       title={c.titleOf?.(row)}
-                      style={sticky || wraps ? style : undefined}
+                      data-heat={step || undefined}
+                      style={sticky || wraps || step ? style : undefined}
                       className={[
                         wrapCell
                           ? "whitespace-normal break-words px-4 font-normal"
@@ -567,7 +595,9 @@ export function Ledger<T extends LedgerRow, K extends string = string>({
                           ? "font-mono text-[length:var(--density-data)] font-medium"
                           : "text-[length:var(--density-body)]",
                         c.align === "right" ? "text-right" : "text-left",
-                        row.marked ? "text-text" : "text-text-2",
+                        // A heated figure sets in full ink: --color-text-2 is
+                        // under 4.5:1 on the darkest step in dark.
+                        row.marked || step ? "text-text" : "text-text-2",
                         sticky ? "sticky z-10 bg-surface" : "",
                       ].join(" ")}
                     >
@@ -709,6 +739,28 @@ export function isMonoColumn<T, K extends string = string>(column: LedgerColumn<
 export function isWrapColumn<T, K extends string = string>(column: LedgerColumn<T, K>): boolean {
   return column.wrap === true && !isMonoColumn(column);
 }
+
+/**
+ * The heat step, 0 to 4, for a share of the scale. 0 is unshaded: null, NaN,
+ * zero or below. Quartiles above that, the top one closed so a share of
+ * exactly 1 is the darkest step and anything past it clamps there.
+ */
+export function heatStep(share: number | null | undefined): 0 | 1 | 2 | 3 | 4 {
+  if (share == null || !(share > 0)) return 0;
+  if (share > 0.75) return 4;
+  if (share > 0.5) return 3;
+  if (share > 0.25) return 2;
+  return 1;
+}
+
+// Spelled out, not built from the step: a token assembled from a string is
+// invisible to the adherence rules and to a grep for its name.
+const HEAT_FILL = {
+  1: "var(--color-heat-1)",
+  2: "var(--color-heat-2)",
+  3: "var(--color-heat-3)",
+  4: "var(--color-heat-4)",
+} as const;
 
 // Half the rung less half a line, above and below: a single line lands where
 // it would in a fixed-height row, and a second line grows the row downward.
