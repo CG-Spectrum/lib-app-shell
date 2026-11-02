@@ -39,6 +39,7 @@ export {
   detailPanelId,
   expandLabel,
   headerGroups,
+  heatStep,
   isMonoColumn,
   isRowHeader,
   isWrapColumn,

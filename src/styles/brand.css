@@ -202,6 +202,27 @@
   --color-series-2: #858781;
   --color-series-3: #4f514b;
 
+  /* ── Heat ──────────────────────────────────────────────────────────────── */
+  /* The fill a Ledger `heat` column gives a cell: four steps of the TEXT
+     colour at an alpha, so darker means more on dark and on light alike. Grey,
+     because grey is data and green is not (decided 2 Nov 2026, replacing four
+     app-local ramps: three in the accent, one Okabe-Ito diverging).
+
+     ⚖️ THE FILL IS REDUNDANT, AND THAT IS WHY FOUR STEPS ARE ALLOWED. The
+     series note above caps a grey ramp at three by ΔE, because a series has
+     no other carrier. A heat cell always prints its own figure; the steps are
+     a scan aid over values already on the page, never the value itself.
+
+     Aliases through var(), like the table surfaces below, so they follow
+     light mode without a light-block entry. Measured against the panel
+     surface: a heated cell sets its figure in --color-text, which clears
+     6.5:1 on step 4 in dark and 9.8:1 in light. --color-text-2 does NOT on
+     step 4 in dark (4.0:1, under 4.5), which is why Ledger switches it. */
+  --color-heat-1: color-mix(in srgb, var(--color-text) 6%, transparent);
+  --color-heat-2: color-mix(in srgb, var(--color-text) 12%, transparent);
+  --color-heat-3: color-mix(in srgb, var(--color-text) 19%, transparent);
+  --color-heat-4: color-mix(in srgb, var(--color-text) 27%, transparent);
+
   /* New in 2027: the fourth status, for projected and read-only values. It has
      no 2025 equivalent to preserve, so it takes its 2027 values now — safe,
      because nothing references it yet and both values are contrast-tested
