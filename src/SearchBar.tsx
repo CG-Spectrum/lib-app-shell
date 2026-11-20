@@ -94,7 +94,7 @@ export function SearchBar({ userApps }: { userApps: string[] }) {
   const showDropdown = open && query.trim().length >= 2;
 
   return (
-    <div ref={containerRef} className="relative">
+    <div ref={containerRef} className="relative min-w-0">
       <input
         type="search"
         role="combobox"
@@ -107,7 +107,7 @@ export function SearchBar({ userApps }: { userApps: string[] }) {
         onFocus={() => { if (filtered.length > 0) setOpen(true); }}
         onKeyDown={handleKeyDown}
         className={[
-          "w-64 min-w-0 shrink border px-3 py-1.5 text-sm",
+          "w-64 max-w-full min-w-0 shrink border px-3 py-1.5 text-sm",
           "bg-surface border-border text-text placeholder:text-text-3",
           "focus:outline-none focus:border-accent transition-colors",
         ].join(" ")}
