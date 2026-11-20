@@ -76,7 +76,7 @@ export function Header({
             {subtitle}
           </span>
         )}
-        <div className="ml-auto flex items-center gap-3">
+        <div className="ml-auto flex min-w-0 items-center gap-3">
           <SearchBar userApps={user.apps} />
           {children}
           {/* The standard's button, as the part it now is. This link was the
