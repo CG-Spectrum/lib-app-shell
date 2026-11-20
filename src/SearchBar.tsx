@@ -94,7 +94,7 @@ export function SearchBar({ userApps }: { userApps: string[] }) {
   const showDropdown = open && query.trim().length >= 2;
 
   return (
-    <div ref={containerRef} className="relative min-w-0">
+    <div ref={containerRef} className="relative hidden min-w-0 sm:block">
       <input
         type="search"
         role="combobox"
