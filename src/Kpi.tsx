@@ -36,6 +36,18 @@ export interface KpiProps {
   actual?: number;
   target?: number;
   state?: KpiState;
+  /**
+   * Draw the bar as a RULER: one tick per unit when the target is a COUNT of
+   * things (38 students, 12 subjects), so the gap reads as "this many still to
+   * go" before anyone reads the number. Above 60 units the ticks fall back to
+   * tenths, because a tick narrower than ~3px is texture, not measurement.
+   *
+   * ⚖️ A ruler only where something is counted. A rate, a dollar figure or a
+   * ratio keeps the plain bar: ticks on $412,000 measure nothing.
+   * Neon exploration, 25 Nov 2026 (Sebastian): the ruler is the one neon piece
+   * that carries meaning in a tool.
+   */
+  ruler?: boolean;
   className?: string;
   /**
    * ⛔ SET BY `KpiRow as="dl"`, NOT BY HAND. The row clones its tiles with it
@@ -46,7 +58,7 @@ export interface KpiProps {
   inList?: boolean;
 }
 
-export function Kpi({ label, value, context, actual, target, state, className = "", inList = false }: KpiProps) {
+export function Kpi({ label, value, context, actual, target, state, ruler = false, className = "", inList = false }: KpiProps) {
   const resolved: KpiState = state ?? (target === undefined ? { kind: "no-target" } : { kind: "on-target" });
   const missing = resolved.kind === "missing-target";
   const showBar = !missing && actual !== undefined && target !== undefined && target > 0;
@@ -75,7 +87,9 @@ export function Kpi({ label, value, context, actual, target, state, className = 
         {missing ? "Not set" : value}
       </Value>
 
-      {showBar && <TargetBar actual={actual} target={target} below={resolved.kind === "below-target"} />}
+      {showBar && (ruler
+        ? <RulerBar actual={actual} target={target} below={resolved.kind === "below-target"} />
+        : <TargetBar actual={actual} target={target} below={resolved.kind === "below-target"} />)}
 
       {(context || resolved.kind === "below-target" || missing || resolved.kind === "not-validated") && (
         <div className="mt-2 flex flex-wrap items-baseline gap-2 text-[13px] text-text-3">
@@ -113,6 +127,33 @@ function TargetBar({ actual, target, below }: { actual: number; target: number; 
         style={{ width: `${pct}%` }}
       />
       <div className="absolute inset-y-[-2px] w-px bg-text" style={{ left: `${tickPct}%` }} />
+    </div>
+  );
+}
+
+/** Tick spacing for the ruler, as a share of the track: one per unit up to 60, then tenths. */
+export function rulerStep(target: number): number {
+  if (!(target > 0)) return 0;
+  return target <= 60 ? 100 / target : 10;
+}
+
+// The ruler: unit ticks across the top, the counted run as a solid bar along
+// the bottom, and a full-height mark where the run ends. Same tones as the
+// target bar (paper fill, bad when below target); the accent stays reserved.
+// Shape carries it, not hue: a reader who cannot tell the greys apart still
+// sees where the run stops and how many ticks are left after it.
+function RulerBar({ actual, target, below }: { actual: number; target: number; below: boolean }) {
+  const pct = Math.max(0, Math.min(100, (actual / target) * 100));
+  const step = rulerStep(target);
+  return (
+    <div className="relative h-4 w-full" role="presentation">
+      <div
+        className="absolute inset-x-0 top-0 h-[7px]"
+        style={{ backgroundImage: `repeating-linear-gradient(to right, var(--color-text-3) 0 1px, transparent 1px ${step}%)`, opacity: 0.55 }}
+      />
+      <div className="absolute right-0 top-0 h-[7px] w-px bg-text-3" />
+      <div className={`absolute bottom-0 left-0 h-[5px] ${below ? "bg-bad" : "bg-text"}`} style={{ width: `${pct}%` }} />
+      {pct > 0 && <div className={`absolute bottom-0 h-4 w-[2px] ${below ? "bg-bad" : "bg-text"}`} style={{ left: `calc(${pct}% - 1px)` }} />}
     </div>
   );
 }
