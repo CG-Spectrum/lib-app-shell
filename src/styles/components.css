@@ -265,3 +265,136 @@
   font-size: 13px;
   color: var(--color-text-3);
 }
+
+/* ── Feature highlights ───────────────────────────────────────────────────
+   The NEW label, the outline round a new feature, and the header's "What's
+   new" list. Components in FeatureHighlights.tsx / NewLabel.tsx.
+
+   🔴 THE WORD AND THE SHAPE CARRY IT, NEVER THE HUE. The label is a square
+   chip reading NEW; the outline is DASHED, so it differs from every solid
+   hairline in the layer by line style as well as tone. The accent edge on
+   the chip is reinforcement for readers who can see it. Jeremy is colour
+   blind and these marks are on his screens.
+
+   ⛔ Quiet by contract: no fill behind the element, no overlay, no dimming,
+   no glow, no animation. Colour transitions only, as every control in the
+   layer, and none at all under prefers-reduced-motion. */
+.feature-new {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  border-radius: 0;
+  border: 1px solid var(--color-accent-border);
+  padding: 2px 4px;
+  font-family: var(--brand-mono);
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-text);
+  white-space: nowrap;
+  vertical-align: middle;
+}
+.feature-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  outline: 1px dashed var(--color-border-strong);
+  outline-offset: 2px;
+}
+div.feature-outline {
+  display: flex;
+}
+
+.whats-new {
+  position: relative;
+  flex-shrink: 0;
+}
+.whats-new-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 0;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  padding: 4px 8px;
+  font-family: var(--brand-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-text-2);
+  white-space: nowrap;
+  transition: border-color .15s ease, color .15s ease;
+}
+.whats-new-trigger:hover {
+  border-color: var(--color-border-strong);
+  color: var(--color-text);
+}
+/* The count sits in the same square-chip register as the NEW label. */
+.whats-new-count {
+  border: 1px solid var(--color-accent-border);
+  padding: 2px 4px;
+  font-size: 10px;
+  line-height: 1;
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}
+/* Phone width: the word goes, the count chip stays. The accessible name is on
+   the button's aria-label and names the feature count either way. */
+@media (max-width: 639px) {
+  .whats-new-trigger > span:first-child {
+    display: none;
+  }
+}
+.whats-new-list {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  z-index: 50;
+  margin: 4px 0 0;
+  padding: 4px 0;
+  list-style: none;
+  width: min(320px, calc(100vw - 32px));
+  border-radius: 0;
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-surface);
+}
+.whats-new-list[hidden] {
+  display: none;
+}
+.whats-new-item {
+  display: block;
+  padding: 8px 12px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-text-2);
+  text-decoration: none;
+  transition: background .15s ease, color .15s ease;
+}
+a.whats-new-item:hover {
+  background: var(--color-surface-2);
+  color: var(--color-text);
+  text-decoration: underline;
+}
+/* The 2027 focus indicator: 2px accent outline at 3px offset, always visible
+   on keyboard focus. Inset inside the list so a neighbouring row cannot
+   cover it. */
+.whats-new-trigger:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+}
+a.whats-new-item:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -2px;
+  background: var(--color-surface-2);
+  color: var(--color-text);
+}
+@media (prefers-reduced-motion: reduce) {
+  .whats-new-trigger,
+  .whats-new-item {
+    transition: none;
+  }
+}

@@ -137,3 +137,19 @@ export type { Scale } from "./scale";
 export { buildUrl } from "./url-state";
 export { useUrlState } from "./useUrlState";
 export type { UrlStateCodec, UrlState } from "./useUrlState";
+
+// ── Feature highlights ──────────────────────────────────────────────────────
+// A NEW label, a quiet outline and a "What's new" list for newly live app
+// features. No network: the app passes the list in and records use itself.
+export { FeatureHighlightsProvider, useFeatureNew, FeatureOutline, WhatsNew } from "./FeatureHighlights";
+export type { FeatureHighlightsProviderProps, FeatureOutlineProps, WhatsNewProps } from "./FeatureHighlights";
+export { NewLabel } from "./NewLabel";
+export type { NewLabelProps } from "./NewLabel";
+export {
+  FEATURE_MAX_DEFAULT,
+  FEATURE_WINDOW_DAYS_DEFAULT,
+  isFeatureNew,
+  selectFeatures,
+  safeFeatureHref,
+} from "./feature-highlights-logic";
+export type { Feature, FeaturePermissions, FeatureSelection } from "./feature-highlights-logic";
